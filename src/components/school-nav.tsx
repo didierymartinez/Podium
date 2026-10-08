@@ -2,6 +2,7 @@
 
 import {
   Baby,
+  ChartColumn,
   CalendarCheck,
   GraduationCap,
   House,
@@ -61,6 +62,13 @@ const BILLING: NavItem = {
   ready: true,
   audience: "manager",
 };
+const REPORTS: NavItem = {
+  path: "/reportes",
+  label: "Reportes",
+  icon: ChartColumn,
+  ready: true,
+  audience: "manager",
+};
 const MY_PAYMENTS: NavItem = {
   path: "/mis-pagos",
   label: "Mis pagos",
@@ -105,6 +113,7 @@ export const SCHOOL_NAV: NavItem[] = [
   COACHES,
   ATTENDANCE,
   BILLING,
+  REPORTS,
   MY_KIDS,
   MY_PAYMENTS,
   NOTICES,
