@@ -15,7 +15,10 @@ export type UploadTicket = { ok: true; fileId: string; uploadUrl: string } | { o
 
 /** Paso 1: el navegador pide una URL firmada y luego sube el archivo directo al almacenamiento. */
 export async function requestUploadAction(slug: string, req: UploadRequest): Promise<UploadTicket> {
-  const member = await getActionContext(slug, canUpload(req.kind));
+  // El soporte de un pago se puede subir aunque la escuela esté en solo lectura (#21).
+  const member = await getActionContext(slug, canUpload(req.kind), {
+    allowReadOnly: req.kind === "PAYMENT_PROOF",
+  });
   if (!member) return { ok: false, message: "No tienes permiso para subir este archivo." };
   const result = await requestUpload(db, storage(), member.ctx, req);
   if (!result.ok) {

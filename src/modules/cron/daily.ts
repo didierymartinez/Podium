@@ -17,7 +17,13 @@ import { deliverPending } from "@/modules/notifications/delivery";
 import { sendTrialEmails } from "@/modules/onboarding/emails";
 import { sendScheduledAnnouncements } from "@/modules/announcements/announcements";
 import { commsEnabled } from "@/modules/schools/comms";
+import type { ProviderKeys } from "@/modules/payments/provider";
+import { wompiCardApi, type CardApi } from "@/modules/subscription/podium-wompi";
+import { runSubscriptionJob } from "@/modules/subscription/subscription";
 import { cronSchools, type CronSchool } from "./schools";
+
+/** En solo lectura no se generan cobros ni se envían avisos; los pagos de las familias sí se concilian. */
+const READ_ONLY_JOBS = new Set(["subscription", "onlinePaymentsReconciled", "notificationsDelivered"]);
 
 export type DailyJob = (database: Database, school: CronSchool, today: string, now: Date) => Promise<number>;
 
@@ -35,9 +41,24 @@ const systemCtx = (school: CronSchool) => ({ schoolId: school.id, actorUserId: n
  * Tareas diarias por escuela, en este orden. Todas son idempotentes: correrlas dos veces el mismo día
  * no duplica nada. Se programan a las 9:00 a. m. (hora de Bogotá) por el horario de la Ley 2300.
  */
-export type JobDeps = { mailer: Mailer; notifier: Notifier | null; appUrl: string };
+export type JobDeps = {
+  mailer: Mailer;
+  notifier: Notifier | null;
+  appUrl: string;
+  /** Cobro de la suscripción a Podium (#21); sin llaves solo se avisan los vencimientos. */
+  podiumKeys?: ProviderKeys | null;
+  cardApi?: CardApi;
+};
 
 export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
+  // Primero la suscripción: define si la escuela sigue activa o pasa a solo lectura.
+  subscription: (db, school, _today, now) =>
+    runSubscriptionJob(db, school, now, {
+      mailer: deps.mailer,
+      appUrl: deps.appUrl,
+      keys: deps.podiumKeys ?? null,
+      cardApi: deps.cardApi ?? wompiCardApi(),
+    }),
   reactivatedEnrollments: (db, school, today) => reactivateFrozenEnrollments(db, school, today),
   sessionsCreated: async (db, school, today) => (await syncSessions(db, school, today)).created,
   attendanceReminders: (db, school, today) => remindMissingAttendance(db, school, today),
@@ -75,7 +96,10 @@ export async function runDaily(
     const today = todayIn(school.timezone, now);
     try {
       const totals: Record<string, number> = {};
-      for (const [name, job] of Object.entries(jobs)) totals[name] = await job(database, school, today, now);
+      for (const [name, job] of Object.entries(jobs)) {
+        if (school.status === "READ_ONLY" && !READ_ONLY_JOBS.has(name)) continue;
+        totals[name] = await job(database, school, today, now);
+      }
       results.push({ school: school.slug, ok: true, totals });
     } catch (err) {
       results.push({

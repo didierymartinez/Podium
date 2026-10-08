@@ -7,6 +7,11 @@ export function canManageSettings(roles: readonly SchoolRole[]): boolean {
   return roles.includes("OWNER") || roles.includes("ADMIN");
 }
 
+/** Suscripción a Podium, cancelación y eliminación: solo el propietario (ONBOARDING §4). */
+export function canManageSubscription(roles: readonly SchoolRole[]): boolean {
+  return roles.includes("OWNER");
+}
+
 export class ForbiddenError extends Error {
   constructor(message = "No tienes permiso para esta acción") {
     super(message);

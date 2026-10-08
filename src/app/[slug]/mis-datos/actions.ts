@@ -21,7 +21,7 @@ export async function registerPushTokenAction(
   token: string,
   userAgent: string,
 ): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false, message: "Inicia sesión de nuevo." };
   if (!/^[\w:-]{20,4096}$/.test(token)) return { ok: false, message: "Token inválido" };
   await registerPushToken(db, member.user.id, token, userAgent.slice(0, 300));
@@ -33,7 +33,7 @@ export async function savePreferencesAction(
   _prev: ActionState,
   form: FormData,
 ): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false, message: "Inicia sesión de nuevo." };
   const flag = (topic: string, channel: string) => form.get(`${topic}.${channel}`) === "on";
   await updatePreferences(db, member.user.id, {
@@ -50,7 +50,7 @@ export async function updateProfileAction(
   _prev: ActionState,
   form: FormData,
 ): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false, message: "Inicia sesión de nuevo." };
   const name = String(form.get("name") ?? "").trim();
   const rawPhone = String(form.get("phone") ?? "").trim();
@@ -66,7 +66,7 @@ export async function updateProfileAction(
 }
 
 export async function setWhatsAppConsentAction(slug: string, granted: boolean): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false };
   const h = await headers();
   await setWhatsAppConsent(
@@ -86,7 +86,7 @@ export async function setImageConsentForKidAction(
   athleteId: string,
   consent: "GRANTED" | "DENIED",
 ): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false };
   const mine = await guardianIdsOfUser(db, member.school.id, member.user.id);
   if (!mine.length) return { ok: false };
@@ -100,7 +100,7 @@ export async function requestDeletionAction(
   _prev: ActionState,
   form: FormData,
 ): Promise<ActionState> {
-  const member = await getActionContext(slug, anyMember);
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
   if (!member) return { ok: false };
   await requestDeletion(db, member.school, member.user, String(form.get("reason") ?? "").trim());
   deliverSoon(member.school.id);

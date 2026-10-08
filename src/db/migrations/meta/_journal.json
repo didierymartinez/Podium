@@ -197,6 +197,20 @@
       "when": 1791457994624,
       "tag": "0027_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791458641495,
+      "tag": "0028_subscriptions_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791458653327,
+      "tag": "0029_platform_billing_rls",
+      "breakpoints": true
     }
   ]
 }

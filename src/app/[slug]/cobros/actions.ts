@@ -38,8 +38,8 @@ const fail = (error: z.ZodError): ActionState => ({
   errors: z.flattenError(error).fieldErrors,
 });
 
-async function billing(slug: string, admin = false) {
-  const member = await getActionContext(slug, admin ? canManageSettings : canManagePeople);
+async function billing(slug: string, admin = false, allowReadOnly = false) {
+  const member = await getActionContext(slug, admin ? canManageSettings : canManagePeople, { allowReadOnly });
   if (!member) return null;
   return {
     ...member,
@@ -103,7 +103,8 @@ export async function recordPaymentAction(
   _prev: ActionState,
   form: FormData,
 ): Promise<ActionState> {
-  const m = await billing(slug);
+  // Los pagos de las familias siguen entrando aunque la escuela esté en solo lectura.
+  const m = await billing(slug, false, true);
   if (!m) return FORBIDDEN_STATE;
   const f = formReader(form);
   const parsed = manualPaymentSchema.safeParse({

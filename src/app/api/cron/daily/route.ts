@@ -4,6 +4,7 @@ import { serverEnv } from "@/env";
 import { mailer } from "@/lib/mailer";
 import { notifier } from "@/lib/notifier";
 import { createDailyJobs, runDaily } from "@/modules/cron/daily";
+import { podiumPaymentKeys } from "@/modules/subscription/podium-wompi";
 
 /**
  * Tareas diarias (regla de portabilidad #6). Cualquier programador sirve: Vercel Cron, `cron` del VPS,
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
   const results = await runDaily(
     db,
     new Date(),
-    createDailyJobs({ mailer: mailer(), notifier: notifier(), appUrl }),
+    createDailyJobs({ mailer: mailer(), notifier: notifier(), appUrl, podiumKeys: podiumPaymentKeys() }),
   );
   const failed = results.filter((r) => !r.ok).length;
   return Response.json(

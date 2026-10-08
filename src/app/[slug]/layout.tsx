@@ -4,12 +4,13 @@ import { BottomNav, SideRail, TopTabs } from "@/components/school-nav";
 import { InstallPrompt, SyncAgent } from "@/components/pwa";
 import { TopBar } from "@/components/top-bar";
 import { Chip, LogoMark, buttonClass } from "@/components/ui";
-import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
+import { canManagePeople, canManageSettings, canManageSubscription } from "@/modules/schools/permissions";
 import { db } from "@/db/client";
 import { fileHref } from "@/modules/files/files";
 import { unreadCount } from "@/modules/notifications/notify";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
+import { SchoolBlocked, SubscriptionBanner } from "./subscription-banner";
 
 export default async function SchoolLayout({ children, params }: LayoutProps<"/[slug]">) {
   const { slug } = await params;
@@ -21,6 +22,7 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
     coach: roles.includes("COACH"),
     family: roles.includes("GUARDIAN"),
   };
+  const isOwner = canManageSubscription(roles);
   const daysLeft =
     access.manager && school.status === "TRIAL" && school.trialEndsAt
       ? trialDaysLeft(school.trialEndsAt, new Date())
@@ -66,9 +68,11 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
           </div>
           <div className="hidden xl:block">
             {daysLeft !== null && daysLeft <= 7 && (
-              <Chip tone="sun" dot>
-                Elige un plan
-              </Chip>
+              <Link href={`/${school.slug}/suscripcion`}>
+                <Chip tone="sun" dot>
+                  Elige un plan
+                </Chip>
+              </Link>
             )}
           </div>
           <div className="ml-auto">
@@ -77,7 +81,23 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
         </TopBar>
         <main className="flex-1 space-y-4 pb-24 md:pb-6">
           <InstallPrompt />
-          <div>{children}</div>
+          {access.manager && (
+            <SubscriptionBanner slug={school.slug} status={school.status} isOwner={isOwner} />
+          )}
+          <div>
+            {school.suspendedAt ? (
+              <SchoolBlocked
+                slug={school.slug}
+                kind="suspended"
+                isOwner={isOwner}
+                reason={school.suspendedReason}
+              />
+            ) : school.status === "CANCELED" ? (
+              <SchoolBlocked slug={school.slug} kind="canceled" isOwner={isOwner} />
+            ) : (
+              children
+            )}
+          </div>
         </main>
         <SyncAgent />
       </div>

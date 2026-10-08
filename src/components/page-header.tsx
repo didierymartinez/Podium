@@ -33,13 +33,15 @@ export function PageHeader({
   );
 }
 
-export function NoAccess() {
+export function NoAccess({
+  message = "Esta sección es para el propietario, administradores y coordinadores de la escuela.",
+}: {
+  message?: string;
+}) {
   return (
     <Card className="mx-auto max-w-md text-center">
       <h1 className="text-xl font-semibold">Sin acceso</h1>
-      <p className="mt-2 text-sm text-ink-soft">
-        Esta sección es para el propietario, administradores y coordinadores de la escuela.
-      </p>
+      <p className="mt-2 text-sm text-ink-soft">{message}</p>
     </Card>
   );
 }

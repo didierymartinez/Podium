@@ -11,6 +11,7 @@ const buttonVariants = {
   primary: "bg-brand text-white shadow-pill hover:bg-brand-strong",
   secondary: "border border-line bg-surface text-ink shadow-pill hover:bg-canvas",
   ghost: "text-ink-soft hover:bg-muted hover:text-ink",
+  danger: "bg-danger text-white shadow-pill hover:opacity-90",
 };
 
 export type ButtonVariant = keyof typeof buttonVariants;

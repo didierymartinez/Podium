@@ -100,6 +100,8 @@ Pantalla `/[slug]/suscripcion`:
   - **PSE / Nequi / Bancolombia** → no permiten débito automático: cada mes se envía un **link de pago** con recordatorios.
 - Cobro confirmado por **webhook** → estado `ACTIVA`, recibo por email.
 
+**Implementación (#21):** planes en `src/modules/subscription/plans.ts` — Semilla (hasta 50), Club (150), Academia (400) y Élite (ilimitado); anual = 10 mensualidades. **Los precios son provisionales hasta que el dueño los confirme.** La cuenta Wompi de Podium se configura con `PODIUM_WOMPI_*` y su webhook apunta a `/api/webhooks/podium`. La tarjeta se tokeniza en el navegador directamente con Wompi (los datos no pasan por Podium) y se guarda como *payment source*; la tarea diaria cobra la renovación el último día del periodo y reintenta los días 1, 3 y 5 de mora.
+
 ---
 
 ## 3. Estados de la escuela

@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { runInTenant } from "@/db/rls";
+import { schools } from "@/db/schema";
 import { connectTestDb, testDatabaseUrl } from "@/test/db";
 import { schoolFixture } from "@/test/fixtures";
 import { consoleMailer } from "@/lib/mailer/console";
@@ -41,6 +44,19 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
     expect(results.find((r) => r.school === b.school.slug)).toMatchObject({ ok: true, totals: { probe: 1 } });
   });
 
+  it("en solo lectura solo corren la suscripción y la conciliación de pagos", async () => {
+    const f = await schoolFixture(conn.db, "Cron solo lectura");
+    await runInTenant(conn.db, { schoolId: f.ctx.schoolId }, (tx) =>
+      tx.update(schools).set({ status: "READ_ONLY" }).where(eq(schools.id, f.ctx.schoolId)),
+    );
+    const [result] = await runDaily(conn.db, new Date(), jobs, [f.school.id]);
+    expect(Object.keys(result.totals ?? {}).sort()).toEqual([
+      "notificationsDelivered",
+      "onlinePaymentsReconciled",
+      "subscription",
+    ]);
+  });
+
   it("las tareas reales son idempotentes", async () => {
     const f = await schoolFixture(conn.db, "Cron real");
     const only = (r: Awaited<ReturnType<typeof runDaily>>) => r.find((x) => x.school === f.school.slug);
@@ -48,6 +64,7 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
     expect(first?.ok).toBe(true);
     expect(first?.totals?.sessionsCreated).toBeGreaterThan(0);
     expect(only(await runDaily(conn.db, new Date(), jobs, [f.school.id]))?.totals).toEqual({
+      subscription: 0,
       reactivatedEnrollments: 0,
       sessionsCreated: 0,
       attendanceReminders: 0,

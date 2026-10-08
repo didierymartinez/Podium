@@ -34,6 +34,8 @@ export const schoolStatusEnum = pgEnum("school_status", [
   "READ_ONLY",
   "CANCELED",
 ]);
+export const billingIntervalEnum = pgEnum("billing_interval", ["MONTHLY", "ANNUAL"]);
+export const subscriptionMethodEnum = pgEnum("subscription_method", ["CARD", "LINK"]);
 export const schoolRoleEnum = pgEnum("school_role", [
   "OWNER",
   "ADMIN",
@@ -158,6 +160,9 @@ export const schools = pgTable("schools", {
   currency: text("currency").notNull().default("COP"),
   settings: jsonb("settings").$type<SchoolSettings>().notNull(),
   commsEnabledAt: timestamp("comms_enabled_at", { withTimezone: true }),
+  /** Suspensión por abuso (super admin, #17): nadie de la escuela puede entrar. */
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedReason: text("suspended_reason"),
   logoFileId: uuid("logo_file_id").references((): AnyPgColumn => files.id, { onDelete: "set null" }),
   ...timestamps,
 });
@@ -254,8 +259,49 @@ export const subscriptions = pgTable("subscriptions", {
   status: subscriptionStatusEnum("status").notNull(),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  interval: billingIntervalEnum("interval").notNull().default("MONTHLY"),
+  /** Tarjeta con cobro automático o link de pago mensual (PSE, Nequi…). */
+  method: subscriptionMethodEnum("method"),
+  paymentSourceId: text("payment_source_id"),
+  cardLabel: text("card_label"),
+  billingEmail: text("billing_email"),
+  pastDueSince: timestamp("past_due_since", { withTimezone: true }),
+  readOnlySince: timestamp("read_only_since", { withTimezone: true }),
+  /** Desde cuándo la escuela supera el límite de alumnos de su plan. */
+  overLimitSince: timestamp("over_limit_since", { withTimezone: true }),
+  canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  cancelReason: text("cancel_reason"),
+  /** Cupón o descuento otorgado por Podium (consola de super admin). */
+  discountPercent: integer("discount_percent").notNull().default(0),
+  discountUntil: date("discount_until"),
   ...timestamps,
 });
+
+export const platformInvoiceStatusEnum = pgEnum("platform_invoice_status", ["PENDING", "PAID", "FAILED", "VOID"]);
+
+/** Cobros de Podium a la escuela por su suscripción (#21). */
+export const platformInvoices = pgTable(
+  "platform_invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    reference: text("reference").notNull().unique(),
+    planCode: text("plan_code").notNull(),
+    interval: billingIntervalEnum("interval").notNull(),
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    amount: integer("amount").notNull(),
+    status: platformInvoiceStatusEnum("status").notNull().default("PENDING"),
+    attempts: integer("attempts").notNull().default(0),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    providerTransactionId: text("provider_transaction_id"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [index("platform_invoices_school_idx").on(t.schoolId, t.status)],
+);
 
 export const auditLogs = pgTable(
   "audit_logs",

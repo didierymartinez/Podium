@@ -12,7 +12,7 @@ import { getActionContext, type ActionState } from "../action-context";
 
 /** El acudiente paga una o varias de sus cuentas en el checkout de Wompi de la escuela (ADM-35). */
 export async function payOnlineAction(slug: string, invoiceIds: string[]): Promise<ActionState> {
-  const member = await getActionContext(slug, () => true);
+  const member = await getActionContext(slug, () => true, { allowReadOnly: true });
   if (!member) return { ok: false, message: "Inicia sesión de nuevo." };
   const [guardianId] = await guardianIdsOfUser(db, member.school.id, member.user.id);
   if (!guardianId) return { ok: false, message: "Tu cuenta no está vinculada como acudiente." };
