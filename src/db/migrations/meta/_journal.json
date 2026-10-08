@@ -365,6 +365,20 @@
       "when": 1791466388654,
       "tag": "0051_competitions_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791467325917,
+      "tag": "0052_badges",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1791467327733,
+      "tag": "0053_badges_rls",
+      "breakpoints": true
     }
   ]
 }

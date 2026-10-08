@@ -111,6 +111,7 @@ describe.skipIf(!testDatabaseUrl)("evaluaciones y promoción de nivel (integraci
       ok: true,
       levelName: basico.name,
       suggestedGroups: [{ id: next.id, name: "Nivel 2" }],
+      athleteId: sofia,
     });
     expect(await approvePromotion(conn.db, ctx, high.id, "2026-10-06")).toEqual({
       ok: false,

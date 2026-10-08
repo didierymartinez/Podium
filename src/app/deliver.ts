@@ -4,6 +4,8 @@ import { db } from "@/db/client";
 import { serverEnv } from "@/env";
 import { mailer } from "@/lib/mailer";
 import { notifier } from "@/lib/notifier";
+import { todayIn } from "@/lib/dates";
+import { awardBadges } from "@/modules/badges/badges";
 import { deliverPending } from "@/modules/notifications/delivery";
 
 export const appUrl = () => serverEnv().NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -14,5 +16,25 @@ export function deliverSoon(schoolId: string) {
     await deliverPending(db, { mailer: mailer(), notifier: notifier(), appUrl: appUrl() }, schoolId).catch(
       (err) => console.error("[entrega]", err),
     );
+  });
+}
+
+/**
+ * Revisa las insignias de estos alumnos después de responder (§10) y entrega los avisos. La tarea
+ * diaria también las otorga, así que un fallo aquí no pierde nada.
+ */
+export function awardBadgesSoon(
+  school: { id: string; slug: string; timezone: string },
+  athleteIds: string[],
+) {
+  if (athleteIds.length === 0) return;
+  after(async () => {
+    try {
+      const awarded = await awardBadges(db, school, todayIn(school.timezone), athleteIds);
+      if (awarded > 0)
+        await deliverPending(db, { mailer: mailer(), notifier: notifier(), appUrl: appUrl() }, school.id);
+    } catch (err) {
+      console.error("[insignias]", err);
+    }
   });
 }

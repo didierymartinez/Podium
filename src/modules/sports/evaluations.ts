@@ -238,7 +238,7 @@ export function pendingPromotions(database: Database, schoolId: string) {
 }
 
 export type ReviewResult =
-  | { ok: true; levelName: string; suggestedGroups: { id: string; name: string }[] }
+  | { ok: true; levelName: string; suggestedGroups: { id: string; name: string }[]; athleteId?: string }
   | { ok: false; error: "not_pending" | "last_level" };
 
 /** Aprueba la promoción: nuevo nivel en el historial, aviso con certificado y grupos sugeridos. */
@@ -280,7 +280,7 @@ export function approvePromotion(database: Database, ctx: Ctx, evaluationId: str
       .select({ id: groups.id, name: groups.name })
       .from(groups)
       .where(and(eq(groups.levelId, next.id), eq(groups.active, true)));
-    return { ok: true, levelName: next.name, suggestedGroups: suggested };
+    return { ok: true, levelName: next.name, suggestedGroups: suggested, athleteId: evaluation.athleteId };
   });
 }
 

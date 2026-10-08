@@ -32,6 +32,8 @@ import { athleteProgress } from "@/modules/sports/performances";
 import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-card";
 import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
+import { BadgesCard } from "@/components/badges-card";
+import { listBadges } from "@/modules/badges/badges";
 import { athleteCompetitions } from "@/modules/competitions/competitions";
 import { GuardiansCard } from "./guardians-card";
 import { PhotoEditor } from "./photo-editor";
@@ -59,15 +61,17 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats, billing, injuries, progress, evaluations, competitions] = await Promise.all([
-    listAthleteDocuments(db, school.id, athleteId, today),
-    attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
-    athleteBillingStatus(db, school.id, [athleteId], today),
-    listInjuries(db, school.id, athleteId),
-    athleteProgress(db, school.id, athleteId, todayIn(school.timezone)),
-    athleteEvaluations(db, school.id, athleteId),
-    athleteCompetitions(db, school.id, athleteId),
-  ]);
+  const [documents, stats, billing, injuries, progress, evaluations, competitions, badges] =
+    await Promise.all([
+      listAthleteDocuments(db, school.id, athleteId, today),
+      attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
+      athleteBillingStatus(db, school.id, [athleteId], today),
+      listInjuries(db, school.id, athleteId),
+      athleteProgress(db, school.id, athleteId, todayIn(school.timezone)),
+      athleteEvaluations(db, school.id, athleteId),
+      athleteCompetitions(db, school.id, athleteId),
+      listBadges(db, school.id, athleteId),
+    ]);
   const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
   const age = ageOn(athlete.birthDate, today);
@@ -168,6 +172,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
           <EvaluationsCard slug={slug} {...toEvaluationsView(evaluations)} />
           <PerformanceCard tests={toProgressView(progress)} />
           <CompetitionHistory history={competitions} />
+          <BadgesCard badges={badges} />
           <InjuriesCard
             slug={slug}
             athleteId={athleteId}

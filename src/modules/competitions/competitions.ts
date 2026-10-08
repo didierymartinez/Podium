@@ -619,9 +619,9 @@ export function saveResult(database: Database, ctx: Ctx, entryId: string, raw: z
       .from(competitionEntries)
       .innerJoin(competitions, eq(competitions.id, competitionEntries.competitionId))
       .where(eq(competitionEntries.id, entryId));
-    if (!row || row.entry.status !== "ACCEPTED") return false;
+    if (!row || row.entry.status !== "ACCEPTED") return null;
     await saveResultTx(tx, ctx, row.entry, row.name, input);
-    return true;
+    return row.entry.athleteId;
   });
 }
 
@@ -657,6 +657,7 @@ export function importResults(database: Database, ctx: Ctx, competitionId: strin
     const idx = Object.fromEntries(RESULT_COLUMNS.map((c) => [c, col(c)]));
     let saved = 0;
     const unmatched: string[] = [];
+    const athleteIds = new Set<string>();
     for (const [i, row] of rows.slice(1).entries()) {
       const cell = (name: string) => (idx[name] >= 0 ? (row[idx[name]] ?? "").trim() : "");
       if (!row.some((c) => c?.trim())) continue;
@@ -679,9 +680,10 @@ export function importResults(database: Database, ctx: Ctx, competitionId: strin
         continue;
       }
       await saveResultTx(tx, ctx, match.entry, competition.name, parsed.data);
+      athleteIds.add(match.entry.athleteId);
       saved++;
     }
-    return { saved, unmatched };
+    return { saved, unmatched, athleteIds: [...athleteIds] };
   });
 }
 

@@ -22,7 +22,7 @@ import {
   type RespondResult,
 } from "@/modules/competitions/competitions";
 import { canManagePeople, type SchoolRole } from "@/modules/schools/permissions";
-import { deliverSoon } from "../../deliver";
+import { awardBadgesSoon, deliverSoon } from "../../deliver";
 import { getActionContext } from "../action-context";
 
 const staff = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -74,9 +74,11 @@ export async function saveResultAction(slug: string, entryId: string, input: unk
   if (!member) return { ok: false };
   const parsed = resultSchema.safeParse(input);
   if (!parsed.success) return { ok: false };
-  const ok = await saveResult(db, { ...member.ctx, slug }, entryId, parsed.data);
-  if (ok) {
+  const athleteId = await saveResult(db, { ...member.ctx, slug }, entryId, parsed.data);
+  const ok = athleteId !== null;
+  if (athleteId) {
     deliverSoon(member.school.id);
+    awardBadgesSoon(member.school, [athleteId]);
     refresh();
   }
   return { ok };
@@ -105,6 +107,7 @@ export async function importResultsAction(
   const result = await importResults(db, { ...member.ctx, slug }, competitionId, rows.slice(0, 501));
   if (!result) return { tone: "danger", message: "La competencia no existe." };
   deliverSoon(member.school.id);
+  awardBadgesSoon(member.school, result.athleteIds);
   refresh();
   return {
     tone: result.unmatched.length ? "danger" : "info",

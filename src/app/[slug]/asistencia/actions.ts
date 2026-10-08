@@ -17,7 +17,7 @@ import {
 import { cancelSchema, cancelSession, restoreSession } from "@/modules/attendance/sessions";
 import { redirect } from "next/navigation";
 import { canManagePeople, type SchoolRole } from "@/modules/schools/permissions";
-import { deliverSoon } from "../../deliver";
+import { awardBadgesSoon, deliverSoon } from "../../deliver";
 import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
 
 const canTakeAttendance = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -57,6 +57,12 @@ export async function saveAttendanceAction(
     { entries: entries as never, ...(recordedAt ? { recordedAt } : {}) },
   );
   if (!result.ok) return { ok: false, message: SAVE_ERRORS[result.error], code: result.error };
+  awardBadgesSoon(
+    member.school,
+    (entries as { athleteId?: unknown }[])
+      .map((e) => String(e.athleteId))
+      .filter((id) => /^[0-9a-f-]{36}$/i.test(id)),
+  );
   refresh();
   return { ok: true, message: `Asistencia guardada (${result.saved})` };
 }

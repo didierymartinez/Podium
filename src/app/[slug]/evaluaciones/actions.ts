@@ -13,7 +13,7 @@ import {
   type EvaluateResult,
   type ReviewResult,
 } from "@/modules/sports/evaluations";
-import { deliverSoon } from "../../deliver";
+import { awardBadgesSoon, deliverSoon } from "../../deliver";
 import { getActionContext } from "../action-context";
 
 const staff = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -58,6 +58,7 @@ export async function reviewPromotionAction(
         : { ok: false as const, error: "not_pending" as const };
   if (result.ok) {
     deliverSoon(member.school.id);
+    if (result.athleteId) awardBadgesSoon(member.school, [result.athleteId]);
     refresh();
   }
   return result;

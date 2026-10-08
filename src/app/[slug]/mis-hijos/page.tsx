@@ -24,6 +24,8 @@ import { athleteProgress } from "@/modules/sports/performances";
 import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-card";
 import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
+import { BadgesCard } from "@/components/badges-card";
+import { listBadges } from "@/modules/badges/badges";
 import { athleteCompetitions, familyInvitations } from "@/modules/competitions/competitions";
 import { CompetitionInvitations } from "./competition-invitations";
 
@@ -53,6 +55,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         progress: await athleteProgress(db, school.id, a.id, today),
         evaluations: await athleteEvaluations(db, school.id, a.id),
         competitions: await athleteCompetitions(db, school.id, a.id),
+        badges: await listBadges(db, school.id, a.id),
         history: await attendanceHistory(db, school.id, a.id, 8),
         documents: await listAthleteDocuments(db, school.id, a.id, today),
       })),
@@ -92,7 +95,17 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         <Card className="text-center text-sm text-ink-soft">No hay alumnos vinculados a tu cuenta.</Card>
       )}
       {details.map(
-        ({ athlete: a, stats, history, documents, upcoming, progress, evaluations, competitions }) => {
+        ({
+          athlete: a,
+          stats,
+          history,
+          documents,
+          upcoming,
+          progress,
+          evaluations,
+          competitions,
+          badges,
+        }) => {
           const name = `${a.firstName} ${a.lastName}`;
           const category = findAgeCategory(
             sportsAge(a.birthDate, Number(today.slice(0, 4))),
@@ -188,6 +201,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                   {...toEvaluationsView(evaluations)}
                 />
               )}
+              {badges.length > 0 && <BadgesCard title={`Insignias de ${a.firstName}`} badges={badges} />}
               {competitions.length > 0 && (
                 <CompetitionHistory title={`Competencias de ${a.firstName}`} history={competitions} />
               )}

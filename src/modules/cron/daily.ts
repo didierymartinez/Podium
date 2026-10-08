@@ -22,6 +22,7 @@ import type { ProviderKeys } from "@/modules/payments/provider";
 import { wompiCardApi, type CardApi } from "@/modules/subscription/podium-wompi";
 import { runSubscriptionJob } from "@/modules/subscription/subscription";
 import { cronSchools, type CronSchool } from "./schools";
+import { awardBadges } from "@/modules/badges/badges";
 
 /** En solo lectura no se generan cobros ni se envían avisos; los pagos de las familias sí se concilian. */
 const READ_ONLY_JOBS = new Set(["subscription", "onlinePaymentsReconciled", "notificationsDelivered"]);
@@ -80,6 +81,7 @@ export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
   paymentReminders: async (db, school, _today, now) =>
     (await commsEnabled(db, school.id)) ? sendPaymentReminders(db, school, now) : 0,
   announcementsSent: (db, school, _today, now) => sendScheduledAnnouncements(db, school, now),
+  badgesAwarded: (db, school, today) => awardBadges(db, school, today),
   trialEmails: (db, school, _today, now) => sendTrialEmails(db, deps.mailer, school, now, deps.appUrl),
   notificationsDelivered: (db, school, _today, now) => deliverPending(db, deps, school.id, now),
 });

@@ -172,6 +172,8 @@ export const schools = pgTable("schools", {
 export type SchoolSettings = {
   billing: Record<string, unknown> & { generationDay: number; dueDay: number };
   attendance?: Record<string, unknown>;
+  /** Insignias desactivadas por la escuela (§10). */
+  badges?: { disabled?: string[] };
 };
 
 export const schoolMemberships = pgTable(
@@ -1700,4 +1702,33 @@ export const competitionResults = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("competition_results_uq").on(t.entryId, t.event)],
+);
+
+export const badgeEnum = pgEnum("badge", [
+  "STREAK",
+  "CENTURY",
+  "LEVEL_UP",
+  "PERSONAL_BEST",
+  "FIRST_PODIUM",
+  "ANNIVERSARY",
+]);
+
+/** Insignias ganadas (§10). `key` distingue repeticiones: racha 10/25/50, nivel, prueba, años. */
+export const athleteBadges = pgTable(
+  "athlete_badges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    badge: badgeEnum("badge").notNull(),
+    key: text("key").notNull().default(""),
+    label: text("label").notNull(),
+    awardedOn: date("awarded_on").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("athlete_badges_uq").on(t.athleteId, t.badge, t.key)],
 );

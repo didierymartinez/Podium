@@ -75,6 +75,7 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
       collectionFollowUps: 0,
       paymentReminders: 0,
       announcementsSent: 0,
+      badgesAwarded: 0,
       trialEmails: 0,
       notificationsDelivered: 0,
     });

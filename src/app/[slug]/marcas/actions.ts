@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { db } from "@/db/client";
 import { canManagePeople, canManageSettings, type SchoolRole } from "@/modules/schools/permissions";
 import { recordPerformances, setTarget, type RecordResult } from "@/modules/sports/performances";
-import { deliverSoon } from "../../deliver";
+import { awardBadgesSoon, deliverSoon } from "../../deliver";
 import { getActionContext } from "../action-context";
 
 const staff = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -27,6 +27,10 @@ export async function recordPerformancesAction(
   });
   if (result.ok) {
     deliverSoon(member.school.id);
+    awardBadgesSoon(
+      member.school,
+      input.entries.map((e) => e.athleteId),
+    );
     refresh();
   }
   return result;

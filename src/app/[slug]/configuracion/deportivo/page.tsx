@@ -8,6 +8,8 @@ import { TargetsCard } from "./targets-card";
 import { listTargets } from "@/modules/sports/performances";
 import { listCriteria } from "@/modules/sports/evaluations";
 import { CriteriaCard } from "./criteria-card";
+import { BadgesSettings } from "./badges-settings";
+import { readBadgeSettings } from "@/modules/badges/badges";
 
 export const metadata: Metadata = { title: "Estructura deportiva" };
 
@@ -95,6 +97,11 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
             .map((t) => ({ id: t.id, name: t.name, kind: t.kind, unit: t.unit }))}
           categories={s.categories.map((c) => ({ id: c.id, name: c.name }))}
           targets={targets.map((t) => ({ testId: t.testId, ageCategoryId: t.ageCategoryId, value: t.value }))}
+        />
+        <BadgesSettings
+          slug={slug}
+          canEdit={canEdit}
+          disabled={readBadgeSettings(school.settings.badges).disabled}
         />
       </div>
     </div>

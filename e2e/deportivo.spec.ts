@@ -32,7 +32,7 @@ test("estructura deportiva: niveles, categorías, modalidades y pruebas", async 
   await page.getByLabel("Nombre de la prueba").fill("Rutina libre");
   await page.getByLabel("Tipo").selectOption("SCORE");
   await page.getByLabel("Unidad").fill("pts");
-  await page.getByLabel("Mejor marca").selectOption("higher");
+  await page.getByRole("combobox", { name: /^Mejor marca/ }).selectOption("higher");
   await page.getByRole("button", { name: "Guardar prueba" }).click();
   await expect(page.getByRole("list", { name: "Pruebas de Pista" }).getByText("Rutina libre")).toBeVisible();
 });

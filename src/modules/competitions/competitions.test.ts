@@ -149,13 +149,13 @@ describe.skipIf(!testDatabaseUrl)("competencias (integración)", () => {
 
     expect(
       await saveResult(conn.db, ctx, entryId, { event: "500 m", position: 1, mark: "45,20", medal: "GOLD" }),
-    ).toBe(true);
+    ).toBe(sofia);
     const imported = await importResults(conn.db, ctx, competitionId, [
       ["Documento", "Nombre", "Prueba", "Posición", "Marca", "Medalla", "Observación"],
       ["", "sofia gomez", "1.000 m", "2", "1:35,10", "Plata", ""],
       ["", "Nadie Más", "500 m", "5", "", "", ""],
     ]);
-    expect(imported).toEqual({ saved: 1, unmatched: ["Fila 3: Nadie Más"] });
+    expect(imported).toEqual({ saved: 1, unmatched: ["Fila 3: Nadie Más"], athleteIds: [sofia] });
 
     const medals = await medalTable(conn.db, f.ctx.schoolId, season);
     expect(medals.total).toEqual({ GOLD: 1, SILVER: 1, BRONZE: 0 });
