@@ -12,6 +12,7 @@ import {
   Megaphone,
   Settings,
   Timer,
+  Trophy,
   UserRound,
   Users,
   Wallet,
@@ -79,6 +80,13 @@ const EVALUATIONS: NavItem = {
   ready: true,
   audience: "coach",
 };
+const COMPETITIONS: NavItem = {
+  path: "/competencias",
+  label: "Competencias",
+  icon: Trophy,
+  ready: true,
+  audience: "coach",
+};
 const BILLING: NavItem = {
   path: "/cobros",
   label: "Cobros",
@@ -139,6 +147,7 @@ export const SCHOOL_NAV: NavItem[] = [
   TRAINING,
   MARKS,
   EVALUATIONS,
+  COMPETITIONS,
   BILLING,
   REPORTS,
   MY_KIDS,

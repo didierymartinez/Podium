@@ -1587,3 +1587,117 @@ export const sessionReports = pgTable(
     check("session_reports_rpe_ck", sql`${t.rpe} between 0 and 10`),
   ],
 );
+
+export const competitionKindEnum = pgEnum("competition_kind", [
+  "LEAGUE",
+  "FEDERATION",
+  "INTERCLUB",
+  "FESTIVAL",
+  "INTERNAL",
+]);
+
+/** Competencia del calendario (DEP-60). */
+export const competitions = pgTable(
+  "competitions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: competitionKindEnum("kind").notNull(),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    city: text("city").notNull().default(""),
+    venue: text("venue").notNull().default(""),
+    registrationDeadline: date("registration_deadline").notNull(),
+    /** Pruebas ofrecidas ("500 m", "10.000 m puntos"…). */
+    events: text("events")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    entryFee: integer("entry_fee").notNull().default(0),
+    /** Servicios opcionales: [{ name, amount }] (transporte, hospedaje, uniforme…). */
+    extras: jsonb("extras").$type<{ name: string; amount: number }[]>().notNull().default([]),
+    /** Categorías permitidas; vacío = todas. */
+    categoryIds: uuid("category_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    requireNoDebt: boolean("require_no_debt").notNull().default(true),
+    requiredDocumentTypeIds: uuid("required_document_type_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    authorizationText: text("authorization_text").notNull(),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("competitions_school_date_idx").on(t.schoolId, t.startsOn)],
+);
+
+export const entryStatusEnum = pgEnum("competition_entry_status", ["INVITED", "ACCEPTED", "DECLINED"]);
+
+/** Convocatoria de un alumno a una competencia (DEP-61 a DEP-63). */
+export const competitionEntries = pgTable(
+  "competition_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    competitionId: uuid("competition_id")
+      .notNull()
+      .references(() => competitions.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    events: text("events")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    status: entryStatusEnum("status").notNull().default("INVITED"),
+    /** Avisos de validación al convocar (se convocó de todas formas). */
+    warnings: text("warnings")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    extras: text("extras")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    respondedByUserId: uuid("responded_by_user_id").references(() => users.id),
+    authorizationText: text("authorization_text"),
+    authorizationIp: text("authorization_ip"),
+    invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
+    invitedByUserId: uuid("invited_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("competition_entries_uq").on(t.competitionId, t.athleteId)],
+);
+
+export const medalEnum = pgEnum("medal", ["GOLD", "SILVER", "BRONZE"]);
+
+/** Resultado por prueba (DEP-66). */
+export const competitionResults = pgTable(
+  "competition_results",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    entryId: uuid("entry_id")
+      .notNull()
+      .references(() => competitionEntries.id, { onDelete: "cascade" }),
+    event: text("event").notNull(),
+    position: integer("position"),
+    mark: text("mark"),
+    medal: medalEnum("medal"),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("competition_results_uq").on(t.entryId, t.event)],
+);

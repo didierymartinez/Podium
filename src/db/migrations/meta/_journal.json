@@ -351,6 +351,20 @@
       "when": 1791465553512,
       "tag": "0049_training_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1791466387028,
+      "tag": "0050_competitions",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1791466388654,
+      "tag": "0051_competitions_rls",
+      "breakpoints": true
     }
   ]
 }

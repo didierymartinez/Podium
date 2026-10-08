@@ -405,6 +405,41 @@ export async function chargePerAthleteTx(
   return invoiceOf;
 }
 
+/**
+ * Cuenta con varias líneas de cobro único para un alumno, a su responsable de pago (inscripción a una
+ * competencia y adicionales, DEP-63). `null` si el alumno no tiene responsable de pago o el total es 0.
+ */
+export async function chargeAthleteLinesTx(
+  tx: Tx,
+  ctx: Ctx & { slug: string },
+  athlete: { id: string; firstName: string },
+  charge: { title: string; lines: { description: string; amount: number }[]; dueOn: IsoDate; today: IsoDate },
+  policy: BillingPolicy,
+) {
+  const lines = charge.lines.filter((l) => l.amount > 0);
+  if (lines.length === 0) return null;
+  const payer = (await payers(tx, [athlete.id])).get(athlete.id);
+  if (!payer) return null;
+  const invoice = await createInvoice(tx, ctx, {
+    guardianId: payer.id,
+    period: null,
+    issuedOn: charge.today,
+    dueOn: charge.dueOn < charge.today ? charge.today : charge.dueOn,
+    prefix: policy.invoicePrefix,
+    lines: lines.map((l) => ({
+      kind: "ONE_TIME" as const,
+      athleteId: athlete.id,
+      enrollmentId: null,
+      description: `${l.description} · ${athlete.firstName}`,
+      baseAmount: l.amount,
+      amount: l.amount,
+    })),
+  });
+  await applyGuardianCredit(tx, ctx, payer.id, policy);
+  await notifyInvoice(tx, ctx, invoice, charge.title);
+  return invoice.id;
+}
+
 /** Cobro de matrícula al matricular (ADM-12), si la política lo define. Una vez por matrícula. */
 export function chargeEnrollmentFee(
   database: Database,
