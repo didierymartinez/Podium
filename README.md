@@ -2,6 +2,10 @@
 
 SaaS para escuelas deportivas (multi-deporte, iniciando con **patinaje**): gestión deportiva y administrativa para directivos, profesores, alumnos y acudientes.
 
+## Flujo de trabajo
+
+Pendientes, avances y trabajo realizado viven en los [issues de GitHub](https://github.com/didierymartinez/Podium/issues). Guía: [`docs/FLUJO_DE_TRABAJO.md`](docs/FLUJO_DE_TRABAJO.md).
+
 ## Documentación del producto
 
 - Plan del producto: [`docs/PLAN.md`](docs/PLAN.md)
