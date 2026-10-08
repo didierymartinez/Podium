@@ -33,6 +33,8 @@ export const billingPolicySchema = z
       .string()
       .trim()
       .regex(/^[A-Z]{1,4}$/, "Usa de 1 a 4 letras mayúsculas"),
+    /** Mostrar "en mora" a los profesores en la lista de asistencia (ADM-43). */
+    showDebtToCoaches: z.boolean().default(false),
   })
   .refine((p) => p.dueDay >= p.generationDay, {
     message: "El vencimiento debe ser el mismo día de generación o después",
@@ -56,6 +58,7 @@ export const DEFAULT_BILLING_POLICY: BillingPolicy = {
   overdueAfterDays: 0,
   invoicePrefix: "CC",
   receiptPrefix: "RC",
+  showDebtToCoaches: false,
 };
 
 /** Lee la política guardada completando lo que falte con los valores por defecto. */

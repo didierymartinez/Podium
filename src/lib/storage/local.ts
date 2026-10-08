@@ -45,6 +45,13 @@ export function diskStorage(config: { dir: string; secret: string }): Storage & 
         return null;
       }
     },
+    async read(key) {
+      try {
+        return new Uint8Array(await readFile(fileOf(key)));
+      } catch {
+        return null;
+      }
+    },
     async delete(key) {
       await rm(fileOf(key), { force: true });
       await rm(metaOf(key), { force: true });

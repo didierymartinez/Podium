@@ -160,9 +160,11 @@ export function createAthlete(database: Database, ctx: Ctx, input: CreateAthlete
         });
       }
 
-      if (input.enrollment) await insertEnrollment(tx, ctx.schoolId, athlete.id, input.enrollment);
+      const enrollment = input.enrollment
+        ? await insertEnrollment(tx, ctx.schoolId, athlete.id, input.enrollment)
+        : null;
       await audit(tx, ctx, "athlete.created", "athlete", athlete.id);
-      return { athleteId: athlete.id };
+      return { athleteId: athlete.id, enrollmentId: enrollment?.id ?? null };
     }),
   );
 }

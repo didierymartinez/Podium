@@ -70,6 +70,8 @@ export async function schoolFixture(db: Db, name = "Club Prueba") {
       status?: "ACTIVE" | "PRE_ENROLLED";
       guardianPhone?: string;
       birthDate?: string;
+      feePlanId?: string;
+      startDate?: string;
     } = {},
   ) {
     const result = await createAthlete(db, ctx, {
@@ -103,8 +105,8 @@ export async function schoolFixture(db: Db, name = "Club Prueba") {
       },
       enrollment: {
         groupId: opts.groupId ?? group.id,
-        feePlanId: plan.id,
-        startDate: today,
+        feePlanId: opts.feePlanId ?? plan.id,
+        startDate: opts.startDate ?? today,
         status: opts.status ?? "ACTIVE",
       },
       today,

@@ -11,6 +11,8 @@ import { getSessionDetail } from "@/modules/attendance/attendance";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { listCoaches } from "@/modules/coaches/coaches";
 import { fileHref } from "@/modules/files/files";
+import { readBillingPolicy } from "@/modules/billing/policy";
+import { athleteBillingStatus } from "@/modules/billing/statement";
 import { getSchoolContext } from "../../data";
 import { SessionStatusChip } from "../status-chip";
 import { CancelPanel } from "./cancel-panel";
@@ -32,6 +34,16 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
   const canceled = session.status === "CANCELED";
   const holiday = holidaysBetween(session.date, session.date).get(session.date);
   const recorded = session.roster.filter((r) => r.status).length;
+  // ADM-43: la mora se muestra a la administración y, si la escuela lo permite, al profesor.
+  const showDebt = manager || readBillingPolicy(school.settings.billing).showDebtToCoaches;
+  const debts = showDebt
+    ? await athleteBillingStatus(
+        db,
+        school.id,
+        session.roster.map((r) => r.athleteId),
+        today,
+      )
+    : new Map<string, { overdue: boolean }>();
 
   return (
     <div className="space-y-4">
@@ -118,6 +130,7 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
             ...r,
             photoUrl: r.photoFileId ? fileHref(slug, r.photoFileId) : null,
             documentIssue: manager ? r.documentIssue : null,
+            overdue: debts.get(r.athleteId)?.overdue ?? false,
           }))}
           canceled={canceled}
           access={{

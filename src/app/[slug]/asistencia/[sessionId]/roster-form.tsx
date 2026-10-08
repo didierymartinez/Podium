@@ -1,6 +1,6 @@
 "use client";
 
-import { Cake, CheckCheck, CloudUpload, FileWarning, HeartPulse, Sparkles } from "lucide-react";
+import { Cake, CheckCheck, CloudUpload, FileWarning, HeartPulse, Sparkles, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { FormStatus } from "@/components/form-status";
@@ -43,7 +43,7 @@ export function RosterForm({
 }: {
   slug: string;
   sessionId: string;
-  roster: (RosterEntry & { photoUrl: string | null })[];
+  roster: (RosterEntry & { photoUrl: string | null; overdue: boolean })[];
   canceled: boolean;
   access: { isManager: boolean; isGroupCoach: boolean; start: string; end: string };
 }) {
@@ -198,6 +198,11 @@ export function RosterForm({
                     {r.birthday && (
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet">
                         <Cake className="size-3.5" /> Cumpleaños
+                      </span>
+                    )}
+                    {r.overdue && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-danger">
+                        <Wallet className="size-3.5" /> En mora
                       </span>
                     )}
                     {r.medicalNote && (

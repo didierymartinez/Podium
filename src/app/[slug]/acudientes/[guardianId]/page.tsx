@@ -15,6 +15,8 @@ import { invitationStates } from "@/modules/invitations/invitations";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../../data";
 import { GuardianForm } from "./guardian-form";
+import { guardianStatement } from "@/modules/billing/statement";
+import { StatementCard } from "./statement-card";
 
 export const metadata: Metadata = { title: "Acudiente" };
 
@@ -29,6 +31,7 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
   const name = `${guardian.firstName} ${guardian.lastName}`;
   const invitation =
     (await invitationStates(db, school.id, "GUARDIAN", [guardian])).get(guardian.id) ?? "none";
+  const statement = await guardianStatement(db, school.id, guardian.id);
 
   return (
     <div className="space-y-5">
@@ -101,6 +104,7 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
           </ul>
         </Card>
       </div>
+      {statement && <StatementCard slug={slug} guardianId={guardian.id} statement={statement} />}
     </div>
   );
 }

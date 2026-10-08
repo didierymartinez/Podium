@@ -6,6 +6,11 @@ import { canManageSettings } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../../data";
 import { BillingPolicyForm } from "./billing-policy-form";
 import { FeePlansCard } from "./fee-plans-card";
+import { ConceptsCard } from "./concepts-card";
+import { WompiCard } from "./wompi-card";
+import { listConcepts } from "@/modules/billing/concepts";
+import { paymentAccountStatus } from "@/modules/billing/online";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = { title: "Cobros" };
 
@@ -13,7 +18,14 @@ export default async function BillingSettingsPage({ params }: PageProps<"/[slug]
   const { slug } = await params;
   const { school, roles } = await getSchoolContext(slug);
   const canEdit = canManageSettings(roles);
-  const plans = await listFeePlans(db, school.id);
+  const [plans, concepts, account] = await Promise.all([
+    listFeePlans(db, school.id),
+    listConcepts(db, school.id),
+    paymentAccountStatus(db, school.id),
+  ]);
+  const h = await headers();
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL || `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
   const activeByAmount = plans
     .filter((p) => p.active)
     .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
@@ -29,6 +41,22 @@ export default async function BillingSettingsPage({ params }: PageProps<"/[slug]
           name,
           description,
           monthlyAmount,
+          active,
+        }))}
+      />
+      <WompiCard
+        slug={slug}
+        canEdit={canEdit}
+        account={account}
+        webhookUrl={`${origin}/api/webhooks/wompi/${slug}`}
+      />
+      <ConceptsCard
+        slug={slug}
+        canEdit={canEdit}
+        concepts={concepts.map(({ id, name, defaultAmount, active }) => ({
+          id,
+          name,
+          defaultAmount,
           active,
         }))}
       />

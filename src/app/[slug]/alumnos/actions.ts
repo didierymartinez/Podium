@@ -20,6 +20,8 @@ import {
 } from "@/modules/athletes/athletes";
 import { WITHDRAWAL_REASON_LABELS, type WithdrawalReason } from "@/modules/athletes/enrollment-status";
 import { findGuardianByPhone } from "@/modules/athletes/guardians";
+import { chargeEnrollmentFee } from "@/modules/billing/invoices";
+import { readBillingPolicy } from "@/modules/billing/policy";
 import {
   RELATIONSHIPS,
   athleteSchema,
@@ -114,7 +116,25 @@ export async function createAthleteAction(
     today: todayIn(manager.school.timezone),
   });
   if (!result.ok) return { ok: false, code: result.error, message: ATHLETE_ERROR_MESSAGES[result.error] };
+  if (result.enrollmentId && enrollment.success && enrollment.data.status === "ACTIVE") {
+    await chargeFee(manager, slug, result.enrollmentId);
+  }
   redirect(`/${slug}/alumnos/${result.athleteId}`);
+}
+
+/** Cobro de matrícula según la política (#36). */
+async function chargeFee(
+  manager: NonNullable<Awaited<ReturnType<typeof people>>>,
+  slug: string,
+  enrollmentId: string,
+) {
+  await chargeEnrollmentFee(
+    db,
+    { ...manager.ctx, slug },
+    enrollmentId,
+    todayIn(manager.school.timezone),
+    readBillingPolicy(manager.school.settings.billing),
+  );
 }
 
 export async function updateAthleteAction(
@@ -145,6 +165,7 @@ export async function enrollAction(
   if (!enrollment.success) return { ok: false, errors: prefixed("enrollment.", enrollment.error) };
   const result = await enrollAthlete(db, manager.ctx, athleteId, enrollment.data);
   if (!result.ok) return { ok: false, code: result.error, message: ATHLETE_ERROR_MESSAGES[result.error] };
+  if (enrollment.data.status === "ACTIVE") await chargeFee(manager, slug, result.enrollmentId);
   refresh();
   return { ok: true, message: "Matrícula creada" };
 }
@@ -181,6 +202,8 @@ export async function changeStatusAction(
 
   const result = await changeEnrollmentStatus(db, manager.ctx, enrollmentId, change);
   if (!result.ok) return { ok: false, message: ATHLETE_ERROR_MESSAGES[result.error] };
+  // Al activar una preinscripción se cobra la matrícula (una sola vez por matrícula).
+  if (change.to === "ACTIVE") await chargeFee(manager, slug, enrollmentId);
   refresh();
   return { ok: true, message: "Matrícula actualizada" };
 }

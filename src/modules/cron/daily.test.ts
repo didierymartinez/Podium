@@ -45,6 +45,10 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
       sessionsCreated: 0,
       attendanceReminders: 0,
       riskAlerts: 0,
+      invoicesGenerated: 0,
+      lateFees: 0,
+      onlinePaymentsReconciled: 0,
+      paymentReminders: 0,
     });
   });
 });

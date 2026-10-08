@@ -7,4 +7,6 @@ export interface Storage {
   /** Tamaño y tipo del objeto, o null si no existe. */
   head(key: string): Promise<{ size: number; contentType: string | null } | null>;
   delete(key: string): Promise<void>;
+  /** Contenido del archivo (para incrustarlo en PDFs, p. ej. el logo), o null si no existe. */
+  read(key: string): Promise<Uint8Array | null>;
 }

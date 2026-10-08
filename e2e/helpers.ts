@@ -31,7 +31,7 @@ export async function createFeePlans(page: Page, school: string, plans: [string,
   await page.goto(`${school}/configuracion/cobros`);
   for (const [i, [name, amount]] of plans.entries()) {
     if (i > 0) await page.getByRole("button", { name: "Nueva tarifa" }).click();
-    await page.locator('input[name="name"]').fill(name);
+    await page.getByRole("textbox", { name: "Nombre", exact: true }).fill(name);
     await page.locator('input[name="monthlyAmount"]').fill(amount);
     await page.getByRole("button", { name: "Crear tarifa" }).click();
     await expect(page.getByText(name, { exact: true })).toBeVisible();

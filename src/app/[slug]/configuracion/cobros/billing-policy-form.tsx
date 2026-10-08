@@ -187,6 +187,19 @@ export function BillingPolicyForm({
                   />
                 </Field>
               </div>
+              <label className="mt-4 flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="showDebtToCoaches"
+                  className="mt-0.5 size-4 accent-brand"
+                  checked={policy.showDebtToCoaches}
+                  onChange={(e) => update({ showDebtToCoaches: e.target.checked })}
+                />
+                <span>
+                  <strong>Mostrar “en mora” a los profesores</strong> en la lista de asistencia. La
+                  administración siempre lo ve.
+                </span>
+              </label>
             </Group>
 
             <div className="flex flex-wrap items-center gap-4 border-t border-line pt-5">

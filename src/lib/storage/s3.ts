@@ -45,6 +45,12 @@ export function s3Storage(config: S3Config): Storage {
         contentType: res.headers.get("content-type"),
       };
     },
+    async read(key) {
+      const res = await client.fetch(objectUrl(key));
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`Storage GET ${res.status}`);
+      return new Uint8Array(await res.arrayBuffer());
+    },
     async delete(key) {
       const res = await client.fetch(objectUrl(key), { method: "DELETE" });
       if (!res.ok && res.status !== 404) throw new Error(`Storage DELETE ${res.status}`);

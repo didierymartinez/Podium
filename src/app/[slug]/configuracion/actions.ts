@@ -74,6 +74,7 @@ export async function updateBillingPolicyAction(
     overdueAfterDays: int(form, "overdueAfterDays"),
     invoicePrefix: text(form, "invoicePrefix").toUpperCase(),
     receiptPrefix: text(form, "receiptPrefix").toUpperCase(),
+    showDebtToCoaches: form.get("showDebtToCoaches") === "on",
   });
   if (!parsed.success) {
     return {

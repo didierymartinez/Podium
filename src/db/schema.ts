@@ -729,3 +729,238 @@ export const notifications = pgTable(
       .where(sql`${t.dedupeKey} is not null`),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Cobros, pagos y cartera (#9)
+// ---------------------------------------------------------------------------
+
+export const invoiceStatusEnum = pgEnum("invoice_status", ["PENDING", "PARTIAL", "PAID", "VOID"]);
+export const chargeKindEnum = pgEnum("charge_kind", [
+  "MONTHLY",
+  "ENROLLMENT",
+  "ONE_TIME",
+  "PREVIOUS_BALANCE",
+  "LATE_FEE",
+]);
+export const paymentMethodEnum = pgEnum("payment_method", ["CASH", "TRANSFER", "DEPOSIT", "CARD", "ONLINE"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["CONFIRMED", "VOID"]);
+export const creditNoteKindEnum = pgEnum("credit_note_kind", ["ADJUSTMENT", "EARLY_PAYMENT"]);
+export const paymentIntentStatusEnum = pgEnum("payment_intent_status", [
+  "PENDING",
+  "APPROVED",
+  "DECLINED",
+  "VOIDED",
+  "ERROR",
+]);
+
+/** Conceptos de cobro únicos (uniforme, evento…) con valor sugerido (ADM-21). */
+export const chargeConcepts = pgTable(
+  "charge_concepts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    defaultAmount: integer("default_amount"),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("charge_concepts_school_name_uq").on(t.schoolId, t.name)],
+);
+
+/** Cuenta de cobro de un responsable de pago (ADM-20). El saldo = total − notas crédito − pagos aplicados. */
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    code: text("code").notNull(),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id),
+    /** "2026-10" para mensualidades; null para cobros únicos. */
+    period: text("period"),
+    issuedOn: date("issued_on").notNull(),
+    dueOn: date("due_on").notNull(),
+    status: invoiceStatusEnum("status").notNull().default("PENDING"),
+    total: integer("total").notNull(),
+    credited: integer("credited").notNull().default(0),
+    paid: integer("paid").notNull().default(0),
+    voidReason: text("void_reason"),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("invoices_school_number_uq").on(t.schoolId, t.number),
+    index("invoices_guardian_idx").on(t.guardianId, t.status),
+    index("invoices_school_due_idx").on(t.schoolId, t.status, t.dueOn),
+  ],
+);
+
+export const invoiceLines = pgTable(
+  "invoice_lines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    kind: chargeKindEnum("kind").notNull(),
+    athleteId: uuid("athlete_id").references(() => athletes.id),
+    enrollmentId: uuid("enrollment_id").references(() => enrollments.id),
+    period: text("period"),
+    description: text("description").notNull(),
+    baseAmount: integer("base_amount").notNull(),
+    siblingDiscount: integer("sibling_discount").notNull().default(0),
+    amount: integer("amount").notNull(),
+    /** La cuenta se anuló: la línea ya no cuenta para la idempotencia y se puede volver a generar. */
+    voided: boolean("voided").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Idempotencia: una mensualidad por matrícula y periodo (ADM-20); un recargo por cuenta.
+    uniqueIndex("invoice_lines_monthly_uq")
+      .on(t.enrollmentId, t.period)
+      .where(sql`${t.kind} = 'MONTHLY' and not ${t.voided}`),
+    uniqueIndex("invoice_lines_late_fee_uq")
+      .on(t.invoiceId)
+      .where(sql`${t.kind} = 'LATE_FEE'`),
+    uniqueIndex("invoice_lines_enrollment_fee_uq")
+      .on(t.enrollmentId)
+      .where(sql`${t.kind} = 'ENROLLMENT' and not ${t.voided}`),
+    index("invoice_lines_invoice_idx").on(t.invoiceId),
+    index("invoice_lines_athlete_idx").on(t.athleteId),
+  ],
+);
+
+/** Ajustes a una cuenta emitida (nunca se edita un cobro): descuentos, correcciones, pronto pago (ADM-24). */
+export const creditNotes = pgTable(
+  "credit_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id),
+    kind: creditNoteKindEnum("kind").notNull(),
+    amount: integer("amount").notNull(),
+    reason: text("reason").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("credit_notes_invoice_idx").on(t.invoiceId),
+    uniqueIndex("credit_notes_early_payment_uq")
+      .on(t.invoiceId)
+      .where(sql`${t.kind} = 'EARLY_PAYMENT'`),
+  ],
+);
+
+/** Pago recibido (manual o en línea). Lo no aplicado a cuentas es saldo a favor del acudiente. */
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    code: text("code").notNull(),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id),
+    amount: integer("amount").notNull(),
+    paidOn: date("paid_on").notNull(),
+    method: paymentMethodEnum("method").notNull(),
+    reference: text("reference"),
+    proofFileId: uuid("proof_file_id").references(() => files.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    status: paymentStatusEnum("status").notNull().default("CONFIRMED"),
+    /** Id de la transacción en la pasarela (idempotencia de webhooks). */
+    providerTransactionId: text("provider_transaction_id"),
+    voidReason: text("void_reason"),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("payments_school_number_uq").on(t.schoolId, t.number),
+    uniqueIndex("payments_provider_tx_uq")
+      .on(t.schoolId, t.providerTransactionId)
+      .where(sql`${t.providerTransactionId} is not null`),
+    index("payments_guardian_idx").on(t.guardianId),
+    index("payments_school_date_idx").on(t.schoolId, t.paidOn),
+  ],
+);
+
+export const paymentAllocations = pgTable(
+  "payment_allocations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    paymentId: uuid("payment_id")
+      .notNull()
+      .references(() => payments.id),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id),
+    amount: integer("amount").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("payment_allocations_payment_idx").on(t.paymentId),
+    index("payment_allocations_invoice_idx").on(t.invoiceId),
+  ],
+);
+
+/** Cuenta de la pasarela de la escuela (Wompi): el dinero llega directo a la escuela. Llaves cifradas. */
+export const paymentAccounts = pgTable("payment_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .unique()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull().default("wompi"),
+  environment: text("environment").notNull(), // "sandbox" | "production"
+  publicKey: text("public_key").notNull(),
+  privateKeyEncrypted: text("private_key_encrypted").notNull(),
+  eventsSecretEncrypted: text("events_secret_encrypted").notNull(),
+  integritySecretEncrypted: text("integrity_secret_encrypted").notNull(),
+  merchantName: text("merchant_name"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  ...timestamps,
+});
+
+/** Intento de pago en línea de una o varias cuentas (ADM-35). La referencia viaja a la pasarela. */
+export const paymentIntents = pgTable(
+  "payment_intents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id),
+    reference: text("reference").notNull().unique(),
+    invoiceIds: uuid("invoice_ids").array().notNull(),
+    amount: integer("amount").notNull(),
+    status: paymentIntentStatusEnum("status").notNull().default("PENDING"),
+    providerTransactionId: text("provider_transaction_id"),
+    paymentId: uuid("payment_id").references(() => payments.id),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("payment_intents_school_status_idx").on(t.schoolId, t.status)],
+);

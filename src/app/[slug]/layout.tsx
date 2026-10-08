@@ -19,6 +19,7 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
     manager: canManagePeople(roles),
     admin: canManageSettings(roles),
     coach: roles.includes("COACH"),
+    family: roles.includes("GUARDIAN"),
   };
   const daysLeft =
     access.manager && school.status === "TRIAL" && school.trialEndsAt

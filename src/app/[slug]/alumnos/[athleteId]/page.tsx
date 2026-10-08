@@ -11,6 +11,8 @@ import { displayPhone } from "@/lib/phone";
 import { getAthlete } from "@/modules/athletes/athletes";
 import { listAthleteDocuments } from "@/modules/documents/documents";
 import { attendanceStats } from "@/modules/attendance/attendance";
+import { athleteBillingStatus } from "@/modules/billing/statement";
+import { formatCOP } from "@/lib/money";
 import { addDays } from "@/lib/dates";
 import { fileHref } from "@/modules/files/files";
 import { invitationStates } from "@/modules/invitations/invitations";
@@ -49,10 +51,12 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats] = await Promise.all([
+  const [documents, stats, billing] = await Promise.all([
     listAthleteDocuments(db, school.id, athleteId, today),
     attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
+    athleteBillingStatus(db, school.id, [athleteId], today),
   ]);
+  const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
   const age = ageOn(athlete.birthDate, today);
   const category = findAgeCategory(
@@ -85,6 +89,15 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
       <div className="flex flex-wrap gap-2 px-1">
         <Chip tone="brand">{age} años</Chip>
         {category && <Chip tone="violet">Categoría {category.name}</Chip>}
+        {debt && debt.balance > 0 ? (
+          <Chip tone={debt.overdue ? "danger" : "sun"} dot>
+            {debt.overdue ? "En mora" : "Saldo pendiente"} {formatCOP(debt.balance)}
+          </Chip>
+        ) : (
+          <Chip tone="mint" dot>
+            Al día
+          </Chip>
+        )}
         {attendance && attendance.rate !== null && (
           <Chip tone={attendance.rate >= 80 ? "mint" : attendance.rate >= 50 ? "sun" : "danger"}>
             Asistencia 30 días: {attendance.rate} % ({attendance.present + attendance.late}/

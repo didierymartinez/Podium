@@ -15,17 +15,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "./ui";
 
-type Audience = "all" | "manager" | "admin" | "coach";
+type Audience = "all" | "manager" | "admin" | "coach" | "family";
 type NavItem = { path: string; label: string; icon: LucideIcon; ready: boolean; audience: Audience };
 
 /** Qué ve cada persona: administración (propietario, admin, coordinador), profesores y familias. */
-export type NavAccess = { manager: boolean; admin: boolean; coach: boolean };
+export type NavAccess = { manager: boolean; admin: boolean; coach: boolean; family?: boolean };
 
 const visible = (access: NavAccess) => (item: NavItem) =>
   item.audience === "all" ||
   (item.audience === "manager" && access.manager) ||
   (item.audience === "admin" && access.admin) ||
-  (item.audience === "coach" && (access.coach || access.manager));
+  (item.audience === "coach" && (access.coach || access.manager)) ||
+  (item.audience === "family" && Boolean(access.family) && !access.manager);
 
 /** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
 const HOME: NavItem = { path: "", label: "Inicio", icon: House, ready: true, audience: "all" };
@@ -55,8 +56,15 @@ const BILLING: NavItem = {
   path: "/cobros",
   label: "Cobros",
   icon: Wallet,
-  ready: false,
+  ready: true,
   audience: "manager",
+};
+const MY_PAYMENTS: NavItem = {
+  path: "/mis-pagos",
+  label: "Mis pagos",
+  icon: Wallet,
+  ready: true,
+  audience: "family",
 };
 const NOTICES: NavItem = {
   path: "/avisos",
@@ -74,7 +82,16 @@ const SETTINGS: NavItem = {
 };
 
 /** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
-export const SCHOOL_NAV: NavItem[] = [HOME, ATHLETES, GROUPS, COACHES, ATTENDANCE, BILLING, NOTICES];
+export const SCHOOL_NAV: NavItem[] = [
+  HOME,
+  ATHLETES,
+  GROUPS,
+  COACHES,
+  ATTENDANCE,
+  BILLING,
+  MY_PAYMENTS,
+  NOTICES,
+];
 
 function useActive(slug: string) {
   const pathname = usePathname();
@@ -164,7 +181,7 @@ export function TopTabs({ slug, access }: { slug: string; access: NavAccess }) {
 /** Navegación inferior para celular (PWA). */
 export function BottomNav({ slug, access }: { slug: string; access: NavAccess }) {
   const isActive = useActive(slug);
-  const items = [HOME, ATHLETES, GROUPS, ATTENDANCE, { ...SETTINGS, label: "Ajustes" }].filter(
+  const items = [HOME, ATHLETES, GROUPS, ATTENDANCE, MY_PAYMENTS, { ...SETTINGS, label: "Ajustes" }].filter(
     visible(access),
   );
   if (items.length < 2) return null;
