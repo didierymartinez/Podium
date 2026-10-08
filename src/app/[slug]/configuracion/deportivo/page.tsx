@@ -35,7 +35,7 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
             active: d.active,
             groups: d.groups,
           }))}
-          available={s.available.map((d) => ({ code: d.code, name: d.name }))}
+          available={s.available.map((d) => ({ code: d.code, name: d.name, sport: d.sport }))}
         />
         {active.map((d) => (
           <LevelsCard

@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { Button, Field, Input, Select } from "@/components/ui";
 import { ESTIMATED_STUDENTS_OPTIONS } from "@/modules/schools/options";
 import { slugify } from "@/modules/schools/slug";
-import { SKATING_DISCIPLINES } from "@/modules/schools/sport-template";
+import { ALL_DISCIPLINES, SPORT_LABELS, type Sport } from "@/modules/schools/sport-template";
 import { checkSlugAction, createSchoolAction, type CreateSchoolState } from "./actions";
 import { submitWithoutReset } from "@/components/use-form-action";
 
@@ -129,10 +129,14 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Modalidad principal" error={state.errors?.discipline?.[0]}>
           <Select name="discipline" required defaultValue={state.values?.discipline ?? "speed"}>
-            {SKATING_DISCIPLINES.map((d) => (
-              <option key={d.code} value={d.code}>
-                Patinaje · {d.name}
-              </option>
+            {(Object.keys(SPORT_LABELS) as Sport[]).map((sport) => (
+              <optgroup key={sport} label={SPORT_LABELS[sport]}>
+                {ALL_DISCIPLINES.filter((d) => d.sport === sport).map((d) => (
+                  <option key={d.code} value={d.code}>
+                    {SPORT_LABELS[sport]} · {d.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </Select>
         </Field>

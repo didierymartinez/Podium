@@ -12,7 +12,7 @@ import {
   sportTests,
 } from "@/db/schema";
 import {
-  SKATING_DISCIPLINES,
+  ALL_DISCIPLINES,
   criteriaFor,
   levelsFor,
   testsFor,
@@ -70,7 +70,7 @@ export function getStructure(database: Database, schoolId: string) {
           .filter((l) => l.disciplineId === d.id)
           .map((l) => ({ ...l, groups: groupsOfLevel(l.id) })),
       })),
-      available: SKATING_DISCIPLINES.filter((t) => !disciplineRows.some((d) => d.code === t.code)),
+      available: ALL_DISCIPLINES.filter((t) => !disciplineRows.some((d) => d.code === t.code)),
       categories: categoryRows,
       tests: testRows,
     };
@@ -79,7 +79,7 @@ export function getStructure(database: Database, schoolId: string) {
 
 /** Agrega una modalidad de la plantilla (con sus niveles y pruebas) o la reactiva. */
 export function enableDiscipline(database: Database, ctx: Ctx, code: string): Promise<StructureResult> {
-  const template = SKATING_DISCIPLINES.find((d) => d.code === code);
+  const template = ALL_DISCIPLINES.find((d) => d.code === code);
   if (!template) return Promise.resolve(fail("Modalidad desconocida"));
   return runInTenant(database, { schoolId: ctx.schoolId }, async (tx) => {
     const [existing] = await tx.select().from(disciplines).where(eq(disciplines.code, code));
@@ -90,7 +90,7 @@ export function enableDiscipline(database: Database, ctx: Ctx, code: string): Pr
     }
     const [created] = await tx
       .insert(disciplines)
-      .values({ schoolId: ctx.schoolId, sport: "SKATING", code: template.code, name: template.name })
+      .values({ schoolId: ctx.schoolId, sport: template.sport, code: template.code, name: template.name })
       .returning();
     const createdLevels = await tx
       .insert(levels)
@@ -336,7 +336,7 @@ export const testSchema = z.object({
   kind: z.enum(["TIME", "DISTANCE", "POINTS", "REPS", "SCORE", "POSITION"]),
   unit: z.string().trim().min(1, "Escribe la unidad").max(12),
   lowerIsBetter: z.boolean(),
-  context: z.enum(["TRACK", "ROAD", "FIELD"]),
+  context: z.enum(["TRACK", "ROAD", "FIELD", "POOL"]),
 });
 
 export function saveTest(

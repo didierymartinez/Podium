@@ -19,11 +19,17 @@ import {
 import { formatCOP } from "@/lib/money";
 import { WEEKDAYS, describeSchedule, type ScheduleSlot } from "@/modules/groups/schedule";
 import { BRAND_COLORS } from "@/modules/schools/brand-colors";
+import { disciplineLabel } from "@/modules/schools/sport-template";
 import type { ActionState } from "../action-context";
 import { saveGroupAction } from "./actions";
 
 export type GroupFormOptions = {
-  disciplines: { id: string; name: string; levels: { id: string; name: string; position: number }[] }[];
+  disciplines: {
+    id: string;
+    name: string;
+    sport: string;
+    levels: { id: string; name: string; position: number }[];
+  }[];
   feePlans: { id: string; name: string; monthlyAmount: number }[];
   coaches: { id: string; name: string }[];
   venues: { id: string; name: string }[];
@@ -108,7 +114,7 @@ export function GroupForm({
                 >
                   {options.disciplines.map((d) => (
                     <option key={d.id} value={d.id}>
-                      Patinaje · {d.name}
+                      {disciplineLabel(d.sport, d.name)}
                     </option>
                   ))}
                 </Select>

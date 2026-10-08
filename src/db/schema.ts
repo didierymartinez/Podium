@@ -52,7 +52,7 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "PAST_DUE",
   "CANCELED",
 ]);
-export const sportEnum = pgEnum("sport", ["SKATING"]);
+export const sportEnum = pgEnum("sport", ["SKATING", "SWIMMING"]);
 export const documentTypeEnum = pgEnum("document_type", ["NIT", "CC", "CE"]);
 export const personDocumentTypeEnum = pgEnum("person_document_type", [
   "RC",
@@ -247,7 +247,7 @@ export const levels = pgTable(
 );
 
 export const testKindEnum = pgEnum("test_kind", ["TIME", "DISTANCE", "POINTS", "REPS", "SCORE", "POSITION"]);
-export const testContextEnum = pgEnum("test_context", ["TRACK", "ROAD", "FIELD"]);
+export const testContextEnum = pgEnum("test_context", ["TRACK", "ROAD", "FIELD", "POOL"]);
 
 /** Pruebas o métricas para registrar marcas (DEP-02, §2.3): "500 m sprint", "Salto horizontal"… */
 export const sportTests = pgTable(

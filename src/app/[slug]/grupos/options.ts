@@ -20,6 +20,7 @@ export async function loadGroupFormOptions(schoolId: string): Promise<GroupFormO
       .map((d) => ({
         id: d.id,
         name: d.name,
+        sport: d.sport,
         levels: d.levels.filter((l) => l.active).map(({ id, name, position }) => ({ id, name, position })),
       })),
     feePlans: plans

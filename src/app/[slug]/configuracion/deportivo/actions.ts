@@ -60,7 +60,7 @@ export const saveTestAction = async (
     kind: "TIME" | "DISTANCE" | "POINTS" | "REPS" | "SCORE" | "POSITION";
     unit: string;
     lowerIsBetter: boolean;
-    context: "TRACK" | "ROAD" | "FIELD";
+    context: "TRACK" | "ROAD" | "FIELD" | "POOL";
   },
   id?: string,
 ) => run(slug, (ctx) => saveTest(db, ctx, input, id));

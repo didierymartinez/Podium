@@ -24,6 +24,7 @@ import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { ensureSessions } from "./asistencia/sync";
 import { getSchoolContext } from "./data";
+import { disciplineLabel } from "@/modules/schools/sport-template";
 import { BusinessKpis } from "./business-kpis";
 import { MemberHome } from "./member-home";
 
@@ -110,12 +111,12 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
               </Link>
             ) : (
               <Chip tone="brand" dot>
-                Patinaje {mainDiscipline?.name.toLowerCase()}
+                {mainDiscipline ? disciplineLabel(mainDiscipline.sport, mainDiscipline.name) : ""}
               </Chip>
             )
           }
         >
-          Semana en la pista
+          {mainDiscipline?.sport === "SWIMMING" ? "Semana en la piscina" : "Semana en la pista"}
         </SectionTitle>
         {activeGroups.length > 0 ? (
           <WeekBoard

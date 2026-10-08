@@ -7,4 +7,9 @@ export const TEST_KIND_LABELS = {
   SCORE: "Puntaje de jueces",
   POSITION: "Posición",
 } as const;
-export const TEST_CONTEXT_LABELS = { TRACK: "Pista", ROAD: "Ruta", FIELD: "Físicas" } as const;
+export const TEST_CONTEXT_LABELS = {
+  TRACK: "Pista",
+  ROAD: "Ruta",
+  FIELD: "Físicas",
+  POOL: "Piscina",
+} as const;

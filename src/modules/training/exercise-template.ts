@@ -21,6 +21,8 @@ export type ExerciseTemplate = {
   description: string;
   /** Niveles sugeridos (por nombre); vacío = todos. */
   levels: string[];
+  /** Solo para escuelas de patinaje (calentamientos y juegos en patines). */
+  skatingOnly?: boolean;
 };
 
 /** Ejercicios para cualquier modalidad (calentamiento, físico, vuelta a la calma). */
@@ -60,6 +62,7 @@ export const COMMON_EXERCISES: ExerciseTemplate[] = [
     space: "Pista",
     description: "Vueltas a ritmo cómodo, posición relajada, respiración controlada.",
     levels: [],
+    skatingOnly: true,
   },
   {
     name: "Juego de la lleva en patines",
@@ -69,6 +72,7 @@ export const COMMON_EXERCISES: ExerciseTemplate[] = [
     space: "Pista o parque",
     description: "Un perseguidor; quien es tocado cambia de rol. Delimitar el área con conos.",
     levels: ["Iniciación", "Formación"],
+    skatingOnly: true,
   },
   {
     name: "Sentadillas isométricas en posición",
@@ -132,6 +136,7 @@ export const COMMON_EXERCISES: ExerciseTemplate[] = [
     space: "Pista",
     description: "Vueltas muy suaves, posición alta, respiración profunda.",
     levels: [],
+    skatingOnly: true,
   },
   {
     name: "Estiramientos de tren inferior",
@@ -391,6 +396,116 @@ export const SPEED_EXERCISES: ExerciseTemplate[] = [
   },
 ];
 
+/** Ejercicios propios de natación (#71). */
+export const SWIMMING_EXERCISES: ExerciseTemplate[] = [
+  {
+    name: "Burbujas y respiración",
+    component: "WARMUP",
+    minutes: 8,
+    materials: "",
+    space: "Piscina",
+    description: "Inmersión de la cara exhalando por nariz y boca; 10 repeticiones.",
+    levels: ["Adaptación"],
+  },
+  {
+    name: "Flotación en estrella",
+    component: "TECHNIQUE",
+    minutes: 10,
+    materials: "Flotadores",
+    space: "Piscina",
+    description: "Flotación ventral y dorsal con brazos y piernas extendidos; retirar el apoyo poco a poco.",
+    levels: ["Adaptación"],
+  },
+  {
+    name: "Patada con tabla",
+    component: "TECHNIQUE",
+    minutes: 10,
+    materials: "Tablas",
+    space: "Piscina",
+    description: "Patada de libre desde la cadera con tabla, cara en el agua y respiración frontal.",
+    levels: ["Adaptación", "Desplazamiento"],
+  },
+  {
+    name: "Brazada con pull-buoy",
+    component: "TECHNIQUE",
+    minutes: 12,
+    materials: "Pull-buoy",
+    space: "Piscina",
+    description: "Brazada de libre con respiración lateral cada 3 brazadas.",
+    levels: ["Desplazamiento", "Estilos"],
+  },
+  {
+    name: "Espalda con vaso en la frente",
+    component: "TECHNIQUE",
+    minutes: 10,
+    materials: "Vaso plástico",
+    space: "Piscina",
+    description: "Nado de espalda manteniendo la cabeza quieta para corregir la posición.",
+    levels: ["Estilos"],
+  },
+  {
+    name: "Ondulación de mariposa",
+    component: "TECHNIQUE",
+    minutes: 10,
+    materials: "Aletas",
+    space: "Piscina",
+    description: "Ondulación con aletas, brazos al frente, desde el pecho.",
+    levels: ["Estilos", "Perfeccionamiento"],
+  },
+  {
+    name: "Salidas desde el bloque",
+    component: "SPEED",
+    minutes: 15,
+    materials: "Bloques",
+    space: "Piscina",
+    description: "Posición de salida, entrada al agua y primeras patadas subacuáticas.",
+    levels: ["Perfeccionamiento", "Competencia"],
+  },
+  {
+    name: "Vueltas de campana",
+    component: "TECHNIQUE",
+    minutes: 12,
+    materials: "",
+    space: "Piscina",
+    description: "Aproximación a la pared, giro y empuje en posición hidrodinámica.",
+    levels: ["Perfeccionamiento", "Competencia"],
+  },
+  {
+    name: "Series de 50 m a ritmo",
+    component: "ENDURANCE",
+    minutes: 20,
+    materials: "Cronómetro",
+    space: "Piscina",
+    description: "8 × 50 m a ritmo de prueba con 30 s de descanso.",
+    levels: ["Perfeccionamiento", "Competencia"],
+  },
+  {
+    name: "Sprints de 25 m",
+    component: "SPEED",
+    minutes: 15,
+    materials: "Cronómetro",
+    space: "Piscina",
+    description: "6–8 sprints de 25 m con recuperación completa.",
+    levels: ["Competencia"],
+  },
+  {
+    name: "Nado suave de recuperación",
+    component: "COOLDOWN",
+    minutes: 5,
+    materials: "",
+    space: "Piscina",
+    description: "Nado suave en el estilo preferido, respiración relajada.",
+    levels: [],
+  },
+];
+
+const SWIMMING_CODES = new Set(["swim", "swim-comp"]);
+
 export function exercisesFor(code: string) {
+  if (SWIMMING_CODES.has(code)) return SWIMMING_EXERCISES;
   return code === "speed" ? SPEED_EXERCISES : [];
 }
+
+/** Ejercicios comunes según el deporte de la modalidad. */
+export const commonExercisesFor = (code: string) =>
+  SWIMMING_CODES.has(code) ? COMMON_EXERCISES.filter((e) => !e.skatingOnly) : COMMON_EXERCISES;

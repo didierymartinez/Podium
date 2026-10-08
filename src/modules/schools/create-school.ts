@@ -22,8 +22,8 @@ import { ESTIMATED_STUDENTS_OPTIONS } from "./options";
 import { SLUG_ERROR_MESSAGES, validateSlug } from "./slug";
 import {
   DISCIPLINE_CODES,
-  SKATING_AGE_CATEGORIES,
-  SKATING_DISCIPLINES,
+  ALL_DISCIPLINES,
+  ageCategoriesFor,
   criteriaFor,
   levelsFor,
   testsFor,
@@ -63,7 +63,7 @@ export async function createSchool(
 ): Promise<CreateSchoolResult> {
   const schoolId = randomUUID();
   const endsAt = trialEndsAt(now);
-  const discipline = SKATING_DISCIPLINES.find((d) => d.code === input.discipline)!;
+  const discipline = ALL_DISCIPLINES.find((d) => d.code === input.discipline)!;
 
   try {
     await runInTenant(database, { schoolId, userId: ownerUserId }, async (tx) => {
@@ -89,7 +89,7 @@ export async function createSchool(
 
       const [createdDiscipline] = await tx
         .insert(disciplines)
-        .values({ schoolId, sport: "SKATING", code: discipline.code, name: discipline.name })
+        .values({ schoolId, sport: discipline.sport, code: discipline.code, name: discipline.name })
         .returning({ id: disciplines.id });
 
       const createdLevels = await tx
@@ -132,9 +132,13 @@ export async function createSchool(
         })),
       );
 
-      await tx
-        .insert(ageCategories)
-        .values(SKATING_AGE_CATEGORIES.map((category, i) => ({ schoolId, ...category, position: i + 1 })));
+      await tx.insert(ageCategories).values(
+        ageCategoriesFor(discipline.sport).map((category, i) => ({
+          schoolId,
+          ...category,
+          position: i + 1,
+        })),
+      );
 
       await tx.insert(documentTypes).values(DEFAULT_DOCUMENT_TYPES.map((t) => ({ schoolId, ...t })));
       await tx.insert(chargeConcepts).values(DEFAULT_CONCEPTS.map((name) => ({ schoolId, name })));

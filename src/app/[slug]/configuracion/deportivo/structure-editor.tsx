@@ -1,5 +1,6 @@
 "use client";
 
+import { disciplineLabel } from "@/modules/schools/sport-template";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Alert, Button, Card, Chip, Field, IconButton, Input, SectionTitle, Select } from "@/components/ui";
@@ -40,7 +41,7 @@ export function DisciplinesCard({
   slug: string;
   canEdit: boolean;
   disciplines: { id: string; name: string; active: boolean; groups: number }[];
-  available: { code: string; name: string }[];
+  available: { code: string; name: string; sport: string }[];
 }) {
   const { error, pending, run } = useRunner();
   return (
@@ -75,7 +76,7 @@ export function DisciplinesCard({
               disabled={pending}
               onClick={() => run(() => enableDisciplineAction(slug, a.code))}
             >
-              <Plus className="size-4" /> {a.name}
+              <Plus className="size-4" /> {disciplineLabel(a.sport, a.name)}
             </Button>
           ))}
         </div>

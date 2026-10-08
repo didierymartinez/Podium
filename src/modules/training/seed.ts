@@ -1,6 +1,6 @@
 import type { Tx } from "@/db/rls";
 import { exercises } from "@/db/schema";
-import { COMMON_EXERCISES, exercisesFor } from "./exercise-template";
+import { commonExercisesFor, exercisesFor } from "./exercise-template";
 
 /** Carga la biblioteca inicial: los comunes (una vez por escuela) y los de la modalidad. */
 export async function seedExercises(
@@ -12,7 +12,11 @@ export async function seedExercises(
 ) {
   const rows = [
     ...(opts.common
-      ? COMMON_EXERCISES.map((e) => ({ ...e, disciplineId: null, levelIds: [] as string[] }))
+      ? commonExercisesFor(discipline.code).map((e) => ({
+          ...e,
+          disciplineId: null,
+          levelIds: [] as string[],
+        }))
       : []),
     ...exercisesFor(discipline.code).map((e) => ({
       ...e,
