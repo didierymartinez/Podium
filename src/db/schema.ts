@@ -65,6 +65,9 @@ export const enrollmentStatusEnum = pgEnum("enrollment_status", [
   "WITHDRAWN",
   "DISCARDED",
 ]);
+export const invitationRoleEnum = pgEnum("invitation_role", ["GUARDIAN", "ATHLETE", "COACH"]);
+export const invitationStatusEnum = pgEnum("invitation_status", ["PENDING", "ACCEPTED", "CANCELED"]);
+export const coachRoleEnum = pgEnum("coach_role", ["HEAD", "ASSISTANT"]);
 export const withdrawalReasonEnum = pgEnum("withdrawal_reason", [
   "ECONOMIC",
   "SCHEDULE",
@@ -98,7 +101,9 @@ export const legalAcceptances = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    document: text("document").notNull(), // TERMS | PRIVACY
+    /** Escuela a la que se otorga la autorización (nulo = términos de la plataforma). */
+    schoolId: uuid("school_id"),
+    document: text("document").notNull(), // TERMS | PRIVACY | SCHOOL_DATA | WHATSAPP
     version: text("version").notNull(),
     ip: text("ip"),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
@@ -290,6 +295,8 @@ export const athletes = pgTable(
     emergencyContactPhone: text("emergency_contact_phone"),
     schoolName: text("school_name"), // colegio
     notes: text("notes"),
+    /** Se llena cuando el alumno (≥ 14 años o adulto) acepta su invitación. */
+    userId: uuid("user_id").references(() => users.id),
     ...timestamps,
   },
   (t) => [
@@ -412,5 +419,84 @@ export const enrollments = pgTable(
       .on(t.athleteId, t.groupId)
       .where(sql`${t.status} in ('PRE_ENROLLED', 'ACTIVE', 'FROZEN')`),
     index("enrollments_group_idx").on(t.groupId, t.status),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Profesores e invitaciones
+// ---------------------------------------------------------------------------
+
+export const coaches = pgTable(
+  "coaches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    documentType: personDocumentTypeEnum("document_type"),
+    documentNumber: text("document_number"),
+    phone: text("phone").notNull(),
+    email: text("email"),
+    specialty: text("specialty"),
+    hiredOn: date("hired_on"),
+    active: boolean("active").notNull().default(true),
+    userId: uuid("user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("coaches_school_phone_uq").on(t.schoolId, t.phone)],
+);
+
+export const groupCoaches = pgTable(
+  "group_coaches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    coachId: uuid("coach_id")
+      .notNull()
+      .references(() => coaches.id, { onDelete: "cascade" }),
+    role: coachRoleEnum("role").notNull(),
+  },
+  (t) => [
+    uniqueIndex("group_coaches_pair_uq").on(t.groupId, t.coachId),
+    uniqueIndex("group_coaches_one_head_uq")
+      .on(t.groupId)
+      .where(sql`${t.role} = 'HEAD'`),
+    index("group_coaches_coach_idx").on(t.coachId),
+  ],
+);
+
+/** Invitación para entrar a la escuela; el token solo existe en el link (se guarda su hash). */
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    role: invitationRoleEnum("role").notNull(),
+    guardianId: uuid("guardian_id").references(() => guardians.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id").references(() => athletes.id, { onDelete: "cascade" }),
+    coachId: uuid("coach_id").references(() => coaches.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    status: invitationStatusEnum("status").notNull().default("PENDING"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedByUserId: uuid("accepted_by_user_id").references(() => users.id),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("invitations_school_status_idx").on(t.schoolId, t.status),
+    index("invitations_guardian_idx").on(t.guardianId),
+    index("invitations_coach_idx").on(t.coachId),
   ],
 );

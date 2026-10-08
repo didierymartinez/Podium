@@ -33,7 +33,7 @@ pnpm db:setup                 # crea la base, aplica migraciones y habilita el r
 pnpm dev                      # http://localhost:3000
 ```
 
-Flujo disponible: **registro → crear escuela (prueba de 30 días con plantilla de patinaje) → configuración (perfil y cobros) → grupos con horario semanal → alumnos con acudiente responsable de pago y matrícula (congelar, retirar, reactivar) → tablero semanal con las clases**.
+Flujo disponible: **registro → crear escuela (prueba de 30 días) → configuración (perfil y cobros) → profesores y grupos con horario → alumnos con acudiente y matrícula → invitaciones por WhatsApp (link de un solo uso) → acudientes y profesores entran y ven sus hijos o sus grupos**.
 
 ### Comandos
 

@@ -7,7 +7,7 @@ import { Alert, Button } from "@/components/ui";
 import { firebaseAuth, firebaseErrorMessage } from "@/lib/firebase-client";
 import { postSession } from "./post-session";
 
-export function VerifyEmail({ email }: { email: string }) {
+export function VerifyEmail({ email, next }: { email: string; next?: string | null }) {
   const router = useRouter();
   const [message, setMessage] = useState<{ tone: "info" | "danger"; text: string } | null>(null);
   const [pending, setPending] = useState(false);
@@ -54,7 +54,7 @@ export function VerifyEmail({ email }: { email: string }) {
         setMessage({ tone: "danger", text: result.message });
         return;
       }
-      router.push(result.redirectTo);
+      router.push(next ?? result.redirectTo);
       router.refresh();
     });
 

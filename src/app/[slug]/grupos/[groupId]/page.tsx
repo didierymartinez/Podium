@@ -37,6 +37,8 @@ export default async function EditGroupPage({ params }: PageProps<"/[slug]/grupo
           defaultFeePlanId: group.defaultFeePlanId ?? "",
           color: group.color,
           schedule: group.schedule,
+          headCoachId: group.coaches.find((c) => c.role === "HEAD")?.id ?? "",
+          assistantCoachIds: group.coaches.filter((c) => c.role === "ASSISTANT").map((c) => c.id),
         }}
       />
     </div>

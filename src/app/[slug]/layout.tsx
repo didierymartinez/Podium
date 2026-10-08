@@ -3,27 +3,37 @@ import Link from "next/link";
 import { BottomNav, SideRail, TopTabs } from "@/components/school-nav";
 import { TopBar } from "@/components/top-bar";
 import { Chip, LogoMark, buttonClass } from "@/components/ui";
+import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
 
 export default async function SchoolLayout({ children, params }: LayoutProps<"/[slug]">) {
   const { slug } = await params;
-  const { user, school } = await getSchoolContext(slug);
+  const { user, school, roles } = await getSchoolContext(slug);
+  const access = {
+    manager: canManagePeople(roles),
+    admin: canManageSettings(roles),
+    coach: roles.includes("COACH"),
+  };
   const daysLeft =
-    school.status === "TRIAL" && school.trialEndsAt ? trialDaysLeft(school.trialEndsAt, new Date()) : null;
+    access.manager && school.status === "TRIAL" && school.trialEndsAt
+      ? trialDaysLeft(school.trialEndsAt, new Date())
+      : null;
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-1 gap-3 p-3 sm:p-4">
-      <SideRail slug={school.slug} logo={<LogoMark className="size-10" />} />
+      <SideRail slug={school.slug} logo={<LogoMark className="size-10" />} access={access} />
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <TopBar
           userName={user.name}
           actions={
-            <span className="hidden sm:block">
-              <Link href={`/${school.slug}/alumnos/nuevo`} className={buttonClass("secondary", "h-10")}>
-                <Plus className="size-4" /> Agregar alumno
-              </Link>
-            </span>
+            access.manager && (
+              <span className="hidden sm:block">
+                <Link href={`/${school.slug}/alumnos/nuevo`} className={buttonClass("secondary", "h-10")}>
+                  <Plus className="size-4" /> Agregar alumno
+                </Link>
+              </span>
+            )
           }
         >
           <div className="shrink-0 md:hidden">
@@ -47,12 +57,12 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
             )}
           </div>
           <div className="ml-auto">
-            <TopTabs slug={school.slug} />
+            <TopTabs slug={school.slug} access={access} />
           </div>
         </TopBar>
         <main className="flex-1 pb-24 md:pb-6">{children}</main>
       </div>
-      <BottomNav slug={school.slug} />
+      <BottomNav slug={school.slug} access={access} />
     </div>
   );
 }

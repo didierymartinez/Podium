@@ -1,11 +1,13 @@
 import { Alert } from "@/components/ui";
-import { canManageSettings } from "@/modules/schools/permissions";
+import { NoAccess } from "@/components/page-header";
+import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../data";
 import { SettingsTabs } from "./settings-tabs";
 
 export default async function SettingsLayout({ children, params }: LayoutProps<"/[slug]/configuracion">) {
   const { slug } = await params;
   const { roles } = await getSchoolContext(slug);
+  if (!canManagePeople(roles)) return <NoAccess />;
 
   return (
     <div className="space-y-5">

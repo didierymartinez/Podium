@@ -8,6 +8,7 @@ export type GuardianListItem = {
   lastName: string;
   phone: string;
   email: string | null;
+  userId: string | null;
   hasAccount: boolean;
   athletes: { id: string; name: string; isPayer: boolean }[];
 };
@@ -52,6 +53,7 @@ export function listGuardians(database: Database, schoolId: string, query?: stri
       lastName: g.lastName,
       phone: g.phone,
       email: g.email,
+      userId: g.userId,
       hasAccount: g.userId !== null,
       athletes: links
         .filter((l) => l.guardianId === g.id)

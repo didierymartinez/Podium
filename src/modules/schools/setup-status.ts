@@ -1,6 +1,6 @@
 import { count, eq, inArray } from "drizzle-orm";
 import { runInTenant, type Database } from "@/db/rls";
-import { enrollments, feePlans, groups, type schools } from "@/db/schema";
+import { coaches, enrollments, feePlans, groups, type schools } from "@/db/schema";
 
 export type SetupStep = { key: string; title: string; detail: string; done: boolean; href?: string };
 
@@ -9,22 +9,24 @@ export async function getSetupSteps(
   database: Database,
   school: typeof schools.$inferSelect,
 ): Promise<SetupStep[]> {
-  const { activePlans, activeGroups, activeEnrollments } = await runInTenant(
+  const { activePlans, activeGroups, activeEnrollments, activeCoaches } = await runInTenant(
     database,
     { schoolId: school.id },
     async (tx) => {
-      const [[plansCount], [groupsCount], [enrollmentsCount]] = await Promise.all([
+      const [[plansCount], [groupsCount], [enrollmentsCount], [coachesCount]] = await Promise.all([
         tx.select({ value: count() }).from(feePlans).where(eq(feePlans.active, true)),
         tx.select({ value: count() }).from(groups).where(eq(groups.active, true)),
         tx
           .select({ value: count() })
           .from(enrollments)
           .where(inArray(enrollments.status, ["ACTIVE", "PRE_ENROLLED"])),
+        tx.select({ value: count() }).from(coaches).where(eq(coaches.active, true)),
       ]);
       return {
         activePlans: plansCount.value,
         activeGroups: groupsCount.value,
         activeEnrollments: enrollmentsCount.value,
+        activeCoaches: coachesCount.value,
       };
     },
   );
@@ -53,7 +55,13 @@ export async function getSetupSteps(
       done: activeGroups > 0,
       href: `/${school.slug}/grupos`,
     },
-    { key: "coaches", title: "Profesores", detail: "Invitar al equipo", done: false },
+    {
+      key: "coaches",
+      title: "Profesores",
+      detail: "Registrar e invitar al equipo",
+      done: activeCoaches > 0,
+      href: `/${school.slug}/profesores`,
+    },
     {
       key: "athletes",
       title: "Alumnos",
@@ -62,6 +70,12 @@ export async function getSetupSteps(
       href: `/${school.slug}/alumnos/nuevo`,
     },
     { key: "payments", title: "Pagos en línea", detail: "Conectar Wompi", done: false },
-    { key: "guardians", title: "Acudientes", detail: "Invitar y empezar a facturar", done: false },
+    {
+      key: "guardians",
+      title: "Acudientes",
+      detail: "Invitar a las familias",
+      done: false,
+      href: `/${school.slug}/invitaciones`,
+    },
   ];
 }

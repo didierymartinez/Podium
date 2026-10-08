@@ -1,15 +1,22 @@
-import { HeartHandshake, Users } from "lucide-react";
+import { HeartHandshake, Send, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/components/ui";
 
 /** Pestañas Alumnos | Acudientes. */
-export function PeopleTabs({ slug, active }: { slug: string; active: "athletes" | "guardians" }) {
+export function PeopleTabs({
+  slug,
+  active,
+}: {
+  slug: string;
+  active: "athletes" | "guardians" | "invitations";
+}) {
   const tabs = [
     { key: "athletes", href: `/${slug}/alumnos`, label: "Alumnos", icon: Users },
     { key: "guardians", href: `/${slug}/acudientes`, label: "Acudientes", icon: HeartHandshake },
+    { key: "invitations", href: `/${slug}/invitaciones`, label: "Invitaciones", icon: Send },
   ] as const;
   return (
-    <nav className="flex gap-1.5" aria-label="Personas">
+    <nav className="flex flex-wrap gap-1.5" aria-label="Personas">
       {tabs.map(({ key, href, label, icon: Icon }) => (
         <Link
           key={key}

@@ -9,6 +9,7 @@ import { db } from "@/db/client";
 import { formatLongDate, todayIn } from "@/lib/dates";
 import { displayPhone } from "@/lib/phone";
 import { getAthlete } from "@/modules/athletes/athletes";
+import { invitationStates } from "@/modules/invitations/invitations";
 import { ageOn } from "@/modules/athletes/enrollment-status";
 import { DOCUMENT_TYPE_LABELS, RELATIONSHIP_LABELS } from "@/modules/athletes/schemas";
 import { findAgeCategory, sportsAge } from "@/modules/schools/age-category";
@@ -34,6 +35,12 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   ]);
   if (!detail) notFound();
   const { athlete, guardians, enrollments } = detail;
+  const invitations = await invitationStates(
+    db,
+    school.id,
+    "GUARDIAN",
+    guardians.map(({ guardian }) => ({ id: guardian.id, userId: guardian.userId })),
+  );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
   const age = ageOn(athlete.birthDate, today);
@@ -98,6 +105,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
             athleteFirstName={athlete.firstName}
             guardians={guardians.map(({ guardian: g, relationship, isPayer }) => ({
               id: g.id,
+              invitation: invitations.get(g.id) ?? "none",
               name: `${g.firstName} ${g.lastName}`,
               phone: g.phone,
               displayPhone: displayPhone(g.phone),

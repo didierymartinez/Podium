@@ -32,6 +32,8 @@ export default async function NewGroupPage({ params }: PageProps<"/[slug]/grupos
             { weekday: 2, startTime: "16:00", endTime: "18:00" },
             { weekday: 4, startTime: "16:00", endTime: "18:00" },
           ],
+          headCoachId: "",
+          assistantCoachIds: [],
         }}
       />
     </div>

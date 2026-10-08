@@ -6,12 +6,16 @@ import { FormStatus } from "@/components/form-status";
 import { submitWithoutReset } from "@/components/use-form-action";
 import { Avatar, Button, Card, Chip, IconButton, SectionTitle, Tile } from "@/components/ui";
 import { whatsappLink } from "@/lib/whatsapp";
+import { InvitationChip } from "@/modules/invitations/components/invitation-chip";
+import { InviteButton } from "@/modules/invitations/components/invite-button";
+import type { InvitationState } from "@/modules/invitations/message";
 import type { ActionState } from "../../action-context";
 import { addGuardianAction, removeGuardianAction, setPayerAction } from "../actions";
 import { GuardianFields } from "../guardian-fields";
 
 export type GuardianView = {
   id: string;
+  invitation: InvitationState;
   name: string;
   phone: string;
   displayPhone: string;
@@ -67,7 +71,17 @@ export function GuardiansCard({
                 <p className="truncate text-sm text-ink-soft">
                   {g.relationship} · {g.displayPhone}
                 </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <InvitationChip state={g.invitation} />
+                </div>
               </div>
+              {g.invitation !== "account" && (
+                <InviteButton
+                  slug={slug}
+                  target={{ role: "GUARDIAN", guardianId: g.id }}
+                  resend={g.invitation !== "none"}
+                />
+              )}
               {g.isPayer ? (
                 <Chip tone="violet" dot>
                   Responsable de pago

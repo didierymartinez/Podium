@@ -2,6 +2,7 @@
 
 import {
   CalendarCheck,
+  GraduationCap,
   House,
   Layers,
   Megaphone,
@@ -14,19 +15,66 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "./ui";
 
-type NavItem = { path: string; label: string; icon: LucideIcon; ready: boolean };
+type Audience = "all" | "manager" | "admin" | "coach";
+type NavItem = { path: string; label: string; icon: LucideIcon; ready: boolean; audience: Audience };
+
+/** Qué ve cada persona: administración (propietario, admin, coordinador), profesores y familias. */
+export type NavAccess = { manager: boolean; admin: boolean; coach: boolean };
+
+const visible = (access: NavAccess) => (item: NavItem) =>
+  item.audience === "all" ||
+  (item.audience === "manager" && access.manager) ||
+  (item.audience === "admin" && access.admin) ||
+  (item.audience === "coach" && (access.coach || access.manager));
 
 /** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
-export const SCHOOL_NAV: NavItem[] = [
-  { path: "", label: "Inicio", icon: House, ready: true },
-  { path: "/alumnos", label: "Alumnos", icon: Users, ready: true },
-  { path: "/grupos", label: "Grupos", icon: Layers, ready: true },
-  { path: "/asistencia", label: "Asistencia", icon: CalendarCheck, ready: false },
-  { path: "/cobros", label: "Cobros", icon: Wallet, ready: false },
-  { path: "/avisos", label: "Avisos", icon: Megaphone, ready: false },
-];
+const HOME: NavItem = { path: "", label: "Inicio", icon: House, ready: true, audience: "all" };
+const ATHLETES: NavItem = {
+  path: "/alumnos",
+  label: "Alumnos",
+  icon: Users,
+  ready: true,
+  audience: "manager",
+};
+const GROUPS: NavItem = { path: "/grupos", label: "Grupos", icon: Layers, ready: true, audience: "manager" };
+const COACHES: NavItem = {
+  path: "/profesores",
+  label: "Profesores",
+  icon: GraduationCap,
+  ready: true,
+  audience: "admin",
+};
+const ATTENDANCE: NavItem = {
+  path: "/asistencia",
+  label: "Asistencia",
+  icon: CalendarCheck,
+  ready: false,
+  audience: "coach",
+};
+const BILLING: NavItem = {
+  path: "/cobros",
+  label: "Cobros",
+  icon: Wallet,
+  ready: false,
+  audience: "manager",
+};
+const NOTICES: NavItem = {
+  path: "/avisos",
+  label: "Avisos",
+  icon: Megaphone,
+  ready: false,
+  audience: "manager",
+};
+const SETTINGS: NavItem = {
+  path: "/configuracion",
+  label: "Configuración",
+  icon: Settings,
+  ready: true,
+  audience: "manager",
+};
 
-const SETTINGS: NavItem = { path: "/configuracion", label: "Configuración", icon: Settings, ready: true };
+/** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
+export const SCHOOL_NAV: NavItem[] = [HOME, ATHLETES, GROUPS, COACHES, ATTENDANCE, BILLING, NOTICES];
 
 function useActive(slug: string) {
   const pathname = usePathname();
@@ -60,7 +108,7 @@ function RailLink({ slug, item, active }: { slug: string; item: NavItem; active:
 }
 
 /** Barra lateral de íconos (escritorio). */
-export function SideRail({ slug, logo }: { slug: string; logo: React.ReactNode }) {
+export function SideRail({ slug, logo, access }: { slug: string; logo: React.ReactNode; access: NavAccess }) {
   const isActive = useActive(slug);
   return (
     <aside className="sticky top-3 hidden h-[calc(100dvh-1.5rem)] w-[72px] shrink-0 flex-col items-center rounded-[28px] border border-white/70 bg-glass py-4 shadow-soft backdrop-blur md:flex dark:border-line">
@@ -68,19 +116,20 @@ export function SideRail({ slug, logo }: { slug: string; logo: React.ReactNode }
         {logo}
       </Link>
       <nav className="flex flex-1 flex-col justify-center gap-2" aria-label="Secciones">
-        {SCHOOL_NAV.map((item) => (
+        {SCHOOL_NAV.filter(visible(access)).map((item) => (
           <RailLink key={item.label} slug={slug} item={item} active={isActive(item)} />
         ))}
       </nav>
-      <RailLink slug={slug} item={SETTINGS} active={isActive(SETTINGS)} />
+      {visible(access)(SETTINGS) && <RailLink slug={slug} item={SETTINGS} active={isActive(SETTINGS)} />}
     </aside>
   );
 }
 
 /** Pestañas tipo píldora de la barra superior (escritorio). */
-export function TopTabs({ slug }: { slug: string }) {
+export function TopTabs({ slug, access }: { slug: string; access: NavAccess }) {
   const isActive = useActive(slug);
-  const tabs = [SCHOOL_NAV[0], SCHOOL_NAV[1], SCHOOL_NAV[2]];
+  const tabs = [HOME, ATHLETES, GROUPS].filter(visible(access));
+  if (tabs.length < 2) return null;
   return (
     <nav className="hidden items-center gap-1.5 lg:flex" aria-label="Accesos rápidos">
       {tabs.map((item) => {
@@ -113,9 +162,12 @@ export function TopTabs({ slug }: { slug: string }) {
 }
 
 /** Navegación inferior para celular (PWA). */
-export function BottomNav({ slug }: { slug: string }) {
+export function BottomNav({ slug, access }: { slug: string; access: NavAccess }) {
   const isActive = useActive(slug);
-  const items = [...SCHOOL_NAV.slice(0, 4), { ...SETTINGS, label: "Ajustes" }];
+  const items = [HOME, ATHLETES, GROUPS, ATTENDANCE, { ...SETTINGS, label: "Ajustes" }].filter(
+    visible(access),
+  );
+  if (items.length < 2) return null;
   return (
     <nav
       className="fixed inset-x-3 bottom-3 z-20 flex justify-around rounded-full border border-white/70 bg-glass px-2 py-1.5 shadow-soft backdrop-blur md:hidden dark:border-line"

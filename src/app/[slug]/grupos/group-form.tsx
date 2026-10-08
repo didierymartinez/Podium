@@ -25,6 +25,7 @@ import { saveGroupAction } from "./actions";
 export type GroupFormOptions = {
   disciplines: { id: string; name: string; levels: { id: string; name: string; position: number }[] }[];
   feePlans: { id: string; name: string; monthlyAmount: number }[];
+  coaches: { id: string; name: string }[];
 };
 
 export type GroupFormValues = {
@@ -36,6 +37,8 @@ export type GroupFormValues = {
   defaultFeePlanId: string;
   color: string;
   schedule: ScheduleSlot[];
+  headCoachId: string;
+  assistantCoachIds: string[];
 };
 
 export function GroupForm({
@@ -79,6 +82,7 @@ export function GroupForm({
       {values.id && <input type="hidden" name="id" value={values.id} />}
       <input type="hidden" name="schedule" value={JSON.stringify(values.schedule)} />
       <input type="hidden" name="color" value={values.color} />
+      <input type="hidden" name="assistantCoachIds" value={JSON.stringify(values.assistantCoachIds)} />
       <fieldset disabled={pending} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="space-y-6">
           <section className="space-y-4">
@@ -151,6 +155,75 @@ export function GroupForm({
                 </Select>
               </Field>
             </div>
+          </section>
+
+          <section className="space-y-4">
+            <SectionTitle>Profesores</SectionTitle>
+            {options.coaches.length === 0 ? (
+              <p className="text-sm text-ink-soft">
+                Aún no hay profesores registrados.{" "}
+                <Link href={`/${slug}/profesores/nuevo`} className="font-semibold text-brand">
+                  Crear profesor
+                </Link>
+              </p>
+            ) : (
+              <>
+                <Field label="Profesor titular" error={error("headCoachId")}>
+                  <Select
+                    name="headCoachId"
+                    value={values.headCoachId}
+                    onChange={(e) =>
+                      setValues((v) => ({
+                        ...v,
+                        headCoachId: e.target.value,
+                        assistantCoachIds: v.assistantCoachIds.filter((id) => id !== e.target.value),
+                      }))
+                    }
+                  >
+                    <option value="">Sin titular</option>
+                    {options.coaches.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-semibold">Auxiliares</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {options.coaches
+                      .filter((c) => c.id !== values.headCoachId)
+                      .map((c) => {
+                        const checked = values.assistantCoachIds.includes(c.id);
+                        return (
+                          <label
+                            key={c.id}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
+                              checked ? "border-brand bg-brand/8 font-semibold" : "border-line bg-surface",
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-brand"
+                              checked={checked}
+                              onChange={(e) =>
+                                set(
+                                  "assistantCoachIds",
+                                  e.target.checked
+                                    ? [...values.assistantCoachIds, c.id]
+                                    : values.assistantCoachIds.filter((id) => id !== c.id),
+                                )
+                              }
+                            />
+                            {c.name}
+                          </label>
+                        );
+                      })}
+                  </div>
+                </fieldset>
+              </>
+            )}
           </section>
 
           <section className="space-y-3">
@@ -254,6 +327,11 @@ export function GroupForm({
                 {levels.find((l) => l.id === values.levelId)?.name ?? "Varios niveles"} · cupo{" "}
                 {values.capacity || 0}
               </p>
+              {values.headCoachId && (
+                <p className="mt-1 text-sm opacity-90">
+                  Titular: {options.coaches.find((c) => c.id === values.headCoachId)?.name}
+                </p>
+              )}
             </div>
             <p className="mt-3 text-sm text-ink-soft">
               {values.schedule.length > 0 ? describeSchedule(values.schedule) : "Sin horario"}

@@ -7,6 +7,9 @@ import { db } from "@/db/client";
 import { displayPhone } from "@/lib/phone";
 import { whatsappLink } from "@/lib/whatsapp";
 import { listGuardians } from "@/modules/athletes/guardians";
+import { InvitationChip } from "@/modules/invitations/components/invitation-chip";
+import { InviteButton } from "@/modules/invitations/components/invite-button";
+import { invitationStates } from "@/modules/invitations/invitations";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { PeopleTabs } from "../alumnos/people-tabs";
 import { getSchoolContext } from "../data";
@@ -20,6 +23,7 @@ export default async function GuardiansPage({ params, searchParams }: PageProps<
   if (!canManagePeople(roles)) return <NoAccess />;
   const q = typeof sp.q === "string" ? sp.q : "";
   const guardians = await listGuardians(db, school.id, q);
+  const invitations = await invitationStates(db, school.id, "GUARDIAN", guardians);
 
   return (
     <div className="space-y-5">
@@ -74,9 +78,14 @@ export default async function GuardiansPage({ params, searchParams }: PageProps<
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <Chip tone={g.hasAccount ? "mint" : "neutral"} dot>
-                      {g.hasAccount ? "Con cuenta" : "Sin invitar"}
-                    </Chip>
+                    <InvitationChip state={invitations.get(g.id) ?? "none"} />
+                    {!g.hasAccount && (
+                      <InviteButton
+                        slug={slug}
+                        target={{ role: "GUARDIAN", guardianId: g.id }}
+                        resend={invitations.get(g.id) !== "none"}
+                      />
+                    )}
                     <a
                       href={whatsappLink(g.phone)}
                       target="_blank"

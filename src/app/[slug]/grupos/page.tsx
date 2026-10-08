@@ -1,4 +1,4 @@
-import { Clock, Pencil, Plus, Users } from "lucide-react";
+import { Clock, GraduationCap, Pencil, Plus, TriangleAlert, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess, PageHeader } from "@/components/page-header";
@@ -6,6 +6,7 @@ import { Card, Chip, buttonClass } from "@/components/ui";
 import { db } from "@/db/client";
 import { formatCOP } from "@/lib/money";
 import { listFeePlans } from "@/modules/billing/fee-plans";
+import { coachScheduleConflicts } from "@/modules/coaches/conflicts";
 import { listGroups } from "@/modules/groups/groups";
 import { describeSchedule, weeklyMinutes } from "@/modules/groups/schedule";
 import { canManagePeople } from "@/modules/schools/permissions";
@@ -20,6 +21,7 @@ export default async function GroupsPage({ params }: PageProps<"/[slug]/grupos">
   if (!canManagePeople(roles)) return <NoAccess />;
   const [groups, plans] = await Promise.all([listGroups(db, school.id), listFeePlans(db, school.id)]);
   const planAmount = new Map(plans.map((p) => [p.id, p.monthlyAmount]));
+  const conflicts = coachScheduleConflicts(groups);
 
   return (
     <div className="space-y-5">
@@ -71,7 +73,24 @@ export default async function GroupsPage({ params }: PageProps<"/[slug]/grupos">
                     {!group.active && <Chip>Archivado</Chip>}
                   </div>
 
-                  <p className="mt-4 flex items-start gap-2 text-sm">
+                  <p className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
+                    <GraduationCap className="size-4 shrink-0 text-ink-faint" />
+                    {group.coaches.length
+                      ? group.coaches.map((c) => (c.role === "HEAD" ? c.name : `${c.name} (aux.)`)).join(", ")
+                      : "Sin profesor asignado"}
+                  </p>
+                  {conflicts
+                    .filter((c) => c.groupIds.includes(group.id))
+                    .map((c) => (
+                      <p
+                        key={c.groupIds.join("-") + c.coachId}
+                        className="mt-2 flex items-start gap-2 text-sm text-danger"
+                      >
+                        <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {c.description}
+                      </p>
+                    ))}
+
+                  <p className="mt-3 flex items-start gap-2 text-sm">
                     <Clock className="mt-0.5 size-4 shrink-0 text-ink-faint" />
                     <span>
                       {describeSchedule(group.schedule)}

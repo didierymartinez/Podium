@@ -86,3 +86,44 @@ export async function saveAthlete(page: Page) {
   await page.getByRole("button", { name: "Guardar alumno" }).click();
   await page.waitForURL(/\/alumnos\/[0-9a-f-]{36}$/);
 }
+
+export const randomPhone = () => `31${Math.floor(1e7 + Math.random() * 9e7)}`;
+
+/** Crea un profesor y devuelve la ruta de su ficha. */
+export async function createCoach(page: Page, school: string, first: string, last: string) {
+  await page.goto(`${school}/profesores/nuevo`);
+  await page.locator('input[name="firstName"]').fill(first);
+  await page.locator('input[name="lastName"]').fill(last);
+  await page.locator('input[name="phone"]').fill(randomPhone());
+  await page.locator('input[name="specialty"]').fill("Velocidad");
+  await page.getByRole("button", { name: "Crear profesor" }).click();
+  await page.waitForURL(/\/profesores\/[0-9a-f-]{36}$/);
+  return new URL(page.url()).pathname;
+}
+
+/** Pulsa "Invitar"/"Reenviar" y devuelve el link generado. */
+export async function generateInviteLink(page: Page) {
+  await page
+    .getByRole("button", { name: /^(Invitar|Reenviar)$/ })
+    .first()
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Compartir invitación" });
+  await expect(dialog.getByText("Invitación lista")).toBeVisible();
+  const link = await dialog.getByLabel("Link de invitación").inputValue();
+  await dialog.getByRole("button", { name: "Cerrar" }).click();
+  return new URL(link).pathname;
+}
+
+/** Desde el link de invitación: crea la cuenta (vuelve al link) y acepta. Termina en el inicio de la escuela. */
+export async function acceptInviteAsNewUser(page: Page, invitePath: string, name: string) {
+  await page.goto(invitePath);
+  await page.getByRole("link", { name: "Crear mi cuenta" }).click();
+  await page.locator('input[name="name"]').fill(name);
+  await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await page.waitForURL(`**${invitePath}`);
+  await page.getByRole("checkbox", { name: /Autorizo a/ }).check();
+  await page.getByRole("button", { name: "Aceptar invitación" }).click();
+  await page.waitForURL(/\/club-e2e-[a-z0-9-]+$/);
+}

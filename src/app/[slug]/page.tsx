@@ -9,10 +9,12 @@ import { nextGenerationDate } from "@/modules/billing/schedule";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import { listGroups } from "@/modules/groups/groups";
 import { shortTimeRange } from "@/modules/groups/schedule";
+import { canManagePeople } from "@/modules/schools/permissions";
 import { getSportsStructure } from "@/modules/schools/queries";
 import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
+import { MemberHome } from "./member-home";
 
 export async function generateMetadata({ params }: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -22,7 +24,8 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
 
 export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
-  const { school, user } = await getSchoolContext(slug);
+  const { school, user, roles } = await getSchoolContext(slug);
+  if (!canManagePeople(roles)) return <MemberHome school={school} user={user} />;
   const [structure, steps, allGroups] = await Promise.all([
     getSportsStructure(db, school.id),
     getSetupSteps(db, school),

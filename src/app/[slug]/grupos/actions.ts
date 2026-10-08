@@ -25,8 +25,10 @@ export async function saveGroupAction(
   const f = formReader(form);
 
   let schedule: unknown = [];
+  let assistantCoachIds: unknown = [];
   try {
     schedule = JSON.parse(f.text("schedule") || "[]");
+    assistantCoachIds = JSON.parse(f.text("assistantCoachIds") || "[]");
   } catch {
     return { ok: false, errors: { schedule: ["Horario inválido"] } };
   }
@@ -39,6 +41,8 @@ export async function saveGroupAction(
     defaultFeePlanId: f.nullable("defaultFeePlanId"),
     color: f.text("color"),
     schedule,
+    headCoachId: f.nullable("headCoachId"),
+    assistantCoachIds,
   });
   if (!parsed.success) {
     const errors = z.flattenError(parsed.error).fieldErrors;

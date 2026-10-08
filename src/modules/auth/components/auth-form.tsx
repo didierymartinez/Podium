@@ -10,7 +10,7 @@ import { postSession, type SessionRequest } from "./post-session";
 
 type Mode = "signup" | "login";
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const router = useRouter();
   const isDev = publicEnv.authProvider === "dev";
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
       setError(result.message);
       return;
     }
-    router.push(result.redirectTo);
+    // Si el email no está verificado se pasa por /verificar-email antes de volver a la invitación.
+    const target = next
+      ? result.redirectTo === "/verificar-email"
+        ? `/verificar-email?next=${encodeURIComponent(next)}`
+        : next
+      : result.redirectTo;
+    router.push(target);
     router.refresh();
   }
 
@@ -67,7 +73,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
       if (mode === "signup") {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         if (name) await updateProfile(cred.user, { displayName: name });
-        await sendEmailVerification(cred.user, { url: `${window.location.origin}/verificar-email` });
+        await sendEmailVerification(cred.user, {
+          url: `${window.location.origin}/verificar-email${next ? `?next=${encodeURIComponent(next)}` : ""}`,
+        });
         await finish({
           provider: "firebase",
           idToken: await cred.user.getIdToken(),
@@ -168,14 +176,20 @@ export function AuthForm({ mode }: { mode: Mode }) {
         {mode === "signup" ? (
           <>
             ¿Ya tienes cuenta?{" "}
-            <Link href="/ingresar" className="font-semibold text-brand">
+            <Link
+              href={next ? `/ingresar?next=${encodeURIComponent(next)}` : "/ingresar"}
+              className="font-semibold text-brand"
+            >
               Ingresa
             </Link>
           </>
         ) : (
           <>
             ¿Primera vez?{" "}
-            <Link href="/registro" className="font-semibold text-brand">
+            <Link
+              href={next ? `/registro?next=${encodeURIComponent(next)}` : "/registro"}
+              className="font-semibold text-brand"
+            >
               Crea tu cuenta
             </Link>
           </>
