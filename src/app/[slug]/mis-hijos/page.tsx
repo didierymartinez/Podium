@@ -1,4 +1,4 @@
-import { Clock } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { DocumentStatusChip } from "@/components/document-status-chip";
@@ -31,6 +31,7 @@ import { toBodyView } from "@/modules/athletes/body-view";
 import { listBadges } from "@/modules/badges/badges";
 import { athleteCompetitions, familyInvitations } from "@/modules/competitions/competitions";
 import { CompetitionInvitations } from "./competition-invitations";
+import { listVenues } from "@/modules/schools/venues";
 
 export const metadata: Metadata = { title: "Mis hijos" };
 
@@ -42,6 +43,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
     getMemberHome(db, school.id, user.id),
     getSportsStructure(db, school.id),
   ]);
+  const venueById = new Map((await listVenues(db, school.id)).map((v) => [v.id, v]));
   const invitations = await asPortalUser(user.id, () => familyInvitations(db, school.id, today));
   const details = await asPortalUser(user.id, async () => {
     const ids = home.athletes.map((a) => a.id);
@@ -145,6 +147,30 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                             {group.name}
                           </p>
                           <p className="text-xs text-ink-soft">{group.levelName ?? "Varios niveles"}</p>
+                          {group.venueId && venueById.get(group.venueId) && (
+                            <p className="mt-1 flex items-start gap-1.5 text-sm">
+                              <MapPin className="mt-0.5 size-3.5 shrink-0" />
+                              <span>
+                                {venueById.get(group.venueId)!.name}
+                                {venueById.get(group.venueId)!.address
+                                  ? ` · ${venueById.get(group.venueId)!.address}`
+                                  : ""}
+                                {venueById.get(group.venueId)!.mapUrl && (
+                                  <>
+                                    {" "}
+                                    <a
+                                      href={venueById.get(group.venueId)!.mapUrl!}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="font-semibold text-brand"
+                                    >
+                                      Cómo llegar
+                                    </a>
+                                  </>
+                                )}
+                              </span>
+                            </p>
+                          )}
                           <p className="mt-1 flex items-start gap-1.5 text-sm">
                             <Clock className="mt-0.5 size-3.5 shrink-0" /> {describeSchedule(group.schedule)}
                           </p>

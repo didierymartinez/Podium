@@ -24,6 +24,7 @@ export default async function NewGroupPage({ params }: PageProps<"/[slug]/grupos
           name: "",
           disciplineId: discipline?.id ?? "",
           levelId: discipline?.levels[0]?.id ?? "",
+          venueId: options.venues[0]?.id ?? "",
           capacity: 15,
           defaultFeePlanId: options.feePlans[0]?.id ?? "",
           color: "#2f6bff",

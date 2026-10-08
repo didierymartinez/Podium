@@ -127,7 +127,9 @@ export function SignupForm({
         <Field
           label="Grupo"
           hint={
-            group ? `${group.levelName ?? "Varios niveles"} · ${describeSchedule(group.schedule)}` : undefined
+            group
+              ? `${group.levelName ?? "Varios niveles"} · ${describeSchedule(group.schedule)}${group.venue ? ` · ${group.venue}` : ""}`
+              : undefined
           }
         >
           <Select

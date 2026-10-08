@@ -1,7 +1,7 @@
 import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { runInTenant, type Database } from "@/db/rls";
-import { auditLogs, enrollments, groupSchedules, groups, levels, schools } from "@/db/schema";
+import { auditLogs, enrollments, groupSchedules, groups, levels, schools, venues } from "@/db/schema";
 import { addDays, weekdayIndex, type IsoDate } from "@/lib/dates";
 import { normalizeColombianMobile } from "@/lib/phone";
 import { AthleteDomainError, createAthleteTx } from "@/modules/athletes/athletes";
@@ -55,6 +55,7 @@ export type PublicGroup = {
   id: string;
   name: string;
   levelName: string | null;
+  venue: string | null;
   schedule: { weekday: number; startTime: string; endTime: string }[];
   spots: number;
   dates: IsoDate[];
@@ -76,9 +77,10 @@ export function publicSignupInfo(database: Database, schoolId: string, today: Is
     const settings = readSignupSettings(school.settings.signup);
     if (!settings.enabled) return null;
     const rows = await tx
-      .select({ group: groups, levelName: levels.name })
+      .select({ group: groups, levelName: levels.name, venueName: venues.name, venueAddress: venues.address })
       .from(groups)
       .leftJoin(levels, eq(levels.id, groups.levelId))
+      .leftJoin(venues, eq(venues.id, groups.venueId))
       .where(and(eq(groups.active, true), sql`${groups.defaultFeePlanId} is not null`))
       .orderBy(asc(levels.position), asc(groups.name));
     const ids = rows.map((r) => r.group.id);
@@ -97,7 +99,7 @@ export function publicSignupInfo(database: Database, schoolId: string, today: Is
         ])
       : [[], []];
     const list: PublicGroup[] = rows
-      .map(({ group, levelName }) => {
+      .map(({ group, levelName, venueName, venueAddress }) => {
         const schedule = slots
           .filter((s) => s.groupId === group.id)
           .map((s) => ({
@@ -109,6 +111,7 @@ export function publicSignupInfo(database: Database, schoolId: string, today: Is
           id: group.id,
           name: group.name,
           levelName,
+          venue: venueName ? [venueName, venueAddress].filter(Boolean).join(" · ") : null,
           schedule,
           spots: group.capacity - (counts.find((c) => c.groupId === group.id)?.value ?? 0),
           dates: trialDates(schedule, today),

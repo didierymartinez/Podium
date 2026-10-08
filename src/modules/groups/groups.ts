@@ -13,6 +13,7 @@ import {
   groupSchedules,
   groups,
   levels,
+  venues,
 } from "@/db/schema";
 import { CURRENT_STATUSES } from "@/modules/athletes/enrollment-status";
 import { hhmm, scheduleSchema, type ScheduleSlot } from "./schedule";
@@ -27,6 +28,8 @@ export const groupSchema = z.object({
   schedule: scheduleSchema,
   headCoachId: z.uuid().nullable().default(null),
   assistantCoachIds: z.array(z.uuid()).max(10).default([]),
+  /** Sede (ADM-08); si falta se usa la sede principal. */
+  venueId: z.uuid().nullable().default(null),
 });
 
 export type GroupInput = z.input<typeof groupSchema>;
@@ -42,6 +45,8 @@ export type GroupSummary = {
   disciplineName: string;
   levelId: string | null;
   levelName: string | null;
+  venueId: string | null;
+  venueName: string | null;
   defaultFeePlanId: string | null;
   defaultFeePlanName: string | null;
   schedule: ScheduleSlot[];
@@ -58,11 +63,13 @@ export function listGroups(database: Database, schoolId: string): Promise<GroupS
         disciplineName: disciplines.name,
         levelName: levels.name,
         levelPosition: levels.position,
+        venueName: venues.name,
         feePlanName: feePlans.name,
       })
       .from(groups)
       .innerJoin(disciplines, eq(disciplines.id, groups.disciplineId))
       .leftJoin(levels, eq(levels.id, groups.levelId))
+      .leftJoin(venues, eq(venues.id, groups.venueId))
       .leftJoin(feePlans, eq(feePlans.id, groups.defaultFeePlanId))
       .orderBy(asc(levels.position), asc(groups.name));
     if (rows.length === 0) return [];
@@ -94,7 +101,7 @@ export function listGroups(database: Database, schoolId: string): Promise<GroupS
     ]);
 
     return rows
-      .map(({ group, disciplineName, levelName, feePlanName }) => ({
+      .map(({ group, disciplineName, levelName, venueName, feePlanName }) => ({
         id: group.id,
         name: group.name,
         color: group.color,
@@ -104,6 +111,8 @@ export function listGroups(database: Database, schoolId: string): Promise<GroupS
         disciplineName,
         levelId: group.levelId,
         levelName,
+        venueId: group.venueId,
+        venueName,
         defaultFeePlanId: group.defaultFeePlanId,
         defaultFeePlanName: feePlanName,
         schedule: slots
@@ -151,17 +160,30 @@ async function assertReferences(tx: Tx, input: ParsedGroup) {
     (await allVisible(tx, disciplines, [input.disciplineId])) &&
     (await allVisible(tx, levels, [input.levelId])) &&
     (await allVisible(tx, feePlans, [input.defaultFeePlanId])) &&
+    (await allVisible(tx, venues, [input.venueId])) &&
     (await allVisible(tx, coaches, [input.headCoachId, ...input.assistantCoachIds]));
   if (!ok) throw new InvalidReferenceError();
 }
 
 type ParsedGroup = z.output<typeof groupSchema>;
 
+/** Sede principal: la activa más antigua. */
+async function defaultVenueId(tx: Tx) {
+  const [venue] = await tx
+    .select({ id: venues.id })
+    .from(venues)
+    .where(eq(venues.active, true))
+    .orderBy(asc(venues.createdAt))
+    .limit(1);
+  return venue?.id ?? null;
+}
+
 export function createGroup(database: Database, ctx: Ctx, raw: GroupInput) {
   const input = groupSchema.parse(raw);
   return runInTenant(database, { schoolId: ctx.schoolId }, async (tx) => {
     await assertReferences(tx, input);
     const { schedule, headCoachId, assistantCoachIds, ...data } = input;
+    data.venueId ??= await defaultVenueId(tx);
     const [group] = await tx
       .insert(groups)
       .values({ schoolId: ctx.schoolId, ...data })
@@ -178,6 +200,7 @@ export function updateGroup(database: Database, ctx: Ctx, groupId: string, raw: 
   return runInTenant(database, { schoolId: ctx.schoolId }, async (tx) => {
     await assertReferences(tx, input);
     const { schedule, headCoachId, assistantCoachIds, ...data } = input;
+    data.venueId ??= await defaultVenueId(tx);
     const [group] = await tx.update(groups).set(data).where(eq(groups.id, groupId)).returning();
     if (!group) return null;
     await replaceSchedule(tx, ctx.schoolId, group.id, schedule);

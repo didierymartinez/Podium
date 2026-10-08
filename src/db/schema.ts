@@ -205,6 +205,9 @@ export const venues = pgTable("venues", {
     .references(() => schools.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   address: text("address"),
+  /** Enlace de Google Maps u otro para llegar (multi-sede, ADM-08). */
+  mapUrl: text("map_url"),
+  active: boolean("active").notNull().default(true),
   ...timestamps,
 });
 
@@ -471,6 +474,8 @@ export const groups = pgTable("groups", {
     .notNull()
     .references(() => disciplines.id),
   levelId: uuid("level_id").references(() => levels.id),
+  /** Sede donde entrena el grupo (ADM-08). */
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "set null" }),
   capacity: integer("capacity").notNull(),
   defaultFeePlanId: uuid("default_fee_plan_id").references(() => feePlans.id),
   color: text("color").notNull().default("#2f6bff"),

@@ -2,7 +2,7 @@ import { Clock, GraduationCap, Pencil, Plus, TriangleAlert, Users } from "lucide
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess, PageHeader } from "@/components/page-header";
-import { Card, Chip, buttonClass } from "@/components/ui";
+import { Card, Chip, buttonClass, cn } from "@/components/ui";
 import { db } from "@/db/client";
 import { formatCOP } from "@/lib/money";
 import { listFeePlans } from "@/modules/billing/fee-plans";
@@ -11,15 +11,24 @@ import { listGroups } from "@/modules/groups/groups";
 import { describeSchedule, weeklyMinutes } from "@/modules/groups/schedule";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../data";
+import { listVenues } from "@/modules/schools/venues";
 import { GroupArchiveButton } from "./group-archive-button";
 
 export const metadata: Metadata = { title: "Grupos" };
 
-export default async function GroupsPage({ params }: PageProps<"/[slug]/grupos">) {
+export default async function GroupsPage({ params, searchParams }: PageProps<"/[slug]/grupos">) {
   const { slug } = await params;
+  const { sede } = await searchParams;
   const { school, roles } = await getSchoolContext(slug);
   if (!canManagePeople(roles)) return <NoAccess />;
-  const [groups, plans] = await Promise.all([listGroups(db, school.id), listFeePlans(db, school.id)]);
+  const [allGroups, plans, venueRows] = await Promise.all([
+    listGroups(db, school.id),
+    listFeePlans(db, school.id),
+    listVenues(db, school.id),
+  ]);
+  const venues = venueRows.filter((v) => v.active);
+  const venueId = venues.length > 1 && venues.some((v) => v.id === sede) ? sede : undefined;
+  const groups = venueId ? allGroups.filter((g) => g.venueId === venueId) : allGroups;
   const planAmount = new Map(plans.map((p) => [p.id, p.monthlyAmount]));
   const conflicts = coachScheduleConflicts(groups);
 
@@ -34,6 +43,23 @@ export default async function GroupsPage({ params }: PageProps<"/[slug]/grupos">
           </Link>
         }
       />
+
+      {venues.length > 1 && (
+        <nav className="flex flex-wrap gap-2" aria-label="Sedes">
+          {[{ id: "", name: "Todas las sedes" }, ...venues].map((v) => (
+            <Link
+              key={v.id}
+              href={v.id ? `/${slug}/grupos?sede=${v.id}` : `/${slug}/grupos`}
+              className={cn(
+                "inline-flex h-9 items-center rounded-full px-3.5 text-sm font-semibold",
+                (venueId ?? "") === v.id ? "bg-ink text-surface" : "bg-muted text-ink-soft hover:text-ink",
+              )}
+            >
+              {v.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {groups.length === 0 ? (
         <Card className="mx-auto max-w-lg text-center">
@@ -68,6 +94,7 @@ export default async function GroupsPage({ params }: PageProps<"/[slug]/grupos">
                       <p className="truncate text-lg font-semibold">{group.name}</p>
                       <p className="text-sm text-ink-soft">
                         {group.disciplineName} · {group.levelName ?? "Varios niveles"}
+                        {venues.length > 1 && group.venueName ? ` · ${group.venueName}` : ""}
                       </p>
                     </div>
                     {!group.active && <Chip>Archivado</Chip>}

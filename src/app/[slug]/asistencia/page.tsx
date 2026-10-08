@@ -19,6 +19,7 @@ import { closureOn, listClosures } from "@/modules/calendar/closures";
 import { listSessions, type SessionItem } from "@/modules/attendance/sessions";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../data";
+import { listVenues } from "@/modules/schools/venues";
 import { SessionStatusChip } from "./status-chip";
 import { CachePages } from "@/components/pwa";
 import { ensureSessions } from "./sync";
@@ -27,7 +28,7 @@ export const metadata: Metadata = { title: "Asistencia" };
 
 export default async function AttendanceDayPage({ params, searchParams }: PageProps<"/[slug]/asistencia">) {
   const { slug } = await params;
-  const { fecha } = await searchParams;
+  const { fecha, sede } = await searchParams;
   const { school, user, roles } = await getSchoolContext(slug);
   const manager = canManagePeople(roles);
   if (!manager && !roles.includes("COACH")) return <NoAccess />;
@@ -36,14 +37,21 @@ export default async function AttendanceDayPage({ params, searchParams }: PagePr
   const date = isIsoDate(fecha) ? fecha : today;
   const week = dateRange(startOfWeek(date), 7);
   await ensureSessions(school.id, school.timezone);
+  const venues = (await listVenues(db, school.id)).filter((v) => v.active);
+  const venueId = venues.length > 1 && venues.some((v) => v.id === sede) ? (sede as string) : undefined;
   const [items, closures] = await Promise.all([
-    listSessions(db, school.id, { from: date, to: date }, manager ? {} : { coachUserId: user.id }),
+    listSessions(
+      db,
+      school.id,
+      { from: date, to: date },
+      { ...(manager ? {} : { coachUserId: user.id }), venueId },
+    ),
     listClosures(db, school.id, date, date),
   ]);
   const holiday = holidaysBetween(date, date).get(date);
   const closure = closureOn(date, closures);
   const weekHolidays = holidaysBetween(week[0], week[6]);
-  const href = (d: string) => `/${slug}/asistencia?fecha=${d}`;
+  const href = (d: string, v = venueId) => `/${slug}/asistencia?fecha=${d}${v ? `&sede=${v}` : ""}`;
   const title = formatDayTitle(date);
 
   return (
@@ -74,6 +82,23 @@ export default async function AttendanceDayPage({ params, searchParams }: PagePr
           </>
         }
       />
+
+      {venues.length > 1 && (
+        <nav className="flex flex-wrap gap-2" aria-label="Sedes">
+          {[{ id: "", name: "Todas las sedes" }, ...venues].map((v) => (
+            <Link
+              key={v.id}
+              href={href(date, v.id || undefined)}
+              className={cn(
+                "inline-flex h-9 items-center rounded-full px-3.5 text-sm font-semibold",
+                (venueId ?? "") === v.id ? "bg-ink text-surface" : "bg-muted text-ink-soft hover:text-ink",
+              )}
+            >
+              {v.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <Card className="p-3 sm:p-4">
         <nav className="flex items-center gap-1.5" aria-label="Días de la semana">

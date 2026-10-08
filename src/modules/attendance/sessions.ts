@@ -133,7 +133,7 @@ export function listSessions(
   database: Database,
   schoolId: string,
   range: { from: IsoDate; to: IsoDate },
-  filter: { coachUserId?: string; groupIds?: string[] } = {},
+  filter: { coachUserId?: string; groupIds?: string[]; venueId?: string } = {},
 ): Promise<SessionItem[]> {
   return runInTenant(database, { schoolId }, async (tx) => {
     let mine: SQL | undefined;
@@ -186,6 +186,7 @@ export function listSessions(
           filter.groupIds
             ? inArray(sessions.groupId, filter.groupIds.length ? filter.groupIds : [NONE])
             : undefined,
+          filter.venueId ? eq(groups.venueId, filter.venueId) : undefined,
         ),
       )
       .groupBy(sessions.id, groups.id)

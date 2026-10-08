@@ -38,6 +38,7 @@ export async function saveGroupAction(
     name: f.text("name"),
     disciplineId: f.text("disciplineId"),
     levelId: f.nullable("levelId"),
+    venueId: f.nullable("venueId"),
     capacity: f.int("capacity"),
     defaultFeePlanId: f.nullable("defaultFeePlanId"),
     color: f.text("color"),

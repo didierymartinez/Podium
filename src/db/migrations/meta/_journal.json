@@ -435,6 +435,20 @@
       "when": 1791471944929,
       "tag": "0061_expenses_inventory_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791472650011,
+      "tag": "0062_venues",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1791472651933,
+      "tag": "0063_venues_backfill",
+      "breakpoints": true
     }
   ]
 }

@@ -33,6 +33,7 @@ export default async function EditGroupPage({ params }: PageProps<"/[slug]/grupo
           name: group.name,
           disciplineId: group.disciplineId,
           levelId: group.levelId ?? "",
+          venueId: group.venueId ?? options.venues[0]?.id ?? "",
           capacity: group.capacity,
           defaultFeePlanId: group.defaultFeePlanId ?? "",
           color: group.color,

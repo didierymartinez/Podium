@@ -26,6 +26,7 @@ export type GroupFormOptions = {
   disciplines: { id: string; name: string; levels: { id: string; name: string; position: number }[] }[];
   feePlans: { id: string; name: string; monthlyAmount: number }[];
   coaches: { id: string; name: string }[];
+  venues: { id: string; name: string }[];
 };
 
 export type GroupFormValues = {
@@ -33,6 +34,7 @@ export type GroupFormValues = {
   name: string;
   disciplineId: string;
   levelId: string;
+  venueId: string;
   capacity: number;
   defaultFeePlanId: string;
   color: string;
@@ -125,6 +127,21 @@ export function GroupForm({
                   ))}
                 </Select>
               </Field>
+              {options.venues.length > 1 && (
+                <Field label="Sede" error={error("venueId")}>
+                  <Select
+                    name="venueId"
+                    value={values.venueId}
+                    onChange={(e) => set("venueId", e.target.value)}
+                  >
+                    {options.venues.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
               <Field label="Cupo máximo" error={error("capacity")}>
                 <Input
                   name="capacity"
