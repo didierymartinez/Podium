@@ -43,7 +43,7 @@
    - Si algo bloquea (credenciales, decisión del producto, asesoría legal): etiqueta `bloqueado` y comentario con lo que se necesita y de quién.
 
 3. **Al terminar**
-   - Verificar: `pnpm lint && pnpm typecheck && pnpm test` y, si hay interfaz, prueba en el navegador (escritorio y celular).
+   - Verificar: `pnpm lint && pnpm typecheck && pnpm test` y, si hay interfaz, `pnpm build && pnpm test:e2e` con una prueba nueva o ajustada en `e2e/` (escritorio y celular).
    - Comentario de **cierre** con la plantilla de la sección 3.
    - Cerrar el issue como completado y quitar `en-progreso`. Si un commit en la rama por defecto incluye `Closes #N`, GitHub lo cierra automáticamente; igual se deja el comentario de cierre.
    - Revisar la épica: si todas sus tareas están cerradas, cerrarla con un resumen.

@@ -16,7 +16,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - La lógica de negocio vive en `src/modules/<módulo>` y recibe la base de datos por parámetro para poder probarla; las páginas y server actions solo orquestan.
 - Reglas de portabilidad (`docs/ARQUITECTURA_Y_MIGRACION.md`): runtime Node, nada de productos exclusivos de Vercel, tokens de Firebase verificados con `jose`.
 - Cache Components está desactivado (`next.config.ts`): la app es casi toda dinámica y autenticada.
-- Antes de terminar: `pnpm lint && pnpm typecheck && pnpm test`.
+- Antes de terminar: `pnpm lint && pnpm typecheck && pnpm test`; si hay cambios de interfaz, además `pnpm build && pnpm test:e2e` y agregar o ajustar la prueba en `e2e/`.
 
 ## Flujo de trabajo obligatorio: GitHub Issues
 

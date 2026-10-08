@@ -42,6 +42,7 @@ Flujo disponible: **registro → crear escuela (prueba de 30 días con plantilla
 | `pnpm dev` | Servidor de desarrollo |
 | `pnpm lint` / `pnpm typecheck` | ESLint / TypeScript |
 | `pnpm test` | Pruebas (las de integración requieren `TEST_DATABASE_URL`) |
+| `pnpm build && pnpm test:e2e` | Pruebas de punta a punta con Playwright (escritorio y celular) contra el build standalone |
 | `pnpm db:generate` | Genera una migración a partir de `src/db/schema.ts` |
 | `pnpm db:migrate` | Aplica migraciones (usa `MIGRATIONS_DATABASE_URL`) |
 | `pnpm build` | Build de producción (`output: "standalone"`) |
