@@ -174,6 +174,8 @@ export type SchoolSettings = {
   attendance?: Record<string, unknown>;
   /** Insignias desactivadas por la escuela (§10). */
   badges?: { disabled?: string[] };
+  /** Formulario público de pre-inscripción (ADM-19). */
+  signup?: { enabled?: boolean; intro?: string };
 };
 
 export const schoolMemberships = pgTable(
