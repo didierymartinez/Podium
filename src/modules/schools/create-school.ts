@@ -1,3 +1,4 @@
+import { DEFAULT_DOCUMENT_TYPES } from "@/modules/documents/documents";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { pgErrorCode, runInTenant, type Database } from "@/db/rls";
@@ -5,6 +6,7 @@ import {
   ageCategories,
   auditLogs,
   disciplines,
+  documentTypes,
   levels,
   schoolMemberships,
   schools,
@@ -91,6 +93,8 @@ export async function createSchool(
       await tx
         .insert(ageCategories)
         .values(SKATING_AGE_CATEGORIES.map((category, i) => ({ schoolId, ...category, position: i + 1 })));
+
+      await tx.insert(documentTypes).values(DEFAULT_DOCUMENT_TYPES.map((t) => ({ schoolId, ...t })));
 
       await tx.insert(subscriptions).values({
         schoolId,

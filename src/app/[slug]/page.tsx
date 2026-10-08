@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, Layers, Sparkles, Wallet } from "lucide-react";
+import { CalendarDays, Clock, FileWarning, Layers, Sparkles, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
@@ -7,6 +7,9 @@ import { db } from "@/db/client";
 import { addDays, dateRange, formatLongDate, isoDateOf, startOfWeek, todayIn } from "@/lib/dates";
 import { holidaysBetween } from "@/lib/holidays-co";
 import { listSessions } from "@/modules/attendance/sessions";
+import { certificationAlerts } from "@/modules/coaches/certifications";
+import { documentAlerts } from "@/modules/documents/documents";
+import { DOCUMENT_STATUS_LABELS } from "@/modules/documents/status";
 import { closureOn, listClosures } from "@/modules/calendar/closures";
 import { nextGenerationDate } from "@/modules/billing/schedule";
 import { readBillingPolicy } from "@/modules/billing/policy";
@@ -34,12 +37,14 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const boardFrom = startOfWeek(today);
   const boardTo = addDays(boardFrom, 13);
   await ensureSessions(school.id, school.timezone);
-  const [structure, steps, allGroups, boardSessions, closures] = await Promise.all([
+  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts] = await Promise.all([
     getSportsStructure(db, school.id),
     getSetupSteps(db, school),
     listGroups(db, school.id),
     listSessions(db, school.id, { from: boardFrom, to: boardTo }),
     listClosures(db, school.id, boardFrom, boardTo),
+    documentAlerts(db, school.id, today),
+    certificationAlerts(db, school.id, today),
   ]);
   const marks = new Map<string, BoardMark>();
   for (const [date, name] of holidaysBetween(boardFrom, boardTo))
@@ -146,6 +151,59 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
           />
         )}
       </Card>
+
+      {(docAlerts.length > 0 || certAlerts.length > 0) && (
+        <Card>
+          <SectionTitle action={<FileWarning className="size-4 text-danger" />}>
+            Documentos por revisar
+          </SectionTitle>
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" aria-label="Documentos por revisar">
+            {[
+              ...docAlerts.map((a) => ({
+                key: `${a.athleteId}-${a.document}`,
+                href: `/${school.slug}/alumnos/${a.athleteId}`,
+                who: a.name,
+                what: a.document,
+                status: a.status,
+                expiresOn: a.expiresOn,
+              })),
+              ...certAlerts.map((a) => ({
+                key: `${a.coachId}-${a.name}`,
+                href: `/${school.slug}/profesores/${a.coachId}`,
+                who: `Prof. ${a.coachName}`,
+                what: a.name,
+                status: a.status,
+                expiresOn: a.expiresOn,
+              })),
+            ]
+              .slice(0, 9)
+              .map((a) => (
+                <li key={a.key}>
+                  <Link
+                    href={a.href}
+                    className="flex items-center gap-3 rounded-2xl bg-canvas px-3 py-2 hover:bg-muted"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{a.who}</span>
+                      <span className="block truncate text-xs text-ink-soft">
+                        {a.what}
+                        {a.expiresOn && ` · ${formatLongDate(a.expiresOn)}`}
+                      </span>
+                    </span>
+                    <Chip
+                      tone={a.status === "expiring" ? "sun" : a.status === "expired" ? "danger" : "neutral"}
+                    >
+                      {DOCUMENT_STATUS_LABELS[a.status]}
+                    </Chip>
+                  </Link>
+                </li>
+              ))}
+          </ul>
+          {docAlerts.length + certAlerts.length > 9 && (
+            <p className="mt-3 text-sm text-ink-soft">Y {docAlerts.length + certAlerts.length - 9} más.</p>
+          )}
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>

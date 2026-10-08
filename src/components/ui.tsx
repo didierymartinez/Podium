@@ -147,7 +147,31 @@ export function initials(name: string) {
 }
 
 /** Avatar con iniciales y color estable por nombre. */
-export function Avatar({ name, size = 40, className }: { name: string; size?: number; className?: string }) {
+export function Avatar({
+  name,
+  size = 40,
+  className,
+  src,
+}: {
+  name: string;
+  size?: number;
+  className?: string;
+  /** Foto (URL interna firmada); si no hay, iniciales. */
+  src?: string | null;
+}) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className={cn("shrink-0 rounded-full object-cover ring-2 ring-white", className)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   const color = AVATAR_COLORS[hash % AVATAR_COLORS.length];

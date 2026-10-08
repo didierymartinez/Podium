@@ -1,6 +1,6 @@
 "use client";
 
-import { Building, CalendarDays, Wallet } from "lucide-react";
+import { Building, CalendarDays, FileText, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
@@ -11,6 +11,7 @@ export function SettingsTabs({ slug }: { slug: string }) {
     { href: `/${slug}/configuracion`, label: "Perfil", icon: Building },
     { href: `/${slug}/configuracion/cobros`, label: "Cobros", icon: Wallet },
     { href: `/${slug}/configuracion/calendario`, label: "Calendario", icon: CalendarDays },
+    { href: `/${slug}/configuracion/documentos`, label: "Documentos", icon: FileText },
   ];
   return (
     <nav className="flex flex-wrap gap-1.5" aria-label="Configuración">

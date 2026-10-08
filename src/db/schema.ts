@@ -13,6 +13,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 const timestamps = {
@@ -70,6 +71,15 @@ export const invitationStatusEnum = pgEnum("invitation_status", ["PENDING", "ACC
 export const coachRoleEnum = pgEnum("coach_role", ["HEAD", "ASSISTANT"]);
 export const sessionStatusEnum = pgEnum("session_status", ["SCHEDULED", "CANCELED"]);
 export const sessionSourceEnum = pgEnum("session_source", ["SCHEDULE", "EXTRA"]);
+export const fileKindEnum = pgEnum("file_kind", [
+  "SCHOOL_LOGO",
+  "ATHLETE_PHOTO",
+  "ATHLETE_DOCUMENT",
+  "COACH_CERTIFICATE",
+  "PAYMENT_PROOF",
+]);
+export const fileStatusEnum = pgEnum("file_status", ["PENDING", "READY"]);
+export const imageConsentEnum = pgEnum("image_consent", ["GRANTED", "DENIED"]);
 export const attendanceStatusEnum = pgEnum("attendance_status", ["PRESENT", "LATE", "ABSENT", "EXCUSED"]);
 export const withdrawalReasonEnum = pgEnum("withdrawal_reason", [
   "ECONOMIC",
@@ -142,6 +152,7 @@ export const schools = pgTable("schools", {
   currency: text("currency").notNull().default("COP"),
   settings: jsonb("settings").$type<SchoolSettings>().notNull(),
   commsEnabledAt: timestamp("comms_enabled_at", { withTimezone: true }),
+  logoFileId: uuid("logo_file_id").references((): AnyPgColumn => files.id, { onDelete: "set null" }),
   ...timestamps,
 });
 
@@ -300,6 +311,10 @@ export const athletes = pgTable(
     notes: text("notes"),
     /** Se llena cuando el alumno (≥ 14 años o adulto) acepta su invitación. */
     userId: uuid("user_id").references(() => users.id),
+    photoFileId: uuid("photo_file_id").references((): AnyPgColumn => files.id, { onDelete: "set null" }),
+    /** Autorización de uso de imagen (ADM-71), separada de los demás consentimientos. */
+    imageConsent: imageConsentEnum("image_consent"),
+    imageConsentAt: timestamp("image_consent_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
@@ -571,4 +586,112 @@ export const attendance = pgTable(
     uniqueIndex("attendance_session_athlete_uq").on(t.sessionId, t.athleteId),
     index("attendance_athlete_idx").on(t.athleteId),
   ],
+);
+
+/** Archivo en el almacenamiento (R2/S3/disco). Solo se sirve con URL firmada temporal. */
+export const files = pgTable(
+  "files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references((): AnyPgColumn => schools.id, { onDelete: "cascade" }),
+    kind: fileKindEnum("kind").notNull(),
+    storageKey: text("storage_key").notNull().unique(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    originalName: text("original_name").notNull(),
+    status: fileStatusEnum("status").notNull().default("PENDING"),
+    uploadedByUserId: uuid("uploaded_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("files_school_idx").on(t.schoolId, t.kind)],
+);
+
+/** Documentos que la escuela pide a cada alumno (ADM-17). */
+export const documentTypes = pgTable(
+  "document_types",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    required: boolean("required").notNull().default(true),
+    /** Meses de vigencia desde la fecha de expedición; null = no vence. */
+    validityMonths: smallint("validity_months"),
+    active: boolean("active").notNull().default(true),
+    position: smallint("position").notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("document_types_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const athleteDocuments = pgTable(
+  "athlete_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    documentTypeId: uuid("document_type_id")
+      .notNull()
+      .references(() => documentTypes.id, { onDelete: "cascade" }),
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    issuedOn: date("issued_on").notNull(),
+    expiresOn: date("expires_on"),
+    notes: text("notes"),
+    receivedByUserId: uuid("received_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("athlete_documents_athlete_type_uq").on(t.athleteId, t.documentTypeId)],
+);
+
+/** Certificaciones de profesores (primeros auxilios, curso de entrenador…). */
+export const coachCertifications = pgTable(
+  "coach_certifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    coachId: uuid("coach_id")
+      .notNull()
+      .references(() => coaches.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    issuedOn: date("issued_on"),
+    expiresOn: date("expires_on"),
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [index("coach_certifications_coach_idx").on(t.coachId)],
+);
+
+/**
+ * Bandeja de avisos por persona (ADM-13, COM-xx). Es la fuente para la campana en la app,
+ * las notificaciones push y los correos; cada canal marca cuándo lo envió.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    href: text("href"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
 );

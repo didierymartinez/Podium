@@ -1,6 +1,7 @@
 import { and, asc, eq, ilike, inArray, or, sql } from "drizzle-orm";
-import { runInTenant, type Database } from "@/db/rls";
-import { athleteGuardians, athletes, guardians } from "@/db/schema";
+import { pgErrorCode, runInTenant, type Database } from "@/db/rls";
+import { athleteGuardians, athletes, auditLogs, guardians } from "@/db/schema";
+import type { GuardianInput } from "./schemas";
 
 export type GuardianListItem = {
   id: string;
@@ -71,4 +72,54 @@ export async function findGuardianByPhone(database: Database, schoolId: string, 
       .where(and(eq(guardians.schoolId, schoolId), eq(guardians.phone, phone))),
   );
   return row ?? null;
+}
+
+/** Acudiente con sus alumnos (ficha del acudiente). */
+export async function getGuardian(database: Database, schoolId: string, guardianId: string) {
+  return runInTenant(database, { schoolId }, async (tx) => {
+    const [guardian] = await tx.select().from(guardians).where(eq(guardians.id, guardianId));
+    if (!guardian) return null;
+    const links = await tx
+      .select({
+        id: athletes.id,
+        firstName: athletes.firstName,
+        lastName: athletes.lastName,
+        relationship: athleteGuardians.relationship,
+        isPayer: athleteGuardians.isPayer,
+      })
+      .from(athleteGuardians)
+      .innerJoin(athletes, eq(athletes.id, athleteGuardians.athleteId))
+      .where(eq(athleteGuardians.guardianId, guardianId))
+      .orderBy(asc(athletes.firstName));
+    return { guardian, athletes: links };
+  });
+}
+
+export type UpdateGuardianResult = { ok: true } | { ok: false; error: "not_found" | "phone_taken" };
+
+/** Edita los datos del acudiente; el celular es único por escuela (índice `guardians_school_phone_uq`). */
+export function updateGuardian(
+  database: Database,
+  ctx: { schoolId: string; actorUserId: string },
+  guardianId: string,
+  input: GuardianInput,
+): Promise<UpdateGuardianResult> {
+  return runInTenant(database, { schoolId: ctx.schoolId }, async (tx): Promise<UpdateGuardianResult> => {
+    const [before] = await tx.select().from(guardians).where(eq(guardians.id, guardianId));
+    if (!before) return { ok: false, error: "not_found" };
+    await tx.update(guardians).set(input).where(eq(guardians.id, guardianId));
+    const changed = (Object.keys(input) as (keyof GuardianInput)[]).filter((k) => before[k] !== input[k]);
+    await tx.insert(auditLogs).values({
+      schoolId: ctx.schoolId,
+      actorUserId: ctx.actorUserId,
+      action: "guardian.updated",
+      entity: "guardian",
+      entityId: guardianId,
+      data: { changed },
+    });
+    return { ok: true };
+  }).catch((err) => {
+    if (pgErrorCode(err) === "23505") return { ok: false as const, error: "phone_taken" as const };
+    throw err;
+  });
 }

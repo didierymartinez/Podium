@@ -6,7 +6,10 @@ import { NoAccess, PageHeader } from "@/components/page-header";
 import { Alert, Avatar, Card, Chip, SectionTitle, Tile } from "@/components/ui";
 import { db } from "@/db/client";
 import { displayPhone } from "@/lib/phone";
+import { listCertifications } from "@/modules/coaches/certifications";
 import { getCoach } from "@/modules/coaches/coaches";
+import { fileHref } from "@/modules/files/files";
+import { todayIn } from "@/lib/dates";
 import { coachScheduleConflicts } from "@/modules/coaches/conflicts";
 import { listGroups } from "@/modules/groups/groups";
 import { describeSchedule } from "@/modules/groups/schedule";
@@ -17,6 +20,7 @@ import { canManageSettings } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../../data";
 import { CoachActiveButton } from "../coach-active-button";
 import { CoachForm } from "../coach-form";
+import { CertificationsCard } from "./certifications-card";
 
 export const metadata: Metadata = { title: "Profesor" };
 
@@ -27,6 +31,7 @@ export default async function CoachPage({ params }: PageProps<"/[slug]/profesore
   if (!/^[0-9a-f-]{36}$/.test(coachId)) notFound();
   const [coach, groups] = await Promise.all([getCoach(db, school.id, coachId), listGroups(db, school.id)]);
   if (!coach) notFound();
+  const certifications = await listCertifications(db, school.id, coach.id, todayIn(school.timezone));
   const name = `${coach.firstName} ${coach.lastName}`;
   const invitation = (await invitationStates(db, school.id, "COACH", [coach])).get(coach.id) ?? "none";
   const conflicts = coachScheduleConflicts(groups).filter((c) => c.coachId === coach.id);
@@ -84,38 +89,54 @@ export default async function CoachPage({ params }: PageProps<"/[slug]/profesore
             hiredOn: coach.hiredOn ?? "",
           }}
         />
-        <Card>
-          <SectionTitle>Grupos</SectionTitle>
-          <ul className="space-y-2.5">
-            {coachGroups.length === 0 && (
-              <Tile className="text-sm text-ink-soft">
-                Sin grupos. Asígnalo desde la edición de un{" "}
-                <Link href={`/${slug}/grupos`} className="text-brand">
-                  grupo
-                </Link>
-                .
-              </Tile>
-            )}
-            {coachGroups.map((g) => (
-              <li key={g.id}>
-                <Link href={`/${slug}/grupos/${g.id}`}>
-                  <Tile className="hover:border-brand/40">
-                    <div className="flex items-center gap-2">
-                      <span className="size-2.5 rounded-full" style={{ background: g.color }} aria-hidden />
-                      <span className="flex-1 font-semibold">{g.name}</span>
-                      <Chip
-                        tone={g.coaches.find((c) => c.id === coach.id)?.role === "HEAD" ? "brand" : "neutral"}
-                      >
-                        {g.coaches.find((c) => c.id === coach.id)?.role === "HEAD" ? "Titular" : "Auxiliar"}
-                      </Chip>
-                    </div>
-                    <p className="mt-1 text-sm text-ink-soft">{describeSchedule(g.schedule)}</p>
-                  </Tile>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <SectionTitle>Grupos</SectionTitle>
+            <ul className="space-y-2.5">
+              {coachGroups.length === 0 && (
+                <Tile className="text-sm text-ink-soft">
+                  Sin grupos. Asígnalo desde la edición de un{" "}
+                  <Link href={`/${slug}/grupos`} className="text-brand">
+                    grupo
+                  </Link>
+                  .
+                </Tile>
+              )}
+              {coachGroups.map((g) => (
+                <li key={g.id}>
+                  <Link href={`/${slug}/grupos/${g.id}`}>
+                    <Tile className="hover:border-brand/40">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full" style={{ background: g.color }} aria-hidden />
+                        <span className="flex-1 font-semibold">{g.name}</span>
+                        <Chip
+                          tone={
+                            g.coaches.find((c) => c.id === coach.id)?.role === "HEAD" ? "brand" : "neutral"
+                          }
+                        >
+                          {g.coaches.find((c) => c.id === coach.id)?.role === "HEAD" ? "Titular" : "Auxiliar"}
+                        </Chip>
+                      </div>
+                      <p className="mt-1 text-sm text-ink-soft">{describeSchedule(g.schedule)}</p>
+                    </Tile>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <CertificationsCard
+            slug={slug}
+            coachId={coach.id}
+            rows={certifications.map((c) => ({
+              id: c.id,
+              name: c.name,
+              issuedOn: c.issuedOn,
+              expiresOn: c.expiresOn,
+              status: c.status,
+              fileUrl: c.fileId ? fileHref(slug, c.fileId) : null,
+            }))}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 "use client";
 
-import { Check, MapPin, MessageCircle, Phone } from "lucide-react";
-import { useActionState, useState } from "react";
+import { Check, MapPin, MessageCircle, Phone, Trash } from "lucide-react";
+import { useActionState, useState, useTransition } from "react";
+import { FileUploadButton } from "@/components/file-upload";
+import { setImageAction } from "../archivos/actions";
 import { FormStatus } from "@/components/form-status";
 import { Button, Card, Field, Input, SectionTitle, Select, cn, initials } from "@/components/ui";
 import { BRAND_COLORS } from "@/modules/schools/brand-colors";
@@ -25,11 +27,14 @@ export function ProfileForm({
   slug,
   initial,
   canEdit,
+  logoUrl,
 }: {
   slug: string;
   initial: ProfileValues;
   canEdit: boolean;
+  logoUrl: string | null;
 }) {
+  const [removing, startRemoving] = useTransition();
   const [state, action, pending] = useActionState<ActionState, FormData>(
     updateProfileAction.bind(null, slug),
     {},
@@ -146,9 +151,36 @@ export function ProfileForm({
                   );
                 })}
               </div>
-              <p className="text-xs text-ink-soft">
-                El logo se podrá subir cuando habilitemos el almacenamiento de archivos.
+            </section>
+
+            <section className="space-y-3">
+              <SectionTitle>Logo</SectionTitle>
+              <p className="-mt-2 text-sm text-ink-soft">
+                PNG, JPG, WEBP o SVG de máximo 2 MB. Mejor cuadrado.
               </p>
+              {canEdit && (
+                <div className="flex flex-wrap items-start gap-2">
+                  <FileUploadButton
+                    slug={slug}
+                    kind="SCHOOL_LOGO"
+                    label={logoUrl ? "Cambiar logo" : "Subir logo"}
+                    onUploaded={(fileId) => setImageAction(slug, { kind: "SCHOOL_LOGO" }, fileId)}
+                  />
+                  {logoUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-10"
+                      disabled={removing}
+                      onClick={() =>
+                        startRemoving(() => void setImageAction(slug, { kind: "SCHOOL_LOGO" }, null))
+                      }
+                    >
+                      <Trash className="size-4" /> Quitar logo
+                    </Button>
+                  )}
+                </div>
+              )}
             </section>
 
             <div className="flex flex-wrap items-center gap-4 border-t border-line pt-5">
@@ -159,13 +191,13 @@ export function ProfileForm({
         </form>
       </Card>
 
-      <ProfilePreview values={values} />
+      <ProfilePreview values={values} logoUrl={logoUrl} />
     </div>
   );
 }
 
 /** Vista previa: así verán las familias la escuela en su app. */
-function ProfilePreview({ values }: { values: ProfileValues }) {
+function ProfilePreview({ values, logoUrl }: { values: ProfileValues; logoUrl: string | null }) {
   return (
     <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
       <div className="rounded-2xl bg-sun/30 px-4 py-3 text-sm">
@@ -175,12 +207,21 @@ function ProfilePreview({ values }: { values: ProfileValues }) {
       <div className="overflow-hidden rounded-[28px] border border-white/70 bg-surface shadow-soft dark:border-line">
         <div className="h-24" style={{ background: values.brandColor }} />
         <div className="-mt-9 px-5 pb-5">
-          <span
-            className="grid size-[72px] place-items-center rounded-2xl text-2xl font-bold text-white ring-4 ring-surface"
-            style={{ background: values.brandColor }}
-          >
-            {initials(values.name || "?")}
-          </span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal, sin optimizador
+            <img
+              src={logoUrl}
+              alt={`Logo de ${values.name}`}
+              className="size-[72px] rounded-2xl bg-surface object-contain ring-4 ring-surface"
+            />
+          ) : (
+            <span
+              className="grid size-[72px] place-items-center rounded-2xl text-2xl font-bold text-white ring-4 ring-surface"
+              style={{ background: values.brandColor }}
+            >
+              {initials(values.name || "?")}
+            </span>
+          )}
           <p className="mt-3 text-lg font-semibold">{values.name || "Nombre de la escuela"}</p>
           {values.legalName && <p className="text-sm text-ink-soft">{values.legalName}</p>}
           <ul className="mt-4 space-y-2 text-sm text-ink-soft">

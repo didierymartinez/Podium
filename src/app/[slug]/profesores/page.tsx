@@ -5,7 +5,9 @@ import { NoAccess, PageHeader } from "@/components/page-header";
 import { Avatar, Card, Chip, buttonClass } from "@/components/ui";
 import { db } from "@/db/client";
 import { displayPhone } from "@/lib/phone";
+import { certificationAlerts } from "@/modules/coaches/certifications";
 import { listCoaches } from "@/modules/coaches/coaches";
+import { todayIn } from "@/lib/dates";
 import { coachScheduleConflicts } from "@/modules/coaches/conflicts";
 import { listGroups } from "@/modules/groups/groups";
 import { InvitationChip } from "@/modules/invitations/components/invitation-chip";
@@ -19,7 +21,11 @@ export default async function CoachesPage({ params }: PageProps<"/[slug]/profeso
   const { slug } = await params;
   const { school, roles } = await getSchoolContext(slug);
   if (!canManageSettings(roles)) return <NoAccess />;
-  const [coaches, groups] = await Promise.all([listCoaches(db, school.id), listGroups(db, school.id)]);
+  const [coaches, groups, certAlerts] = await Promise.all([
+    listCoaches(db, school.id),
+    listGroups(db, school.id),
+    certificationAlerts(db, school.id, todayIn(school.timezone)),
+  ]);
   const invitations = await invitationStates(db, school.id, "COACH", coaches);
   const conflicts = coachScheduleConflicts(groups);
 
@@ -50,6 +56,7 @@ export default async function CoachesPage({ params }: PageProps<"/[slug]/profeso
           {coaches.map((coach) => {
             const name = `${coach.firstName} ${coach.lastName}`;
             const hasConflict = conflicts.some((c) => c.coachId === coach.id);
+            const certAlert = certAlerts.find((a) => a.coachId === coach.id);
             return (
               <li key={coach.id}>
                 <Link href={`/${slug}/profesores/${coach.id}`} className="block h-full">
@@ -70,6 +77,13 @@ export default async function CoachesPage({ params }: PageProps<"/[slug]/profeso
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       <InvitationChip state={invitations.get(coach.id) ?? "none"} />
                       {!coach.active && <Chip>Inactivo</Chip>}
+                      {certAlert && (
+                        <Chip tone={certAlert.status === "expired" ? "danger" : "sun"} dot>
+                          {certAlert.status === "expired"
+                            ? "Certificación vencida"
+                            : "Certificación por vencer"}
+                        </Chip>
+                      )}
                       {hasConflict && (
                         <Chip tone="danger">
                           <TriangleAlert className="size-3.5" /> Cruce de horario

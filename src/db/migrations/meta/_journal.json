@@ -71,6 +71,34 @@
       "when": 1791448865034,
       "tag": "0009_sessions_attendance_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791450269872,
+      "tag": "0010_files_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791450270985,
+      "tag": "0011_files_documents_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791450553608,
+      "tag": "0012_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791450554753,
+      "tag": "0013_notifications_rls_cron",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { MessageCircle, Plus, Star, X } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import { FormStatus } from "@/components/form-status";
@@ -67,7 +68,12 @@ export function GuardiansCard({
             <Tile className="flex flex-wrap items-center gap-3">
               <Avatar name={g.name} size={40} />
               <div className="min-w-[9rem] flex-1">
-                <p className="truncate font-semibold">{g.name}</p>
+                <Link
+                  href={`/${slug}/acudientes/${g.id}`}
+                  className="block truncate font-semibold hover:text-brand"
+                >
+                  {g.name}
+                </Link>
                 <p className="truncate text-sm text-ink-soft">
                   {g.relationship} · {g.displayPhone}
                 </p>

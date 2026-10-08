@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { allVisible } from "@/db/ownership";
 import { pgErrorCode, runInTenant, type Database, type Tx } from "@/db/rls";
 import {
@@ -11,6 +11,7 @@ import {
   guardians,
   relationshipEnum,
 } from "@/db/schema";
+import { familyUserIds, notifyUsers } from "@/modules/notifications/notify";
 import { decryptField, encryptField } from "@/lib/crypto";
 import {
   ADULT_AGE,
@@ -436,5 +437,45 @@ export function getAthlete(database: Database, schoolId: string, athleteId: stri
       guardians: guardianRows,
       enrollments: enrollmentRows,
     };
+  });
+}
+
+/**
+ * ADM-13: las matrículas congeladas vuelven a ACTIVE el día de `frozen_until` (idempotente).
+ * Avisa a las familias con cuenta.
+ */
+export function reactivateFrozenEnrollments(
+  database: Database,
+  school: { id: string; slug: string },
+  today: string,
+) {
+  return runInTenant(database, { schoolId: school.id }, async (tx) => {
+    const due = await tx
+      .update(enrollments)
+      .set({ status: "ACTIVE", frozenUntil: null, statusNotes: null })
+      .where(and(eq(enrollments.status, "FROZEN"), lte(enrollments.frozenUntil, today)))
+      .returning({ id: enrollments.id, athleteId: enrollments.athleteId, groupId: enrollments.groupId });
+    for (const e of due) {
+      await tx.insert(auditLogs).values({
+        schoolId: school.id,
+        actorUserId: null,
+        action: "enrollment.auto_reactivated",
+        entity: "enrollment",
+        entityId: e.id,
+        data: { date: today },
+      });
+      const [athlete] = await tx
+        .select({ firstName: athletes.firstName })
+        .from(athletes)
+        .where(eq(athletes.id, e.athleteId));
+      const [group] = await tx.select({ name: groups.name }).from(groups).where(eq(groups.id, e.groupId));
+      await notifyUsers(tx, school.id, await familyUserIds(tx, [e.athleteId]), {
+        kind: "enrollment.reactivated",
+        title: `${athlete?.firstName ?? "La matrícula"} vuelve a clases`,
+        body: `Terminó el congelamiento: la matrícula en ${group?.name ?? "el grupo"} está activa desde hoy.`,
+        href: `/${school.slug}`,
+      });
+    }
+    return due.length;
   });
 }

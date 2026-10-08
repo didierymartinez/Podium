@@ -64,7 +64,12 @@ export default async function GuardiansPage({ params, searchParams }: PageProps<
                 <Card className="flex h-full items-start gap-3 p-4">
                   <Avatar name={name} size={44} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{name}</p>
+                    <Link
+                      href={`/${slug}/acudientes/${g.id}`}
+                      className="block truncate font-semibold hover:text-brand"
+                    >
+                      {name}
+                    </Link>
                     <p className="text-sm text-ink-soft">{displayPhone(g.phone)}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {g.athletes.map((a) => (

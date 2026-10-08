@@ -12,6 +12,14 @@ const serverSchema = z.object({
   NEXT_PUBLIC_AUTH_PROVIDER: z.enum(["firebase", "dev"]).default("firebase"),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
   ALLOW_DEV_AUTH: z.enum(["true", "false"]).optional(),
+  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+  STORAGE_LOCAL_DIR: z.string().optional(),
+  S3_ENDPOINT: z.url().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

@@ -102,10 +102,10 @@ Migrar no es una meta en sí; hacerlo cuando aparezca **una** de estas señales:
 ## 5. Checklist de portabilidad en el proyecto base
 - [ ] `next.config` con `output: "standalone"`
 - [ ] `Dockerfile` + job de CI que construye la imagen en cada PR
-- [ ] `docker-compose.yml` para desarrollo local (app + Postgres + MinIO)
+- [x] `docker-compose.yml` para desarrollo local (Postgres + MinIO opcional con `--profile s3`)
 - [ ] `.env.example` con todas las variables
 - [ ] Interfaces `AuthProvider`, `Storage`, `Mailer`, `Notifier`, `PaymentProvider`
-- [ ] Endpoints `/api/cron/*` protegidos con `CRON_SECRET` e idempotentes
+- [x] Endpoints `/api/cron/*` protegidos con `CRON_SECRET` e idempotentes (`/api/cron/daily`; en Vercel lo programa `vercel.json`, en un VPS basta `curl -H "Authorization: Bearer $CRON_SECRET"` desde `cron`)
 - [ ] Tabla `users` propia con `firebase_uid`
 - [ ] Script de backup/restauración probado (`pg_dump` → almacenamiento externo)
 

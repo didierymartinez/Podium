@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { displayPhone } from "@/lib/phone";
+import { fileHref } from "@/modules/files/files";
 import { canManageSettings } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../data";
 import { ProfileForm } from "./profile-form";
@@ -14,6 +15,7 @@ export default async function ProfileSettingsPage({ params }: PageProps<"/[slug]
     <ProfileForm
       slug={slug}
       canEdit={canManageSettings(roles)}
+      logoUrl={school.logoFileId ? fileHref(slug, school.logoFileId) : null}
       initial={{
         name: school.name,
         legalName: school.legalName ?? "",

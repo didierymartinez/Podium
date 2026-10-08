@@ -14,7 +14,7 @@ export default async function SettingsLayout({ children, params }: LayoutProps<"
       <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Configuración</h1>
-          <p className="mt-1 text-ink-soft">Datos de la escuela, reglas de cobro y calendario.</p>
+          <p className="mt-1 text-ink-soft">Datos de la escuela, cobros, calendario y documentos.</p>
         </div>
         <SettingsTabs slug={slug} />
       </div>

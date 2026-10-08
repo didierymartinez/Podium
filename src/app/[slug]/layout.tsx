@@ -4,12 +4,16 @@ import { BottomNav, SideRail, TopTabs } from "@/components/school-nav";
 import { TopBar } from "@/components/top-bar";
 import { Chip, LogoMark, buttonClass } from "@/components/ui";
 import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
+import { db } from "@/db/client";
+import { fileHref } from "@/modules/files/files";
+import { unreadCount } from "@/modules/notifications/notify";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
 
 export default async function SchoolLayout({ children, params }: LayoutProps<"/[slug]">) {
   const { slug } = await params;
   const { user, school, roles } = await getSchoolContext(slug);
+  const unread = await unreadCount(db, school.id, user.id);
   const access = {
     manager: canManagePeople(roles),
     admin: canManageSettings(roles),
@@ -26,6 +30,7 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <TopBar
           userName={user.name}
+          notifications={{ href: `/${school.slug}/notificaciones`, unread }}
           actions={
             access.manager && (
               <span className="hidden sm:block">
@@ -39,6 +44,14 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
           <div className="shrink-0 md:hidden">
             <LogoMark />
           </div>
+          {school.logoFileId && (
+            // eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal
+            <img
+              src={fileHref(school.slug, school.logoFileId)}
+              alt=""
+              className="hidden size-9 shrink-0 rounded-xl object-contain sm:block"
+            />
+          )}
           <div className="min-w-0">
             <p className="truncate text-sm font-bold leading-tight">{school.name}</p>
             {daysLeft !== null && (

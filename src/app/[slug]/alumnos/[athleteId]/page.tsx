@@ -4,11 +4,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { NoAccess, PageHeader } from "@/components/page-header";
-import { Avatar, Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
+import { Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
 import { db } from "@/db/client";
 import { formatLongDate, todayIn } from "@/lib/dates";
 import { displayPhone } from "@/lib/phone";
 import { getAthlete } from "@/modules/athletes/athletes";
+import { listAthleteDocuments } from "@/modules/documents/documents";
+import { fileHref } from "@/modules/files/files";
 import { invitationStates } from "@/modules/invitations/invitations";
 import { ageOn } from "@/modules/athletes/enrollment-status";
 import { DOCUMENT_TYPE_LABELS, RELATIONSHIP_LABELS } from "@/modules/athletes/schemas";
@@ -18,7 +20,9 @@ import { getSportsStructure } from "@/modules/schools/queries";
 import { getSchoolContext } from "../../data";
 import { loadEnrollmentOptions } from "../options";
 import { EnrollmentCard } from "./enrollment-card";
+import { DocumentsCard } from "./documents-card";
 import { GuardiansCard } from "./guardians-card";
+import { PhotoEditor } from "./photo-editor";
 
 export const metadata: Metadata = { title: "Alumno" };
 
@@ -43,6 +47,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
+  const documents = await listAthleteDocuments(db, school.id, athleteId, today);
   const age = ageOn(athlete.birthDate, today);
   const category = findAgeCategory(
     sportsAge(athlete.birthDate, Number(today.slice(0, 4))),
@@ -56,7 +61,12 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
         back={{ href: `/${slug}/alumnos`, label: "Alumnos" }}
         title={
           <span className="flex items-center gap-4">
-            <Avatar name={name} size={56} />
+            <PhotoEditor
+              slug={slug}
+              athleteId={athleteId}
+              name={name}
+              photoUrl={athlete.photoFileId ? fileHref(slug, athlete.photoFileId) : null}
+            />
             {name}
           </span>
         }
@@ -117,6 +127,26 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
         </div>
 
         <div className="space-y-4">
+          <DocumentsCard
+            slug={slug}
+            athleteId={athleteId}
+            today={today}
+            imageConsent={athlete.imageConsent}
+            rows={documents.map((d) => ({
+              typeId: d.type.id,
+              name: d.type.name,
+              required: d.type.required,
+              validityMonths: d.type.validityMonths,
+              status: d.status,
+              document: d.document && {
+                id: d.document.id,
+                issuedOn: d.document.issuedOn,
+                expiresOn: d.document.expiresOn,
+                notes: d.document.notes,
+                fileUrl: d.document.fileId ? fileHref(slug, d.document.fileId) : null,
+              },
+            }))}
+          />
           <Card>
             <SectionTitle>Datos personales</SectionTitle>
             <ul className="space-y-3 text-sm">
