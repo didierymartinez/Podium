@@ -16,7 +16,7 @@ jobs:
           POSTGRES_DB: podium_test
         ports: ["5432:5432"]
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       MIGRATIONS_DATABASE_URL: postgres://postgres:postgres@localhost:5432/podium_test
       TEST_DATABASE_URL: postgres://podium_app:podium_app_dev@localhost:5432/podium_test
