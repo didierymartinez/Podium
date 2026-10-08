@@ -12,7 +12,8 @@ import { requestDeletion, setWhatsAppConsent } from "@/modules/portal/privacy";
 import { deliverSoon } from "../../deliver";
 import { db } from "@/db/client";
 import { registerPushToken, updatePreferences } from "@/modules/notifications/delivery";
-import { getActionContext, type ActionState } from "../action-context";
+import { confirmFamilyData } from "@/modules/athletes/reenrollment";
+import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
 
 const anyMember = () => true;
 
@@ -105,4 +106,14 @@ export async function requestDeletionAction(
   await requestDeletion(db, member.school, member.user, String(form.get("reason") ?? "").trim());
   deliverSoon(member.school.id);
   return { ok: true, message: "Solicitud enviada a la escuela" };
+}
+
+export async function confirmFamilyDataAction(slug: string): Promise<ActionState> {
+  const member = await getActionContext(slug, anyMember, { allowReadOnly: true });
+  if (!member) return FORBIDDEN_STATE;
+  const n = await asPortalUser(member.user.id, () =>
+    confirmFamilyData(db, member.school.id, member.user.id, new Date()),
+  );
+  refresh();
+  return { ok: true, message: n ? "¡Gracias! Confirmaste tus datos." : "Ya estaban confirmados." };
 }

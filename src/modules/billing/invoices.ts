@@ -355,6 +355,56 @@ export function chargeOneTime(
   });
 }
 
+/**
+ * Cobra un valor por alumno agrupando por responsable de pago (una cuenta por familia), dentro de la
+ * transacción del llamador. Lo usa la re-matrícula anual (ADM-18). Devuelve la cuenta de cada alumno.
+ */
+export async function chargePerAthleteTx(
+  tx: Tx,
+  ctx: Ctx & { slug: string },
+  items: { athleteId: string; firstName: string }[],
+  charge: {
+    kind: "ENROLLMENT" | "ONE_TIME";
+    description: string;
+    amount: number;
+    dueOn: IsoDate;
+    today: IsoDate;
+  },
+  policy: BillingPolicy,
+) {
+  const payerOf = await payers(
+    tx,
+    items.map((i) => i.athleteId),
+  );
+  const byPayer = new Map<string, typeof items>();
+  for (const item of items) {
+    const payer = payerOf.get(item.athleteId);
+    if (payer) byPayer.set(payer.id, [...(byPayer.get(payer.id) ?? []), item]);
+  }
+  const invoiceOf = new Map<string, string>();
+  for (const [guardianId, list] of byPayer) {
+    const invoice = await createInvoice(tx, ctx, {
+      guardianId,
+      period: null,
+      issuedOn: charge.today,
+      dueOn: charge.dueOn < charge.today ? charge.today : charge.dueOn,
+      prefix: policy.invoicePrefix,
+      lines: list.map((a) => ({
+        kind: charge.kind,
+        athleteId: a.athleteId,
+        enrollmentId: null,
+        description: `${charge.description} · ${a.firstName}`,
+        baseAmount: charge.amount,
+        amount: charge.amount,
+      })),
+    });
+    await applyGuardianCredit(tx, ctx, guardianId, policy);
+    await notifyInvoice(tx, ctx, invoice, charge.description);
+    for (const a of list) invoiceOf.set(a.athleteId, invoice.id);
+  }
+  return invoiceOf;
+}
+
 /** Cobro de matrícula al matricular (ADM-12), si la política lo define. Una vez por matrícula. */
 export function chargeEnrollmentFee(
   database: Database,

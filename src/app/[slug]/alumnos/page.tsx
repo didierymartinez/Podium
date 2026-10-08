@@ -1,4 +1,4 @@
-import { MessageCircle, Plus, Search, Upload } from "lucide-react";
+import { MessageCircle, Plus, RefreshCw, Search, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess, PageHeader } from "@/components/page-header";
@@ -60,6 +60,9 @@ export default async function AthletesPage({ params, searchParams }: PageProps<"
         actions={
           <>
             <PeopleTabs slug={slug} active="athletes" />
+            <Link href={`/${slug}/alumnos/rematricula`} className={buttonClass("secondary", "h-10")}>
+              <RefreshCw className="size-4" /> Re-matrícula
+            </Link>
             <Link href={`/${slug}/alumnos/importar`} className={buttonClass("secondary", "h-10")}>
               <Upload className="size-4" /> Importar
             </Link>

@@ -21,6 +21,9 @@ import {
 import { WITHDRAWAL_REASON_LABELS, type WithdrawalReason } from "@/modules/athletes/enrollment-status";
 import { findGuardianByPhone } from "@/modules/athletes/guardians";
 import { clearInjury, reportInjury } from "@/modules/attendance/injuries";
+import { launchCampaign } from "@/modules/athletes/reenrollment";
+import { parseCOP } from "@/lib/money";
+import { deliverSoon } from "../../deliver";
 import { chargeEnrollmentFee } from "@/modules/billing/invoices";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import {
@@ -303,4 +306,33 @@ export async function clearInjuryAction(
   await clearInjury(db, manager.ctx, injuryId, todayIn(manager.school.timezone));
   refresh();
   return { ok: true };
+}
+
+export async function launchReenrollmentAction(
+  slug: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const manager = await people(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  const f = formReader(form);
+  const result = await launchCampaign(
+    db,
+    { ...manager.ctx, slug },
+    { year: Number(f.text("year")), amount: parseCOP(f.text("amount")) ?? 0, dueOn: f.text("dueOn") },
+    todayIn(manager.school.timezone),
+    readBillingPolicy(manager.school.settings.billing),
+  );
+  if (!result.ok)
+    return {
+      ok: false,
+      message:
+        result.error === "exists" ? "Ya hay una re-matrícula para ese año." : "No hay alumnos activos.",
+    };
+  deliverSoon(manager.school.id);
+  refresh();
+  return {
+    ok: true,
+    message: `Re-matrícula lanzada: ${result.athletes} alumnos, ${result.invoices} cuentas`,
+  };
 }

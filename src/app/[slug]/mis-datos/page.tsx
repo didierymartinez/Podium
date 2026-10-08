@@ -12,7 +12,8 @@ import { getMemberHome } from "@/modules/portal/member-home";
 import { CONSENT_LABELS, athleteConsents, listConsents } from "@/modules/portal/privacy";
 import { eq } from "drizzle-orm";
 import { getSchoolContext } from "../data";
-import { ConsentToggles, DeletionRequest, PreferencesForm, ProfileForm } from "./forms";
+import { ConfirmDataButton, ConsentToggles, DeletionRequest, PreferencesForm, ProfileForm } from "./forms";
+import { pendingConfirmations } from "@/modules/athletes/reenrollment";
 
 export const metadata: Metadata = { title: "Mis datos" };
 
@@ -27,6 +28,7 @@ export default async function MyDataPage({ params }: PageProps<"/[slug]/mis-dato
   const whatsapp = consents.some(
     (c) => c.schoolId === school.id && c.document === "WHATSAPP" && !c.revokedAt,
   );
+  const pendingReenrollment = await asPortalUser(user.id, () => pendingConfirmations(db, school.id));
   const kids = await asPortalUser(user.id, () =>
     athleteConsents(
       db,
@@ -41,6 +43,17 @@ export default async function MyDataPage({ params }: PageProps<"/[slug]/mis-dato
         title="Mis datos"
         subtitle="Tu información, tus autorizaciones y qué avisos quieres recibir."
       />
+      {pendingReenrollment.length > 0 && (
+        <Card className="border-brand/30 bg-brand/5" aria-label="Re-matrícula">
+          <SectionTitle>Re-matrícula {pendingReenrollment[0].year}</SectionTitle>
+          <p className="mb-3 text-sm">
+            Revisa tu perfil y los datos de{" "}
+            {[...new Set(pendingReenrollment.map((p) => p.firstName))].join(", ")}. Si algo cambió,
+            actualízalo aquí o avísale a la escuela; luego confirma.
+          </p>
+          <ConfirmDataButton slug={slug} />
+        </Card>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <SectionTitle>Perfil</SectionTitle>

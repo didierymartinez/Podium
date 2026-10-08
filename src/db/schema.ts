@@ -1282,3 +1282,41 @@ export const cashClosings = pgTable(
   },
   (t) => [uniqueIndex("cash_closings_user_day_uq").on(t.schoolId, t.userId, t.date)],
 );
+
+/** Campaña de re-matrícula de un año (ADM-18). */
+export const reenrollmentCampaigns = pgTable(
+  "reenrollment_campaigns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    amount: integer("amount").notNull(),
+    dueOn: date("due_on").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("reenrollment_campaigns_year_uq").on(t.schoolId, t.year)],
+);
+
+/** Estado de cada alumno en la campaña: cobro generado y datos confirmados por la familia. */
+export const reenrollments = pgTable(
+  "reenrollments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => reenrollmentCampaigns.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id").references(() => invoices.id),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    confirmedByUserId: uuid("confirmed_by_user_id").references(() => users.id),
+  },
+  (t) => [uniqueIndex("reenrollments_campaign_athlete_uq").on(t.campaignId, t.athleteId)],
+);

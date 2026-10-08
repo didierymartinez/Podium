@@ -7,6 +7,7 @@ import { Button, Field, Input, cn } from "@/components/ui";
 import type { NotificationPreferences } from "@/modules/notifications/preferences";
 import type { ActionState } from "../action-context";
 import {
+  confirmFamilyDataAction,
   requestDeletionAction,
   savePreferencesAction,
   setImageConsentForKidAction,
@@ -174,5 +175,22 @@ export function DeletionRequest({ slug }: { slug: string }) {
         <FormStatus state={state} />
       </div>
     </form>
+  );
+}
+
+/** Re-matrícula (ADM-18): la familia confirma que sus datos están al día. */
+export function ConfirmDataButton({ slug }: { slug: string }) {
+  const [state, setState] = useState<ActionState>({});
+  const [pending, start] = useTransition();
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button
+        disabled={pending}
+        onClick={() => start(async () => setState(await confirmFamilyDataAction(slug)))}
+      >
+        Mis datos están al día
+      </Button>
+      <FormStatus state={state} />
+    </div>
   );
 }
