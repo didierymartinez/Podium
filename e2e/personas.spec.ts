@@ -51,6 +51,8 @@ test("alumnos: hermanos, cupo, estados de matrícula y responsable de pago", asy
     firstName: "Mateo",
     birthDate: "2016-01-20",
     guardianPhone: phone(),
+    // Otro nombre: dos "Laura Gómez" harían ambiguo el listado de acudientes.
+    guardianName: ["Marta", "Ruiz"],
     group: "Iniciación tarde (lleno)",
   });
   await page.getByRole("button", { name: "Guardar alumno" }).click();

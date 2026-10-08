@@ -10,4 +10,6 @@ export const publicEnv = {
   },
   /** Clave VAPID pública de Firebase Cloud Messaging; sin ella no se ofrecen notificaciones push. */
   vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ?? "",
+  /** Llave pública de Cloudflare Turnstile; sin ella no se pide captcha (desarrollo y pruebas). */
+  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
 };

@@ -25,6 +25,10 @@ const serverSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().optional(),
   /** JSON de la cuenta de servicio de Firebase (FCM HTTP v1). */
   FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
+  /** Secreto de Cloudflare Turnstile; si falta, no se exige captcha. */
+  TURNSTILE_SECRET_KEY: z.string().optional(),
+  /** Intentos de ingreso/registro por IP: "máximo/segundos" (por defecto 20 cada 10 minutos). */
+  AUTH_RATE_LIMIT: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

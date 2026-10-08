@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   time,
@@ -997,6 +998,17 @@ export const emailLog = pgTable("email_log", {
   key: text("key").primaryKey(),
   sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Contadores de intentos por ventana de tiempo (registro e ingreso, #20). Sin datos de escuelas. */
+export const rateLimits = pgTable(
+  "rate_limits",
+  {
+    key: text("key").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull().default(1),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
+);
 
 /** Aviso a la escuela, grupos, niveles, categorías, deudores o personas (COM-10). */
 export const announcements = pgTable(

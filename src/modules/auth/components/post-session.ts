@@ -1,6 +1,6 @@
+type Common = { name?: string; phone?: string; acceptTerms?: boolean; turnstileToken?: string | null };
 export type SessionRequest =
-  | { provider: "firebase"; idToken: string; name?: string; phone?: string; acceptTerms?: boolean }
-  | { provider: "dev"; email: string; name?: string; phone?: string; acceptTerms?: boolean };
+  ({ provider: "firebase"; idToken: string } & Common) | ({ provider: "dev"; email: string } & Common);
 
 export type SessionResponse =
   { ok: true; redirectTo: string } | { ok: false; error: string; message: string };

@@ -7,11 +7,15 @@ import { normalizeColombianMobile } from "@/lib/phone";
 import { verifyFirebaseIdToken } from "@/modules/auth/firebase-token";
 import { endSession, startSession } from "@/modules/auth/session";
 import { signIn, type Identity } from "@/modules/auth/users";
+import { isDisposableEmail } from "@/modules/security/disposable-email";
+import { hitRateLimit, parseLimit } from "@/modules/security/rate-limit";
+import { verifyTurnstile } from "@/modules/security/turnstile";
 
 const common = {
   name: z.string().trim().max(80).optional(),
   phone: z.string().trim().max(30).optional(),
   acceptTerms: z.boolean().default(false),
+  turnstileToken: z.string().max(2048).nullish(),
 };
 
 const bodySchema = z.discriminatedUnion("provider", [
@@ -24,6 +28,8 @@ const ERRORS = {
   email_in_use: "Ya existe una cuenta con ese email. Ingresa con el método que usaste antes.",
 } as const;
 
+const AUTH_LIMIT = { max: 20, windowSeconds: 600 };
+
 function devAuthAllowed() {
   const env = serverEnv();
   return (
@@ -34,11 +40,35 @@ function devAuthAllowed() {
 
 /** Crea la sesión de Podium a partir de una identidad verificada (Firebase o modo dev). */
 export async function POST(request: Request) {
+  const env = serverEnv();
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  // Límite por IP (#20): frena la fuerza bruta y la creación masiva de cuentas.
+  const limit = await hitRateLimit(db, `auth:${ip ?? "sin-ip"}`, parseLimit(env.AUTH_RATE_LIMIT, AUTH_LIMIT));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited", message: "Demasiados intentos. Espera unos minutos e intenta de nuevo." },
+      { status: 429, headers: { "retry-after": String(limit.retryAfter) } },
+    );
+  }
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid_request", message: "Datos inválidos" }, { status: 400 });
   }
   const body = parsed.data;
+
+  if (env.TURNSTILE_SECRET_KEY) {
+    const human = await verifyTurnstile(body.turnstileToken ?? undefined, {
+      secret: env.TURNSTILE_SECRET_KEY,
+      ip,
+    });
+    if (!human) {
+      return NextResponse.json(
+        { error: "captcha", message: "No pudimos verificar que eres una persona. Intenta de nuevo." },
+        { status: 400 },
+      );
+    }
+  }
 
   let identity: Identity;
   if (body.provider === "firebase") {
@@ -71,6 +101,12 @@ export async function POST(request: Request) {
     };
   }
 
+  if (isDisposableEmail(identity.email)) {
+    return NextResponse.json(
+      { error: "disposable_email", message: "Usa un email permanente; no se aceptan emails temporales." },
+      { status: 400 },
+    );
+  }
   identity.name ||= identity.email.split("@")[0];
   if (body.phone) {
     identity.phone = normalizeColombianMobile(body.phone);
@@ -82,7 +118,6 @@ export async function POST(request: Request) {
     }
   }
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const result = await signIn(db, identity, { acceptTerms: body.acceptTerms, ip });
   if (!result.ok) {
     return NextResponse.json({ error: result.error, message: ERRORS[result.error] }, { status: 409 });

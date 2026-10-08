@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Alert, Button, Field, Input } from "@/components/ui";
 import { firebaseAuth, firebaseErrorMessage } from "@/lib/firebase-client";
 import { publicEnv } from "@/lib/public-env";
 import { postSession, type SessionRequest } from "./post-session";
+import { useTurnstile } from "./turnstile";
 
 type Mode = "signup" | "login";
 
@@ -16,9 +17,18 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const turnstileBox = useRef<HTMLDivElement>(null);
+  const getTurnstileToken = useTurnstile(publicEnv.turnstileSiteKey, turnstileBox);
 
   async function finish(request: SessionRequest) {
-    const result = await postSession(request);
+    let turnstileToken: string | null;
+    try {
+      turnstileToken = await getTurnstileToken();
+    } catch {
+      setError("No pudimos verificar que eres una persona. Recarga la página e intenta de nuevo.");
+      return;
+    }
+    const result = await postSession({ ...request, turnstileToken });
     if (!result.ok) {
       setError(result.message);
       return;
@@ -166,6 +176,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
         )}
 
         {error && <Alert>{error}</Alert>}
+        <div ref={turnstileBox} />
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Ingresar"}
