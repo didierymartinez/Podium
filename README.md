@@ -29,7 +29,7 @@ pnpm db:setup                 # crea la base, aplica migraciones y habilita el r
 pnpm dev                      # http://localhost:3000
 ```
 
-Flujo disponible: **registro → crear escuela (prueba de 30 días con plantilla de patinaje) → inicio de la escuela**.
+Flujo disponible: **registro → crear escuela (prueba de 30 días con plantilla de patinaje) → inicio de la escuela → configuración: perfil (NIT, contacto, color) y cobros (tarifas, política de cobro con simulación)**.
 
 ### Comandos
 

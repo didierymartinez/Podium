@@ -43,6 +43,7 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "CANCELED",
 ]);
 export const sportEnum = pgEnum("sport", ["SKATING"]);
+export const documentTypeEnum = pgEnum("document_type", ["NIT", "CC", "CE"]);
 
 // ---------------------------------------------------------------------------
 // Plataforma (sin RLS: la aplicación controla el acceso)
@@ -91,6 +92,14 @@ export const schools = pgTable("schools", {
     .notNull()
     .references(() => users.id),
   estimatedStudents: text("estimated_students"),
+  // Perfil (ADM-01)
+  legalName: text("legal_name"),
+  documentType: documentTypeEnum("document_type"),
+  documentNumber: text("document_number"),
+  phone: text("phone"),
+  contactEmail: text("contact_email"),
+  address: text("address"),
+  brandColor: text("brand_color").notNull().default("#2f6bff"),
   timezone: text("timezone").notNull().default("America/Bogota"),
   currency: text("currency").notNull().default("COP"),
   settings: jsonb("settings").$type<SchoolSettings>().notNull(),
@@ -98,11 +107,9 @@ export const schools = pgTable("schools", {
   ...timestamps,
 });
 
+/** Configuración flexible; se valida con zod en `src/modules/schools/settings.ts`. */
 export type SchoolSettings = {
-  billing: {
-    generationDay: number;
-    dueDay: number;
-  };
+  billing: Record<string, unknown> & { generationDay: number; dueDay: number };
 };
 
 export const schoolMemberships = pgTable(
@@ -207,4 +214,21 @@ export const auditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("audit_logs_school_idx").on(t.schoolId, t.createdAt)],
+);
+
+/** Tarifas mensuales de la escuela (valores en pesos colombianos, enteros). */
+export const feePlans = pgTable(
+  "fee_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    monthlyAmount: integer("monthly_amount").notNull(),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("fee_plans_school_idx").on(t.schoolId)],
 );

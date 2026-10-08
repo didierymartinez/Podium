@@ -11,6 +11,7 @@ import {
   subscriptions,
   venues,
 } from "@/db/schema";
+import { DEFAULT_BILLING_POLICY } from "@/modules/billing/policy";
 import { ESTIMATED_STUDENTS_OPTIONS } from "./options";
 import { SLUG_ERROR_MESSAGES, validateSlug } from "./slug";
 import { DISCIPLINE_CODES, SKATING_AGE_CATEGORIES, SKATING_DISCIPLINES, levelsFor } from "./sport-template";
@@ -61,7 +62,7 @@ export async function createSchool(
         estimatedStudents: input.estimatedStudents,
         status: "TRIAL",
         trialEndsAt: endsAt,
-        settings: { billing: { generationDay: 1, dueDay: 10 } },
+        settings: { billing: DEFAULT_BILLING_POLICY },
       });
 
       await tx.insert(schoolMemberships).values({

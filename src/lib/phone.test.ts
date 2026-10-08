@@ -14,3 +14,11 @@ describe("normalizeColombianMobile", () => {
     expect(normalizeColombianMobile("")).toBeNull();
   });
 });
+
+describe("displayPhone", () => {
+  it("muestra el celular legible", async () => {
+    const { displayPhone } = await import("./phone");
+    expect(displayPhone("+573001234567")).toBe("300 123 4567");
+    expect(displayPhone(null)).toBe("");
+  });
+});

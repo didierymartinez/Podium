@@ -26,11 +26,12 @@ export const SCHOOL_NAV: NavItem[] = [
   { path: "/avisos", label: "Avisos", icon: Megaphone, ready: false },
 ];
 
-const SETTINGS: NavItem = { path: "/configuracion", label: "Configuración", icon: Settings, ready: false };
+const SETTINGS: NavItem = { path: "/configuracion", label: "Configuración", icon: Settings, ready: true };
 
 function useActive(slug: string) {
   const pathname = usePathname();
-  return (item: NavItem) => pathname === `/${slug}${item.path}`;
+  return (item: NavItem) =>
+    item.path === "" ? pathname === `/${slug}` : pathname.startsWith(`/${slug}${item.path}`);
 }
 
 function RailLink({ slug, item, active }: { slug: string; item: NavItem; active: boolean }) {
@@ -110,7 +111,7 @@ export function TopTabs({ slug }: { slug: string }) {
 /** Navegación inferior para celular (PWA). */
 export function BottomNav({ slug }: { slug: string }) {
   const isActive = useActive(slug);
-  const items = [...SCHOOL_NAV.slice(0, 4), SCHOOL_NAV[4]];
+  const items = [...SCHOOL_NAV.slice(0, 4), { ...SETTINGS, label: "Ajustes" }];
   return (
     <nav
       className="fixed inset-x-3 bottom-3 z-20 flex justify-around rounded-full border border-white/70 bg-glass px-2 py-1.5 shadow-soft backdrop-blur md:hidden dark:border-line"

@@ -8,3 +8,9 @@ export function normalizeColombianMobile(input: string): string | null {
   if (digits.length !== 10 || !digits.startsWith("3")) return null;
   return `+57${digits}`;
 }
+
+/** "+573001234567" → "300 123 4567" para mostrar. */
+export function displayPhone(phone: string | null | undefined): string {
+  const digits = phone?.replace(/^\+57/, "") ?? "";
+  return digits.length === 10 ? `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}` : digits;
+}

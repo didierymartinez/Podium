@@ -1,11 +1,14 @@
 import { CalendarDays, Clock, Layers, Sparkles, Wallet } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
 import { WeekBoard } from "@/components/week-board";
 import { db } from "@/db/client";
 import { formatLongDate, isoDateOf, todayIn } from "@/lib/dates";
 import { nextGenerationDate } from "@/modules/billing/schedule";
+import { readBillingPolicy } from "@/modules/billing/policy";
 import { getSportsStructure } from "@/modules/schools/queries";
+import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
 
@@ -15,29 +18,22 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
   return { title: school.name };
 }
 
-const SETUP_STEPS = [
-  { title: "Crear la escuela", detail: "Listo", done: true },
-  { title: "Perfil", detail: "Logo, colores y contacto", done: false },
-  { title: "Cobros", detail: "Tarifas, corte y mora", done: false },
-  { title: "Grupos y horarios", detail: "Niveles, cupos y profesores", done: false },
-  { title: "Profesores", detail: "Invitar al equipo", done: false },
-  { title: "Alumnos", detail: "Uno a uno o desde Excel", done: false },
-  { title: "Pagos en línea", detail: "Conectar Wompi", done: false },
-  { title: "Acudientes", detail: "Invitar y empezar a facturar", done: false },
-];
-
 export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
   const { school, user } = await getSchoolContext(slug);
-  const structure = await getSportsStructure(db, school.id);
+  const [structure, steps] = await Promise.all([
+    getSportsStructure(db, school.id),
+    getSetupSteps(db, school),
+  ]);
+  const billing = readBillingPolicy(school.settings.billing);
 
   const today = todayIn(school.timezone);
-  const done = SETUP_STEPS.filter((s) => s.done).length;
-  const progress = Math.round((done / SETUP_STEPS.length) * 100);
+  const done = steps.filter((s) => s.done).length;
+  const progress = Math.round((done / steps.length) * 100);
   const mainDiscipline = structure.disciplines[0];
   const trialEnd = school.trialEndsAt ? isoDateOf(school.trialEndsAt, school.timezone) : null;
   const daysLeft = school.trialEndsAt ? trialDaysLeft(school.trialEndsAt, new Date()) : null;
-  const firstBilling = nextGenerationDate(today, school.settings.billing.generationDay);
+  const firstBilling = nextGenerationDate(today, billing.generationDay);
 
   return (
     <div className="space-y-4">
@@ -95,15 +91,30 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
             <div className="h-full rounded-full bg-brand" style={{ width: `${progress}%` }} />
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {SETUP_STEPS.map((step) => (
-              <Tile key={step.title} className="p-3">
-                <p className="text-sm font-semibold">{step.title}</p>
-                <p className="mt-0.5 text-xs text-ink-soft">{step.detail}</p>
-                <Chip tone={step.done ? "mint" : "neutral"} dot className="mt-2">
-                  {step.done ? "Hecho" : "Pendiente"}
-                </Chip>
-              </Tile>
-            ))}
+            {steps.map((step) => {
+              const tile = (
+                <Tile
+                  className={
+                    step.href && !step.done
+                      ? "h-full p-3 transition hover:border-brand/40 hover:bg-brand/5"
+                      : "h-full p-3"
+                  }
+                >
+                  <p className="text-sm font-semibold">{step.title}</p>
+                  <p className="mt-0.5 text-xs text-ink-soft">{step.detail}</p>
+                  <Chip tone={step.done ? "mint" : step.href ? "brand" : "neutral"} dot className="mt-2">
+                    {step.done ? "Hecho" : step.href ? "Configurar" : "Próximamente"}
+                  </Chip>
+                </Tile>
+              );
+              return step.href ? (
+                <Link key={step.key} href={step.href} className="block">
+                  {tile}
+                </Link>
+              ) : (
+                <div key={step.key}>{tile}</div>
+              );
+            })}
           </div>
         </Card>
 
@@ -136,8 +147,7 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
                 <div>
                   <p className="font-semibold">Generación de mensualidades</p>
                   <p className="text-sm text-ink-soft">
-                    Día {school.settings.billing.generationDay} de cada mes, vencen el día{" "}
-                    {school.settings.billing.dueDay}.
+                    Día {billing.generationDay} de cada mes, vencen el día {billing.dueDay}.
                   </p>
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-ink-soft">
                     <Clock className="size-3.5" /> Próxima: {formatLongDate(firstBilling)}

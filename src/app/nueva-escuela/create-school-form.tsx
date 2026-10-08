@@ -6,6 +6,7 @@ import { ESTIMATED_STUDENTS_OPTIONS } from "@/modules/schools/options";
 import { slugify } from "@/modules/schools/slug";
 import { SKATING_DISCIPLINES } from "@/modules/schools/sport-template";
 import { checkSlugAction, createSchoolAction, type CreateSchoolState } from "./actions";
+import { submitWithoutReset } from "@/components/use-form-action";
 
 const CITIES = [
   "Bogotá",
@@ -77,7 +78,7 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
     state.errors?.slug?.[0] ?? (shownSlugStatus?.available === false ? shownSlugStatus.message : undefined);
 
   return (
-    <form action={action} className="space-y-5">
+    <form onSubmit={submitWithoutReset(action)} className="space-y-5">
       <Field label="Nombre de la escuela" error={state.errors?.name?.[0]}>
         <Input
           name="name"
