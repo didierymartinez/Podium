@@ -17,6 +17,7 @@ import {
 import { instantOf, type IsoDate } from "@/lib/dates";
 import { documentStatus } from "@/modules/documents/status";
 import { hhmm } from "@/modules/groups/schedule";
+import { activeRestrictions } from "./injuries";
 import { ATTENDANCE_STATUSES, type AttendanceStatus } from "./labels";
 import { attendanceRate, canRecordAttendance, type AttendanceCounts } from "./planning";
 
@@ -35,6 +36,12 @@ export type RosterEntry = {
   documentIssue: "expired" | "missing" | null;
   status: AttendanceStatus | null;
   excuseReason: string | null;
+  /** Restricciones médicas vigentes (DEP-72), p. ej. "Esguince: no saltos". */
+  restrictions: string[];
+  /** Viene a reponer una clase de otro grupo (DEP-24). */
+  makeup: boolean;
+  /** La excusa la reportó el acudiente antes de la clase (DEP-23). */
+  familyReported: boolean;
 };
 
 export type SessionDetail = {
@@ -102,11 +109,13 @@ export async function loadRoster(
     photoFileId: athletes.photoFileId,
     medical: sql<boolean>`${athletes.medicalNotesEncrypted} is not null`,
   };
-  const selected = await tx
-    .select(columns)
+  const linked = await tx
+    .select({ ...columns, makeup: sessionAthletes.makeup })
     .from(sessionAthletes)
     .innerJoin(athletes, eq(athletes.id, sessionAthletes.athleteId))
     .where(eq(sessionAthletes.sessionId, session.id));
+  const selected = linked.filter((a) => !a.makeup);
+  const makeups = linked.filter((a) => a.makeup);
   const [enrolled, records] = await Promise.all([
     selected.length > 0
       ? Promise.resolve(selected.map((a) => ({ ...a, status: "ACTIVE" as const })))
@@ -123,7 +132,12 @@ export async function loadRoster(
             ),
           ),
     tx
-      .select({ ...columns, status: attendance.status, excuseReason: attendance.excuseReason })
+      .select({
+        ...columns,
+        status: attendance.status,
+        excuseReason: attendance.excuseReason,
+        familyReported: attendance.familyReported,
+      })
       .from(attendance)
       .innerJoin(athletes, eq(athletes.id, attendance.athleteId))
       .where(eq(attendance.sessionId, session.id)),
@@ -131,7 +145,12 @@ export async function loadRoster(
 
   const byId = new Map<string, RosterEntry>();
   const monthDay = session.date.slice(5);
-  const base = (a: (typeof enrolled)[number] | (typeof records)[number]) => ({
+  const base = (
+    a: Pick<
+      (typeof records)[number],
+      "athleteId" | "firstName" | "lastName" | "photoFileId" | "birthDate" | "medical"
+    >,
+  ) => ({
     athleteId: a.athleteId,
     firstName: a.firstName,
     lastName: a.lastName,
@@ -142,20 +161,29 @@ export async function loadRoster(
     trial: false,
     status: null,
     excuseReason: null,
+    restrictions: [],
+    makeup: false,
+    familyReported: false,
   });
   for (const e of enrolled) {
     const prev = byId.get(e.athleteId);
     byId.set(e.athleteId, { ...base(e), trial: Boolean(prev?.trial) || e.status === "PRE_ENROLLED" });
+  }
+  for (const m of makeups) {
+    if (!byId.has(m.athleteId)) byId.set(m.athleteId, { ...base(m), makeup: true });
   }
   for (const r of records) {
     byId.set(r.athleteId, {
       ...(byId.get(r.athleteId) ?? base(r)),
       status: r.status,
       excuseReason: r.excuseReason,
+      familyReported: r.familyReported,
     });
   }
 
   const ids = [...byId.keys()];
+  const restrictions = await activeRestrictions(tx, ids, session.date);
+  for (const entry of byId.values()) entry.restrictions = restrictions.get(entry.athleteId) ?? [];
   if (ids.length > 0) {
     const [types, docs] = await Promise.all([
       tx
@@ -236,7 +264,7 @@ export function getSessionDetail(
       tx
         .select({ id: sessionAthletes.id })
         .from(sessionAthletes)
-        .where(eq(sessionAthletes.sessionId, session.id))
+        .where(and(eq(sessionAthletes.sessionId, session.id), eq(sessionAthletes.makeup, false)))
         .limit(1),
     ]);
     const short = (s: { id: string; date: string; startTime: string } | undefined) =>
@@ -358,6 +386,7 @@ export function saveAttendance(
           status: sql`excluded.status`,
           excuseReason: sql`excluded.excuse_reason`,
           recordedByUserId: sql`excluded.recorded_by_user_id`,
+          familyReported: false,
           updatedAt: sql`excluded.updated_at`,
         },
         // Gana el último registro marcado (un envío atrasado no pisa una corrección posterior).

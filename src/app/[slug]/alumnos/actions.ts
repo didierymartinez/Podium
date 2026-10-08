@@ -20,6 +20,7 @@ import {
 } from "@/modules/athletes/athletes";
 import { WITHDRAWAL_REASON_LABELS, type WithdrawalReason } from "@/modules/athletes/enrollment-status";
 import { findGuardianByPhone } from "@/modules/athletes/guardians";
+import { clearInjury, reportInjury } from "@/modules/attendance/injuries";
 import { chargeEnrollmentFee } from "@/modules/billing/invoices";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import {
@@ -270,4 +271,36 @@ export async function lookupGuardianAction(slug: string, phone: string) {
         email: guardian.email ?? "",
       }
     : null;
+}
+
+export async function addInjuryAction(
+  slug: string,
+  athleteId: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const manager = await people(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  const f = formReader(form);
+  const result = await reportInjury(db, manager.ctx, athleteId, {
+    kind: f.text("kind"),
+    restriction: f.text("restriction"),
+    occurredOn: f.text("occurredOn"),
+    clearedOn: f.nullable("clearedOn"),
+  });
+  if (!result.ok) return { ok: false, message: "Revisa los campos marcados", errors: result.errors };
+  refresh();
+  return { ok: true, message: "Novedad registrada" };
+}
+
+export async function clearInjuryAction(
+  slug: string,
+  athleteId: string,
+  injuryId: string,
+): Promise<ActionState> {
+  const manager = await people(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  await clearInjury(db, manager.ctx, injuryId, todayIn(manager.school.timezone));
+  refresh();
+  return { ok: true };
 }

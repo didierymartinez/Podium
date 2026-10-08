@@ -22,9 +22,11 @@ import { findAgeCategory, sportsAge } from "@/modules/schools/age-category";
 import { canManagePeople, canViewHealthData } from "@/modules/schools/permissions";
 import { getSportsStructure } from "@/modules/schools/queries";
 import { getSchoolContext } from "../../data";
+import { listInjuries } from "@/modules/attendance/injuries";
 import { loadEnrollmentOptions } from "../options";
 import { EnrollmentCard } from "./enrollment-card";
 import { DocumentsCard } from "./documents-card";
+import { InjuriesCard } from "./injuries-card";
 import { GuardiansCard } from "./guardians-card";
 import { PhotoEditor } from "./photo-editor";
 
@@ -51,10 +53,11 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats, billing] = await Promise.all([
+  const [documents, stats, billing, injuries] = await Promise.all([
     listAthleteDocuments(db, school.id, athleteId, today),
     attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
     athleteBillingStatus(db, school.id, [athleteId], today),
+    listInjuries(db, school.id, athleteId),
   ]);
   const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
@@ -153,6 +156,19 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
         </div>
 
         <div className="space-y-4">
+          <InjuriesCard
+            slug={slug}
+            athleteId={athleteId}
+            today={today}
+            injuries={injuries.map((i) => ({
+              id: i.id,
+              kind: i.kind,
+              occurredOn: i.occurredOn,
+              restriction: i.restriction,
+              clearedOn: i.clearedOn,
+              active: !i.clearedOn || i.clearedOn > today,
+            }))}
+          />
           <DocumentsCard
             slug={slug}
             athleteId={athleteId}

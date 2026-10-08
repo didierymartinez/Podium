@@ -668,8 +668,32 @@ export const sessionAthletes = pgTable(
     athleteId: uuid("athlete_id")
       .notNull()
       .references(() => athletes.id, { onDelete: "cascade" }),
+    /** Clase de reposición (DEP-24): alumno de otro grupo que se suma a esta clase sin reemplazar la lista. */
+    makeup: boolean("makeup").notNull().default(false),
   },
   (t) => [uniqueIndex("session_athletes_uq").on(t.sessionId, t.athleteId)],
+);
+
+/** Novedades médicas y lesiones (DEP-72): la restricción se muestra en la asistencia hasta el alta. */
+export const injuries = pgTable(
+  "injuries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    occurredOn: date("occurred_on").notNull(),
+    restriction: text("restriction").notNull(),
+    /** Fecha de alta; nula mientras siga vigente. */
+    clearedOn: date("cleared_on"),
+    reportedByUserId: uuid("reported_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("injuries_athlete_idx").on(t.athleteId)],
 );
 
 export const attendance = pgTable(
@@ -688,6 +712,8 @@ export const attendance = pgTable(
     status: attendanceStatusEnum("status").notNull(),
     excuseReason: text("excuse_reason"),
     recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    /** Excusa reportada por el acudiente antes de la clase (DEP-23); el profesor puede corregirla. */
+    familyReported: boolean("family_reported").notNull().default(false),
     ...timestamps,
   },
   (t) => [

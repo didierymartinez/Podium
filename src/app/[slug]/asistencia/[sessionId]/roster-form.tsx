@@ -1,6 +1,17 @@
 "use client";
 
-import { Cake, CheckCheck, CloudUpload, FileWarning, HeartPulse, Sparkles, Wallet } from "lucide-react";
+import {
+  Bandage,
+  Cake,
+  CheckCheck,
+  CloudUpload,
+  FileWarning,
+  HeartPulse,
+  MessageSquareText,
+  Repeat,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { FormStatus } from "@/components/form-status";
@@ -82,7 +93,8 @@ export function RosterForm({
     });
   const set = (id: string, patch: Partial<Mark>) =>
     setMarks((m) => {
-      const next = { ...m, [id]: { ...m[id], ...patch } };
+      const base: Mark = m[id] ?? { status: null, excuseReason: "" };
+      const next = { ...m, [id]: { ...base, ...patch } };
       // Borrador en el celular: si se cierra la página sin guardar, no se pierde lo marcado.
       void idbSet("drafts", sessionId, next).catch(() => {});
       return next;
@@ -188,7 +200,8 @@ export function RosterForm({
         <ul className="divide-y divide-line" aria-label="Alumnos">
           {roster.map((r) => {
             const name = `${r.firstName} ${r.lastName}`;
-            const mark = marks[r.athleteId];
+            // Un alumno agregado después (p. ej. una reposición) aún no tiene marca local.
+            const mark = marks[r.athleteId] ?? { status: r.status, excuseReason: r.excuseReason ?? "" };
             return (
               <li key={r.athleteId} className="flex flex-wrap items-center gap-3 px-1 py-3">
                 <Avatar name={name} size={40} src={r.photoUrl} />
@@ -221,7 +234,30 @@ export function RosterForm({
                         <Sparkles className="size-3.5" /> Preinscrito
                       </span>
                     )}
+                    {r.makeup && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet">
+                        <Repeat className="size-3.5" /> Reposición
+                      </span>
+                    )}
+                    {r.familyReported && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-soft">
+                        <MessageSquareText className="size-3.5" /> Excusa del acudiente
+                        {r.excuseReason ? `: ${r.excuseReason}` : ""}
+                      </span>
+                    )}
                   </p>
+                  {r.restrictions.length > 0 && (
+                    <p className="mt-1 flex flex-wrap gap-1.5" aria-label={`Restricciones de ${name}`}>
+                      {r.restrictions.map((text) => (
+                        <span
+                          key={text}
+                          className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger"
+                        >
+                          <Bandage className="size-3.5" /> {text}
+                        </span>
+                      ))}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-1.5" role="radiogroup" aria-label={`Asistencia de ${name}`}>
                   {ATTENDANCE_STATUSES.map((s) => {

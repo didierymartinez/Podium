@@ -59,7 +59,8 @@ test("aviso fijado, portal de la familia y mis datos", async ({ page, browser })
   // Mis hijos.
   await family.goto(`${school}/mis-hijos`);
   await expect(family.getByRole("heading", { name: "Sofía Restrepo" })).toBeVisible();
-  await expect(family.getByText("Iniciación tarde")).toBeVisible();
+  await expect(family.getByRole("paragraph").filter({ hasText: "Iniciación tarde" })).toBeVisible();
+  await expect(family.getByRole("list", { name: "Próximas clases de Sofía" })).toBeVisible();
   await expect(family.getByText("Certificado médico")).toBeVisible();
 
   // Mis datos: preferencias, uso de imagen y descarga de datos.

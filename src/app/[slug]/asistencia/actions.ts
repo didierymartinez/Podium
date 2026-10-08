@@ -3,7 +3,9 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { saveAttendance, type SaveAttendanceResult } from "@/modules/attendance/attendance";
+import { getSessionDetail, saveAttendance, type SaveAttendanceResult } from "@/modules/attendance/attendance";
+import { addMakeup, removeMakeup } from "@/modules/attendance/family";
+import { reportInjury } from "@/modules/attendance/injuries";
 import {
   createExtraSession,
   extraSessionSchema,
@@ -144,4 +146,64 @@ export async function setSubstituteAction(slug: string, sessionId: string, coach
   return ok
     ? { ok: true, message: coachId ? "Sustituto asignado" : "Sustituto quitado" }
     : { ok: false, message: "No se pudo asignar" };
+}
+
+/** Profesor de la clase o administración (para reposiciones y novedades médicas). */
+async function sessionStaff(slug: string, sessionId: string) {
+  const member = await getActionContext(slug, canTakeAttendance);
+  if (!member) return null;
+  const detail = await getSessionDetail(
+    db,
+    { schoolId: member.school.id, userId: member.user.id },
+    sessionId,
+  );
+  if (!detail || (!canManagePeople(member.roles) && !detail.isGroupCoach)) return null;
+  return { member, detail };
+}
+
+export async function addMakeupAction(
+  slug: string,
+  sessionId: string,
+  athleteId: string,
+): Promise<ActionState> {
+  const staff = await sessionStaff(slug, sessionId);
+  if (!staff) return FORBIDDEN_STATE;
+  const ok = await addMakeup(db, staff.member.ctx, sessionId, athleteId);
+  if (!ok) return { ok: false, message: "No se pudo agregar: el alumno debe tener una matrícula activa." };
+  refresh();
+  return { ok: true, message: "Reposición agregada" };
+}
+
+export async function removeMakeupAction(
+  slug: string,
+  sessionId: string,
+  athleteId: string,
+): Promise<ActionState> {
+  const staff = await sessionStaff(slug, sessionId);
+  if (!staff) return FORBIDDEN_STATE;
+  const ok = await removeMakeup(db, staff.member.ctx, sessionId, athleteId);
+  if (!ok) return { ok: false, message: "Ya tiene asistencia registrada en esta clase." };
+  refresh();
+  return { ok: true };
+}
+
+export async function reportInjuryAction(
+  slug: string,
+  sessionId: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const staff = await sessionStaff(slug, sessionId);
+  if (!staff) return FORBIDDEN_STATE;
+  const athleteId = String(form.get("athleteId") ?? "");
+  if (!staff.detail.roster.some((r) => r.athleteId === athleteId))
+    return { ok: false, errors: { athleteId: ["Elige un alumno de la clase"] } };
+  const result = await reportInjury(db, staff.member.ctx, athleteId, {
+    kind: String(form.get("kind") ?? ""),
+    occurredOn: String(form.get("occurredOn") ?? ""),
+    restriction: String(form.get("restriction") ?? ""),
+  });
+  if (!result.ok) return { ok: false, message: "Revisa los campos marcados", errors: result.errors };
+  refresh();
+  return { ok: true, message: "Novedad registrada" };
 }

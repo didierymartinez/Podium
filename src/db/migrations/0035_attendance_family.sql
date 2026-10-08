@@ -1,0 +1,1 @@
+ALTER TABLE "attendance" ADD COLUMN "family_reported" boolean DEFAULT false NOT NULL;

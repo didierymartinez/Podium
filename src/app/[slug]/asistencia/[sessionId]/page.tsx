@@ -8,6 +8,7 @@ import { db } from "@/db/client";
 import { formatDayTitle, instantOf, todayIn } from "@/lib/dates";
 import { holidaysBetween } from "@/lib/holidays-co";
 import { getSessionDetail } from "@/modules/attendance/attendance";
+import { makeupCandidates } from "@/modules/attendance/family";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { listCoaches } from "@/modules/coaches/coaches";
 import { fileHref } from "@/modules/files/files";
@@ -17,6 +18,7 @@ import { getSchoolContext } from "../../data";
 import { SessionStatusChip } from "../status-chip";
 import { CancelPanel } from "./cancel-panel";
 import { RosterForm } from "./roster-form";
+import { InjuryCard, MakeupCard } from "./session-extras";
 
 export const metadata: Metadata = { title: "Tomar asistencia" };
 
@@ -140,6 +142,38 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
             end: instantOf(session.date, session.endTime, school.timezone).toISOString(),
           }}
         />
+      )}
+
+      {!canceled && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <MakeupCard
+            slug={slug}
+            sessionId={session.id}
+            makeups={session.roster
+              .filter((r) => r.makeup)
+              .map((r) => ({
+                athleteId: r.athleteId,
+                name: `${r.firstName} ${r.lastName}`,
+                recorded: Boolean(r.status),
+              }))}
+            candidates={(await makeupCandidates(db, school.id, session.id)).map((c) => ({
+              id: c.id,
+              name: `${c.firstName} ${c.lastName}`,
+              groupName: c.groupName,
+            }))}
+          />
+          {session.roster.length > 0 && (
+            <InjuryCard
+              slug={slug}
+              sessionId={session.id}
+              today={today}
+              athletes={session.roster.map((r) => ({
+                id: r.athleteId,
+                name: `${r.firstName} ${r.lastName}`,
+              }))}
+            />
+          )}
+        </div>
       )}
 
       {manager && (

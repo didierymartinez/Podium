@@ -8,6 +8,7 @@ import { asPortalUser } from "@/db/portal";
 import { addDays, formatDayTitle, todayIn } from "@/lib/dates";
 import { ageOn } from "@/modules/athletes/enrollment-status";
 import { attendanceHistory, attendanceStats } from "@/modules/attendance/attendance";
+import { upcomingForFamily } from "@/modules/attendance/family";
 import { ATTENDANCE_LABELS } from "@/modules/attendance/labels";
 import { listAthleteDocuments } from "@/modules/documents/documents";
 import { fileHref } from "@/modules/files/files";
@@ -15,7 +16,9 @@ import { describeSchedule } from "@/modules/groups/schedule";
 import { getMemberHome } from "@/modules/portal/member-home";
 import { findAgeCategory, sportsAge } from "@/modules/schools/age-category";
 import { getSportsStructure } from "@/modules/schools/queries";
+import { ensureSessions } from "../asistencia/sync";
 import { getSchoolContext } from "../data";
+import { UpcomingClasses } from "./upcoming-classes";
 
 export const metadata: Metadata = { title: "Mis hijos" };
 
@@ -29,11 +32,16 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
   ]);
   const details = await asPortalUser(user.id, async () => {
     const ids = home.athletes.map((a) => a.id);
-    const stats = await attendanceStats(db, school.id, ids, { from: addDays(today, -30), to: today });
+    await ensureSessions(school.id, school.timezone);
+    const [stats, upcoming] = await Promise.all([
+      attendanceStats(db, school.id, ids, { from: addDays(today, -30), to: today }),
+      upcomingForFamily(db, school.id, ids, today, new Date(), school.timezone),
+    ]);
     return Promise.all(
       home.athletes.map(async (a) => ({
         athlete: a,
         stats: stats.get(a.id),
+        upcoming: upcoming.get(a.id) ?? [],
         history: await attendanceHistory(db, school.id, a.id, 8),
         documents: await listAthleteDocuments(db, school.id, a.id, today),
       })),
@@ -49,7 +57,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
       {details.length === 0 && (
         <Card className="text-center text-sm text-ink-soft">No hay alumnos vinculados a tu cuenta.</Card>
       )}
-      {details.map(({ athlete: a, stats, history, documents }) => {
+      {details.map(({ athlete: a, stats, history, documents, upcoming }) => {
         const name = `${a.firstName} ${a.lastName}`;
         const category = findAgeCategory(
           sportsAge(a.birthDate, Number(today.slice(0, 4))),
@@ -130,6 +138,21 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                   Para entregar o renovar un documento, envíalo a la escuela.
                 </p>
               </div>
+            </div>
+            <div>
+              <SectionTitle>Próximas clases</SectionTitle>
+              <UpcomingClasses
+                slug={slug}
+                athleteId={a.id}
+                firstName={a.firstName}
+                classes={upcoming.map((c) => ({
+                  sessionId: c.sessionId,
+                  label: `${formatDayTitle(c.date)} · ${c.startTime}`,
+                  groupName: c.groupName,
+                  familyReported: c.familyReported,
+                  recorded: c.recorded,
+                }))}
+              />
             </div>
           </Card>
         );
