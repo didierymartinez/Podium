@@ -11,10 +11,12 @@ import { balanceOf } from "@/modules/billing/ledger";
 import { intentByReference, paymentAccountStatus, pendingIntents } from "@/modules/billing/online";
 import { listPayments } from "@/modules/billing/payments";
 import { guardianStatement } from "@/modules/billing/statement";
+import { listTransferReports } from "@/modules/billing/transfer-reports";
 import { guardianIdsOfUser } from "@/modules/portal/family";
 import { asPortalUser } from "@/db/portal";
 import { getSchoolContext } from "../data";
 import { PayOnline } from "./pay-online";
+import { ReportTransfer } from "./report-transfer";
 
 export const metadata: Metadata = { title: "Mis pagos" };
 
@@ -51,12 +53,13 @@ async function MyPayments({
       </div>
     );
   }
-  const [invoices, payments, statement, intents, account] = await Promise.all([
+  const [invoices, payments, statement, intents, account, reports] = await Promise.all([
     listInvoices(db, school.id, { guardianId, today }),
     listPayments(db, school.id, { guardianId }),
     guardianStatement(db, school.id, guardianId),
     pendingIntents(db, school.id, [guardianId]),
     paymentAccountStatus(db, school.id),
+    listTransferReports(db, school.id, { guardianId }),
   ]);
   const returned = reference ? await intentByReference(db, school.id, reference) : null;
   const open = invoices.filter((i) => i.status === "PENDING" || i.status === "PARTIAL");
@@ -143,6 +146,38 @@ async function MyPayments({
               pdf: pdfHref(slug, "cuenta", i.id),
             }))}
           />
+        )}
+      </Card>
+
+      <Card>
+        <SectionTitle>¿Pagaste por transferencia?</SectionTitle>
+        <ReportTransfer
+          slug={slug}
+          today={today}
+          invoices={open.map((i) => ({
+            id: i.id,
+            label: i.period ? `Mensualidad de ${periodLabel(i.period)}` : i.code,
+            balance: balanceOf(i),
+          }))}
+        />
+        {reports.length > 0 && (
+          <ul className="mt-3 divide-y divide-line text-sm" aria-label="Pagos reportados">
+            {reports.slice(0, 6).map(({ report: r }) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-2 py-2">
+                <span className="flex-1">
+                  {METHOD_LABELS[r.method]} del {r.paidOn} · {formatCOP(r.amount)}
+                  {r.rejectReason ? ` · ${r.rejectReason}` : ""}
+                </span>
+                <Chip tone={r.status === "APPROVED" ? "mint" : r.status === "REJECTED" ? "danger" : "sun"}>
+                  {r.status === "APPROVED"
+                    ? "Aprobado"
+                    : r.status === "REJECTED"
+                      ? "Rechazado"
+                      : "En verificación"}
+                </Chip>
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
 

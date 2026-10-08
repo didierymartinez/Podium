@@ -420,7 +420,11 @@ export function chargeEnrollmentFee(
 export async function chargePreviousBalanceTx(
   tx: Tx,
   ctx: Ctx,
-  data: { guardianId: string; items: { athleteId: string; firstName: string; amount: number }[]; today: IsoDate },
+  data: {
+    guardianId: string;
+    items: { athleteId: string; firstName: string; amount: number }[];
+    today: IsoDate;
+  },
   policy: BillingPolicy,
 ) {
   const invoice = await createInvoice(tx, ctx, {

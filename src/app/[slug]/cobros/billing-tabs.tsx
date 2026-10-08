@@ -1,21 +1,29 @@
 "use client";
 
-import { FileText, LayoutDashboard, Receipt } from "lucide-react";
+import { FileText, Inbox, LayoutDashboard, Receipt } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
 
 export function BillingTabs({ slug }: { slug: string }) {
   const pathname = usePathname();
-  const tabs = [
+  const tabs: { href: string; label: string; icon: typeof Inbox; exact?: boolean; exclude?: string }[] = [
     { href: `/${slug}/cobros`, label: "Cartera", icon: LayoutDashboard, exact: true },
     { href: `/${slug}/cobros/cuentas`, label: "Cuentas", icon: FileText },
-    { href: `/${slug}/cobros/pagos`, label: "Pagos", icon: Receipt },
+    {
+      href: `/${slug}/cobros/pagos`,
+      label: "Pagos",
+      icon: Receipt,
+      exclude: `/${slug}/cobros/pagos/por-verificar`,
+    },
+    { href: `/${slug}/cobros/pagos/por-verificar`, label: "Por verificar", icon: Inbox },
   ];
   return (
     <nav className="flex flex-wrap gap-1.5" aria-label="Cobros">
-      {tabs.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href);
+      {tabs.map(({ href, label, icon: Icon, exact, exclude }) => {
+        const active = exact
+          ? pathname === href
+          : pathname.startsWith(href) && !(exclude && pathname.startsWith(exclude));
         return (
           <Link
             key={href}

@@ -253,6 +253,20 @@
       "when": 1791461111234,
       "tag": "0035_attendance_family",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791461966965,
+      "tag": "0036_payment_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791461968341,
+      "tag": "0037_payment_reports_rls",
+      "breakpoints": true
     }
   ]
 }

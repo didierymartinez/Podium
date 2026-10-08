@@ -303,7 +303,12 @@ export const subscriptions = pgTable("subscriptions", {
   ...timestamps,
 });
 
-export const platformInvoiceStatusEnum = pgEnum("platform_invoice_status", ["PENDING", "PAID", "FAILED", "VOID"]);
+export const platformInvoiceStatusEnum = pgEnum("platform_invoice_status", [
+  "PENDING",
+  "PAID",
+  "FAILED",
+  "VOID",
+]);
 
 /** Cobros de Podium a la escuela por su suscripción (#21). */
 export const platformInvoices = pgTable(
@@ -1154,4 +1159,37 @@ export const announcementRecipients = pgTable(
     index("announcement_recipients_announcement_idx").on(t.announcementId),
     index("announcement_recipients_guardian_idx").on(t.guardianId),
   ],
+);
+
+export const paymentReportStatusEnum = pgEnum("payment_report_status", ["PENDING", "APPROVED", "REJECTED"]);
+
+/** Transferencia o consignación reportada por el acudiente, pendiente de verificar (ADM-34). */
+export const paymentReports = pgTable(
+  "payment_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id),
+    amount: integer("amount").notNull(),
+    paidOn: date("paid_on").notNull(),
+    method: paymentMethodEnum("method").notNull(),
+    reference: text("reference"),
+    proofFileId: uuid("proof_file_id")
+      .notNull()
+      .references(() => files.id),
+    /** Cuentas que la familia dice pagar (vacío: las más antiguas primero). */
+    invoiceIds: jsonb("invoice_ids").$type<string[]>().notNull().default([]),
+    status: paymentReportStatusEnum("status").notNull().default("PENDING"),
+    reportedByUserId: uuid("reported_by_user_id").references(() => users.id),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    rejectReason: text("reject_reason"),
+    paymentId: uuid("payment_id").references(() => payments.id),
+    ...timestamps,
+  },
+  (t) => [index("payment_reports_school_idx").on(t.schoolId, t.status)],
 );

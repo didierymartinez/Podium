@@ -22,6 +22,7 @@ import { disconnectPaymentAccount, paymentAccountSchema, savePaymentAccount } fr
 import { manualPaymentSchema, recordPayment, voidPayment } from "@/modules/billing/payments";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import { sendManualReminders } from "@/modules/billing/reminders";
+import { approveTransferReport, rejectTransferReport } from "@/modules/billing/transfer-reports";
 import { wompiProvider } from "@/modules/payments/wompi";
 import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
 import { deliverSoon } from "../../deliver";
@@ -281,6 +282,32 @@ export async function setConceptActiveAction(
   const m = await billing(slug, true);
   if (!m) return ONLY_ADMIN;
   await setConceptActive(db, m.ctx, id, active);
+  refresh();
+  return { ok: true };
+}
+
+export async function approveTransferAction(slug: string, reportId: string): Promise<ActionState> {
+  // Verificar pagos de familias funciona también en solo lectura.
+  const m = await billing(slug, false, true);
+  if (!m) return FORBIDDEN_STATE;
+  const result = await approveTransferReport(db, m.full, reportId, m.policy);
+  if (!result.ok) return { ok: false, message: "Este reporte ya fue revisado o la cuenta cambió." };
+  deliverSoon(m.school.id);
+  refresh();
+  return { ok: true, message: `Pago aprobado: recibo ${result.code}` };
+}
+
+export async function rejectTransferAction(
+  slug: string,
+  reportId: string,
+  reason: string,
+): Promise<ActionState> {
+  const m = await billing(slug, false, true);
+  if (!m) return FORBIDDEN_STATE;
+  if (reason.trim().length < 3) return { ok: false, message: "Escribe el motivo." };
+  const ok = await rejectTransferReport(db, m.full, reportId, reason);
+  if (!ok) return { ok: false, message: "Este reporte ya fue revisado." };
+  deliverSoon(m.school.id);
   refresh();
   return { ok: true };
 }

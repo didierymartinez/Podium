@@ -9,7 +9,10 @@ import { canManagePeople, canManageSettings, type SchoolRole } from "@/modules/s
 import { getActionContext } from "../action-context";
 
 const canUpload = (kind: FileKind) => (roles: readonly SchoolRole[]) =>
-  kind === "SCHOOL_LOGO" ? canManageSettings(roles) : canManagePeople(roles);
+  kind === "SCHOOL_LOGO"
+    ? canManageSettings(roles)
+    : // Las familias suben el soporte de sus transferencias (ADM-34).
+      canManagePeople(roles) || (kind === "PAYMENT_PROOF" && roles.includes("GUARDIAN"));
 
 export type UploadTicket = { ok: true; fileId: string; uploadUrl: string } | { ok: false; message: string };
 
