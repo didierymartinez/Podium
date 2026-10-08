@@ -1,8 +1,13 @@
-import { CalendarCheck, ChevronRight, Clock, MessageCircle, Users, Wallet } from "lucide-react";
+import { ChevronRight, Clock, MessageCircle, Pin, Users, Wallet } from "lucide-react";
 import Link from "next/link";
-import { Avatar, Card, Chip, SectionTitle, Tile } from "@/components/ui";
+import { Avatar, Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
+import { asPortalUser } from "@/db/portal";
+import { formatCOP } from "@/lib/money";
+import { pinnedAnnouncements } from "@/modules/announcements/announcements";
+import { guardianStatement } from "@/modules/billing/statement";
+import { guardianIdsOfUser } from "@/modules/portal/family";
 import { db } from "@/db/client";
-import { addDays, todayIn } from "@/lib/dates";
+import { addDays, formatDayTitle, todayIn } from "@/lib/dates";
 import { attendanceStats } from "@/modules/attendance/attendance";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ENROLLMENT_STATUS_LABELS, ageOn } from "@/modules/athletes/enrollment-status";
@@ -31,6 +36,21 @@ export async function MemberHome({
   );
   const rate = (id: string) => stats.get(id)?.rate ?? null;
   const firstName = user.name.split(" ")[0];
+  const familyGroupIds = [...new Set(home.athletes.flatMap((a) => a.enrollments.map((e) => e.group.id)))];
+  const [pinned, family] = await Promise.all([
+    pinnedAnnouncements(db, school.id, today, user.id),
+    home.athletes.length
+      ? asPortalUser(user.id, async () => {
+          await ensureSessions(school.id, school.timezone);
+          const [guardianId] = await guardianIdsOfUser(db, school.id, user.id);
+          const [statement, upcoming] = await Promise.all([
+            guardianId ? guardianStatement(db, school.id, guardianId) : Promise.resolve(null),
+            listSessions(db, school.id, { from: today, to: addDays(today, 6) }, { groupIds: familyGroupIds }),
+          ]);
+          return { statement, upcoming };
+        })
+      : Promise.resolve(null),
+  ]);
   let todaySessions: Awaited<ReturnType<typeof listSessions>> = [];
   if (home.coachGroups.length > 0) {
     await ensureSessions(school.id, school.timezone);
@@ -43,6 +63,61 @@ export async function MemberHome({
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Hola, {firstName}</h1>
         <p className="mt-1 text-ink-soft">Bienvenido(a) a {school.name}.</p>
       </div>
+
+      {pinned.map((p) => (
+        <Card key={p.id} className="border-sun/60 bg-sun/15 p-5" aria-label="Aviso fijado">
+          <p className="flex items-center gap-2 font-semibold">
+            <Pin className="size-4" /> {p.title}
+          </p>
+          <p className="mt-1 whitespace-pre-line text-sm">{p.body}</p>
+        </Card>
+      ))}
+
+      {family && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <SectionTitle
+              action={
+                <Link href={`/${school.slug}/mis-pagos`} className="text-sm font-semibold text-brand">
+                  Ver pagos
+                </Link>
+              }
+            >
+              Próximo pago
+            </SectionTitle>
+            {family.statement && family.statement.owed > 0 ? (
+              <>
+                <p className="text-3xl font-semibold">{formatCOP(family.statement.owed)}</p>
+                <Link href={`/${school.slug}/mis-pagos`} className={buttonClass("primary", "mt-3 h-10")}>
+                  <Wallet className="size-4" /> Pagar
+                </Link>
+              </>
+            ) : (
+              <p className="text-sm text-ink-soft">Estás al día. ¡Gracias!</p>
+            )}
+          </Card>
+          <Card>
+            <SectionTitle>Próximas clases</SectionTitle>
+            <ul className="space-y-1.5 text-sm" aria-label="Próximas clases">
+              {family.upcoming.slice(0, 6).map((s) => (
+                <li key={s.id} className="flex items-center gap-2">
+                  <span className="size-2.5 rounded-full" style={{ background: s.groupColor }} aria-hidden />
+                  <span
+                    className={
+                      s.status === "CANCELED" ? "flex-1 capitalize line-through" : "flex-1 capitalize"
+                    }
+                  >
+                    {formatDayTitle(s.date)} · {s.startTime}
+                  </span>
+                  <span className="text-ink-soft">{s.groupName}</span>
+                  {s.status === "CANCELED" && <Chip tone="danger">Cancelada</Chip>}
+                </li>
+              ))}
+              {family.upcoming.length === 0 && <li className="text-ink-soft">No hay clases esta semana.</li>}
+            </ul>
+          </Card>
+        </div>
+      )}
 
       {home.coachGroups.length > 0 && (
         <section className="space-y-3">
@@ -190,36 +265,16 @@ export async function MemberHome({
         </Card>
       )}
 
-      <Card>
-        <SectionTitle>Muy pronto en Podium</SectionTitle>
-        <ul className="grid gap-2.5 sm:grid-cols-3">
-          <Soon
-            icon={<CalendarCheck className="size-4" />}
-            text={home.coachGroups.length ? "Tomar asistencia desde el celular" : "Asistencia de cada clase"}
-          />
-          <Soon icon={<Wallet className="size-4" />} text="Pagos en línea y recibos" />
-          <Soon icon={<MessageCircle className="size-4" />} text="Avisos de la escuela" />
-        </ul>
-        {school.phone && (
-          <a
-            href={whatsappLink(school.phone)}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-mint"
-          >
-            <MessageCircle className="size-4" /> Escribir a la escuela por WhatsApp
-          </a>
-        )}
-      </Card>
+      {school.phone && (
+        <a
+          href={whatsappLink(school.phone)}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 px-1 text-sm font-semibold text-mint"
+        >
+          <MessageCircle className="size-4" /> Escribir a la escuela por WhatsApp
+        </a>
+      )}
     </div>
-  );
-}
-
-function Soon({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <li className="flex items-center gap-2.5 rounded-2xl bg-canvas px-3 py-2.5 text-sm">
-      <span className="grid size-8 place-items-center rounded-full bg-brand/10 text-brand">{icon}</span>
-      {text}
-    </li>
   );
 }

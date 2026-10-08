@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { portalUserId } from "./portal";
 import type * as schema from "./schema";
 
 export type Database = PostgresJsDatabase<typeof schema>;
@@ -22,7 +23,8 @@ export function runInTenant<T>(
   return database.transaction(async (tx) => {
     await tx.execute(
       sql`select set_config('app.school_id', ${ctx.schoolId ?? ""}, true),
-                 set_config('app.user_id', ${ctx.userId ?? ""}, true)`,
+                 set_config('app.user_id', ${ctx.userId ?? ""}, true),
+                 set_config('app.portal_user_id', ${portalUserId() ?? ""}, true)`,
     );
     return fn(tx);
   });

@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/db/client";
 import { serverEnv } from "@/env";
-import { runDaily } from "@/modules/cron/daily";
+import { mailer } from "@/lib/mailer";
+import { notifier } from "@/lib/notifier";
+import { createDailyJobs, runDaily } from "@/modules/cron/daily";
 
 /**
  * Tareas diarias (regla de portabilidad #6). Cualquier programador sirve: Vercel Cron, `cron` del VPS,
@@ -15,7 +17,12 @@ export async function GET(request: Request) {
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
     return new Response(null, { status: 401 });
   }
-  const results = await runDaily(db);
+  const appUrl = serverEnv().NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
+  const results = await runDaily(
+    db,
+    new Date(),
+    createDailyJobs({ mailer: mailer(), notifier: notifier(), appUrl }),
+  );
   const failed = results.filter((r) => !r.ok).length;
   return Response.json(
     { ok: failed === 0, schools: results.length, failed, results },

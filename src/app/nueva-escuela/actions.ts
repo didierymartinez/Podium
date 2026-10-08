@@ -1,6 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { mailer } from "@/lib/mailer";
+import { welcomeEmail } from "@/modules/onboarding/emails";
+import { TRIAL_DAYS } from "@/modules/schools/trial";
+import { appUrl } from "../deliver";
 import { z } from "zod";
 import { db } from "@/db/client";
 import { requireVerifiedUser } from "@/modules/auth/session";
@@ -32,6 +37,17 @@ export async function createSchoolAction(
   if (!result.ok) {
     return { errors: { slug: ["Esa URL ya está en uso, elige otra"] }, values };
   }
+  const welcome = welcomeEmail({
+    ownerName: user.name,
+    schoolName: parsed.data.name,
+    url: `${appUrl()}/${result.slug}`,
+    trialDays: TRIAL_DAYS,
+  });
+  after(() =>
+    mailer()
+      .send({ to: user.email, ...welcome })
+      .then(() => undefined),
+  );
   redirect(`/${result.slug}`);
 }
 

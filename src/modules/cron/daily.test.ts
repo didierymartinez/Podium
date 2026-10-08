@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { connectTestDb, testDatabaseUrl } from "@/test/db";
 import { schoolFixture } from "@/test/fixtures";
-import { runDaily } from "./daily";
+import { consoleMailer } from "@/lib/mailer/console";
+import { createDailyJobs, runDaily } from "./daily";
+
+const jobs = createDailyJobs({
+  mailer: consoleMailer({ quiet: true }),
+  notifier: null,
+  appUrl: "http://test",
+});
 
 describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
   let conn: ReturnType<typeof connectTestDb>;
@@ -37,10 +44,10 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
   it("las tareas reales son idempotentes", async () => {
     const f = await schoolFixture(conn.db, "Cron real");
     const only = (r: Awaited<ReturnType<typeof runDaily>>) => r.find((x) => x.school === f.school.slug);
-    const first = only(await runDaily(conn.db, new Date(), undefined, [f.school.id]));
+    const first = only(await runDaily(conn.db, new Date(), jobs, [f.school.id]));
     expect(first?.ok).toBe(true);
     expect(first?.totals?.sessionsCreated).toBeGreaterThan(0);
-    expect(only(await runDaily(conn.db, new Date(), undefined, [f.school.id]))?.totals).toEqual({
+    expect(only(await runDaily(conn.db, new Date(), jobs, [f.school.id]))?.totals).toEqual({
       reactivatedEnrollments: 0,
       sessionsCreated: 0,
       attendanceReminders: 0,
@@ -49,6 +56,9 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
       lateFees: 0,
       onlinePaymentsReconciled: 0,
       paymentReminders: 0,
+      announcementsSent: 0,
+      trialEmails: 0,
+      notificationsDelivered: 0,
     });
   });
 });

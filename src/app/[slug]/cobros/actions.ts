@@ -24,6 +24,7 @@ import { readBillingPolicy } from "@/modules/billing/policy";
 import { sendManualReminders } from "@/modules/billing/reminders";
 import { wompiProvider } from "@/modules/payments/wompi";
 import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
+import { deliverSoon } from "../../deliver";
 import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
 
 const ONLY_ADMIN: ActionState = {
@@ -53,6 +54,7 @@ export async function generateMonthAction(slug: string, period: string): Promise
   if (!m) return FORBIDDEN_STATE;
   if (!/^\d{4}-\d{2}$/.test(period)) return { ok: false, message: "Periodo inválido" };
   const result = await generateMonth(db, m.full, period, m.today, m.policy);
+  deliverSoon(m.school.id);
   refresh();
   return {
     ok: true,
@@ -88,6 +90,7 @@ export async function oneTimeChargeAction(
           : "Algún alumno no pertenece a la escuela.",
     };
   }
+  deliverSoon(m.school.id);
   redirect(
     result.invoiceIds.length === 1
       ? `/${slug}/cobros/cuentas/${result.invoiceIds[0]}`
@@ -125,6 +128,7 @@ export async function recordPaymentAction(
     };
     return { ok: false, message: messages[result.error] };
   }
+  deliverSoon(m.school.id);
   redirect(`/${slug}/cobros/pagos/${result.paymentId}`);
 }
 
@@ -204,6 +208,7 @@ export async function sendRemindersAction(slug: string, guardianIds: string[]): 
   const m = await billing(slug);
   if (!m) return FORBIDDEN_STATE;
   const result = await sendManualReminders(db, m.school, guardianIds.slice(0, 500), new Date());
+  deliverSoon(m.school.id);
   if (result.outsideHours) {
     return {
       ok: false,

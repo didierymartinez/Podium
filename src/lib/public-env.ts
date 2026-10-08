@@ -6,5 +6,8 @@ export const publicEnv = {
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
   },
+  /** Clave VAPID pública de Firebase Cloud Messaging; sin ella no se ofrecen notificaciones push. */
+  vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ?? "",
 };

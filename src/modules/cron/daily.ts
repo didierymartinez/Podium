@@ -11,6 +11,12 @@ import { reconcileIntents } from "@/modules/billing/online";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import { sendPaymentReminders } from "@/modules/billing/reminders";
 import { wompiProvider } from "@/modules/payments/wompi";
+import type { Mailer } from "@/lib/mailer/types";
+import type { Notifier } from "@/lib/notifier/types";
+import { deliverPending } from "@/modules/notifications/delivery";
+import { sendTrialEmails } from "@/modules/onboarding/emails";
+import { sendScheduledAnnouncements } from "@/modules/announcements/announcements";
+import { commsEnabled } from "@/modules/schools/comms";
 import { cronSchools, type CronSchool } from "./schools";
 
 export type DailyJob = (database: Database, school: CronSchool, today: string, now: Date) => Promise<number>;
@@ -29,7 +35,9 @@ const systemCtx = (school: CronSchool) => ({ schoolId: school.id, actorUserId: n
  * Tareas diarias por escuela, en este orden. Todas son idempotentes: correrlas dos veces el mismo día
  * no duplica nada. Se programan a las 9:00 a. m. (hora de Bogotá) por el horario de la Ley 2300.
  */
-export const DAILY_JOBS: Record<string, DailyJob> = {
+export type JobDeps = { mailer: Mailer; notifier: Notifier | null; appUrl: string };
+
+export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
   reactivatedEnrollments: (db, school, today) => reactivateFrozenEnrollments(db, school, today),
   sessionsCreated: async (db, school, today) => (await syncSessions(db, school, today)).created,
   attendanceReminders: (db, school, today) => remindMissingAttendance(db, school, today),
@@ -37,6 +45,7 @@ export const DAILY_JOBS: Record<string, DailyJob> = {
     notifyAtRisk(db, school, today, readAttendancePolicy((await settingsOf(db, school.id))?.attendance)),
   // Desde el día de generación crea las mensualidades que falten (incluye ingresos a mitad de mes).
   invoicesGenerated: async (db, school, today) => {
+    if (!(await commsEnabled(db, school.id))) return 0;
     const policy = await billingPolicyOf(db, school.id);
     if (Number(today.slice(8, 10)) < policy.generationDay) return 0;
     return (await generateMonth(db, systemCtx(school), today.slice(0, 7), today, policy)).invoices;
@@ -45,14 +54,18 @@ export const DAILY_JOBS: Record<string, DailyJob> = {
     addLateFees(db, systemCtx(school), today, await billingPolicyOf(db, school.id)),
   onlinePaymentsReconciled: async (db, school, _today, now) =>
     reconcileIntents(db, wompiProvider(), school, now, await billingPolicyOf(db, school.id)),
-  paymentReminders: (db, school, _today, now) => sendPaymentReminders(db, school, now),
-};
+  paymentReminders: async (db, school, _today, now) =>
+    (await commsEnabled(db, school.id)) ? sendPaymentReminders(db, school, now) : 0,
+  announcementsSent: (db, school, _today, now) => sendScheduledAnnouncements(db, school, now),
+  trialEmails: (db, school, _today, now) => sendTrialEmails(db, deps.mailer, school, now, deps.appUrl),
+  notificationsDelivered: (db, school, _today, now) => deliverPending(db, deps, school.id, now),
+});
 
 /** Corre las tareas en cada escuela; un error en una escuela no detiene a las demás. */
 export async function runDaily(
   database: Database,
-  now = new Date(),
-  jobs = DAILY_JOBS,
+  now: Date,
+  jobs: Record<string, DailyJob>,
   /** Para pruebas: limitar a estas escuelas. */
   only?: string[],
 ) {

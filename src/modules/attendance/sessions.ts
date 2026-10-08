@@ -106,6 +106,8 @@ export async function syncInTx(tx: Tx, school: { id: string; timezone: string },
   return { created: missing.length, removed: stale.length };
 }
 
+const NONE = "00000000-0000-0000-0000-000000000000";
+
 export type SessionItem = {
   id: string;
   groupId: string;
@@ -131,7 +133,7 @@ export function listSessions(
   database: Database,
   schoolId: string,
   range: { from: IsoDate; to: IsoDate },
-  filter: { coachUserId?: string } = {},
+  filter: { coachUserId?: string; groupIds?: string[] } = {},
 ): Promise<SessionItem[]> {
   return runInTenant(database, { schoolId }, async (tx) => {
     let mine: SQL | undefined;
@@ -176,7 +178,16 @@ export function listSessions(
       .from(sessions)
       .innerJoin(groups, eq(groups.id, sessions.groupId))
       .leftJoin(attendance, eq(attendance.sessionId, sessions.id))
-      .where(and(gte(sessions.date, range.from), lte(sessions.date, range.to), mine))
+      .where(
+        and(
+          gte(sessions.date, range.from),
+          lte(sessions.date, range.to),
+          mine,
+          filter.groupIds
+            ? inArray(sessions.groupId, filter.groupIds.length ? filter.groupIds : [NONE])
+            : undefined,
+        ),
+      )
       .groupBy(sessions.id, groups.id)
       .orderBy(asc(sessions.date), asc(sessions.startTime), asc(groups.name));
     return rows.map((r) => ({ ...r, startTime: hhmm(r.startTime), endTime: hhmm(r.endTime) }));

@@ -9,6 +9,7 @@ export type MemberAthlete = {
   firstName: string;
   lastName: string;
   birthDate: string;
+  photoFileId: string | null;
   isPayer: boolean | null;
   enrollments: { status: EnrollmentStatus; group: GroupSummary }[];
 };
@@ -95,6 +96,7 @@ export async function getMemberHome(
           firstName: athlete.firstName,
           lastName: athlete.lastName,
           birthDate: athlete.birthDate,
+          photoFileId: athlete.photoFileId,
           isPayer,
           enrollments: athleteEnrollments
             .filter((e) => e.athleteId === athlete.id && groupById.has(e.groupId))

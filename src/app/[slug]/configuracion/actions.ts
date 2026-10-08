@@ -11,6 +11,7 @@ import { updateBillingPolicy } from "@/modules/billing/settings";
 import { attendancePolicySchema, updateAttendancePolicy } from "@/modules/attendance/alerts";
 import { closureSchema, createClosure, deleteClosure } from "@/modules/calendar/closures";
 import { schoolProfileSchema, updateSchoolProfile } from "@/modules/schools/profile";
+import { setCommsEnabled } from "@/modules/schools/comms";
 import { resyncSessions } from "../asistencia/sync";
 import { FORBIDDEN_STATE, getManagerContext, type ActionState } from "./context";
 
@@ -174,4 +175,12 @@ export async function updateAttendancePolicyAction(
   await updateAttendancePolicy(db, manager.ctx, parsed.data);
   refresh();
   return { ok: true, message: "Alertas guardadas" };
+}
+
+export async function setCommsAction(slug: string, enabled: boolean): Promise<ActionState> {
+  const manager = await getManagerContext(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  await setCommsEnabled(db, manager.ctx, enabled);
+  refresh();
+  return { ok: true, message: enabled ? "Comunicaciones activadas" : "Comunicaciones en pausa" };
 }

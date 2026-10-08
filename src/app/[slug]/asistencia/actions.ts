@@ -15,6 +15,7 @@ import {
 import { cancelSchema, cancelSession, restoreSession } from "@/modules/attendance/sessions";
 import { redirect } from "next/navigation";
 import { canManagePeople, type SchoolRole } from "@/modules/schools/permissions";
+import { deliverSoon } from "../../deliver";
 import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
 
 const canTakeAttendance = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -70,6 +71,7 @@ export async function cancelSessionAction(
   if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
   if (await cancelSession(db, manager.ctx, sessionId, parsed.data.reason)) {
     await notifyCancellation(db, { ...manager.ctx, slug }, sessionId);
+    deliverSoon(manager.school.id);
   }
   refresh();
   return { ok: true, message: "Clase cancelada" };
@@ -107,6 +109,7 @@ export async function rescheduleAction(
   if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
   const result = await rescheduleSession(db, { ...manager.ctx, slug }, sessionId, parsed.data);
   if (!result.ok) return { ok: false, message: CHANGE_ERRORS[result.error] };
+  deliverSoon(manager.school.id);
   redirect(`/${slug}/asistencia/${result.sessionId}`);
 }
 
@@ -128,6 +131,7 @@ export async function extraSessionAction(
   if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
   const result = await createExtraSession(db, { ...manager.ctx, slug }, parsed.data);
   if (!result.ok) return { ok: false, message: CHANGE_ERRORS[result.error] };
+  deliverSoon(manager.school.id);
   redirect(`/${slug}/asistencia/${result.sessionId}`);
 }
 
@@ -135,6 +139,7 @@ export async function setSubstituteAction(slug: string, sessionId: string, coach
   const manager = await getActionContext(slug, canManagePeople);
   if (!manager) return FORBIDDEN_STATE;
   const ok = await setSubstitute(db, { ...manager.ctx, slug }, sessionId, coachId);
+  deliverSoon(manager.school.id);
   refresh();
   return ok
     ? { ok: true, message: coachId ? "Sustituto asignado" : "Sustituto quitado" }

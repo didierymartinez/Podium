@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { runInTenant, type Database } from "@/db/rls";
-import { files, type fileKindEnum } from "@/db/schema";
+import { athletes, files, type fileKindEnum } from "@/db/schema";
 import type { Storage } from "@/lib/storage/types";
 import type { SchoolRole } from "@/modules/schools/permissions";
 import { canManagePeople } from "@/modules/schools/permissions";
@@ -117,3 +117,11 @@ export function canReadFile(kind: FileKind, roles: readonly SchoolRole[]): boole
 /** Ruta interna que redirige a la URL firmada (60 s). */
 export const fileHref = (slug: string, fileId: string) =>
   `/api/files/${fileId}?escuela=${encodeURIComponent(slug)}`;
+
+/** ¿Es la foto de un alumno visible en el contexto actual? (con RLS de familia: solo sus hijos). */
+export async function isFamilyPhoto(database: Database, schoolId: string, fileId: string) {
+  const [row] = await runInTenant(database, { schoolId }, (tx) =>
+    tx.select({ id: athletes.id }).from(athletes).where(eq(athletes.photoFileId, fileId)).limit(1),
+  );
+  return Boolean(row);
+}

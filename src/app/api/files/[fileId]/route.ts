@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { db } from "@/db/client";
 import { storage } from "@/lib/storage";
 import { getCurrentUser } from "@/modules/auth/session";
-import { canReadFile, getFile } from "@/modules/files/files";
+import { asPortalUser } from "@/db/portal";
+import { canReadFile, getFile, isFamilyPhoto } from "@/modules/files/files";
 import { getMemberSchool } from "@/modules/schools/queries";
 
 /** Verifica sesión, escuela y permiso; responde con una redirección a la URL firmada de 60 s. */
@@ -15,9 +16,13 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/files/[f
   const member = await getMemberSchool(db, slug, user.id);
   if (!member) return new Response(null, { status: 404 });
   const file = await getFile(db, member.school.id, fileId);
-  if (!file || file.status !== "READY" || !canReadFile(file.kind, member.roles)) {
-    return new Response(null, { status: 404 });
-  }
+  if (!file || file.status !== "READY") return new Response(null, { status: 404 });
+  // Las familias ven la foto de sus propios hijos (RLS de familia).
+  const allowed =
+    canReadFile(file.kind, member.roles) ||
+    (file.kind === "ATHLETE_PHOTO" &&
+      (await asPortalUser(user.id, () => isFamilyPhoto(db, member.school.id, file.id))));
+  if (!allowed) return new Response(null, { status: 404 });
   const url = await storage().presignGet(file.storageKey, 60);
   return new Response(null, {
     status: 302,

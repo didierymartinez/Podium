@@ -12,6 +12,7 @@ import { intentByReference, paymentAccountStatus, pendingIntents } from "@/modul
 import { listPayments } from "@/modules/billing/payments";
 import { guardianStatement } from "@/modules/billing/statement";
 import { guardianIdsOfUser } from "@/modules/portal/family";
+import { asPortalUser } from "@/db/portal";
 import { getSchoolContext } from "../data";
 import { PayOnline } from "./pay-online";
 
@@ -21,8 +22,25 @@ export default async function MyPaymentsPage({ params, searchParams }: PageProps
   const { slug } = await params;
   const sp = await searchParams;
   const { school, user } = await getSchoolContext(slug);
+  return asPortalUser(user.id, () =>
+    MyPayments({ slug, reference: typeof sp.ref === "string" ? sp.ref : null, school, userId: user.id }),
+  );
+}
+
+/** Todo lo de "Mis pagos" corre como familia: las políticas RLS limitan a las cuentas de esta persona. */
+async function MyPayments({
+  slug,
+  reference,
+  school,
+  userId,
+}: {
+  slug: string;
+  reference: string | null;
+  school: Awaited<ReturnType<typeof getSchoolContext>>["school"];
+  userId: string;
+}) {
   const today = todayIn(school.timezone);
-  const [guardianId] = await guardianIdsOfUser(db, school.id, user.id);
+  const [guardianId] = await guardianIdsOfUser(db, school.id, userId);
   if (!guardianId) {
     return (
       <div className="space-y-4">
@@ -40,7 +58,7 @@ export default async function MyPaymentsPage({ params, searchParams }: PageProps
     pendingIntents(db, school.id, [guardianId]),
     paymentAccountStatus(db, school.id),
   ]);
-  const returned = typeof sp.ref === "string" ? await intentByReference(db, school.id, sp.ref) : null;
+  const returned = reference ? await intentByReference(db, school.id, reference) : null;
   const open = invoices.filter((i) => i.status === "PENDING" || i.status === "PARTIAL");
   const closed = invoices.filter((i) => i.status === "PAID").slice(0, 12);
 

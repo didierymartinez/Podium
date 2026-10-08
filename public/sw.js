@@ -112,12 +112,15 @@ self.addEventListener("push", (event) => {
   } catch {
     data = { title: "Podium", body: event.data.text() };
   }
+  // FCM envía { notification, data, fcmOptions }; un push propio envía { title, body, href }.
+  const content = data.notification || data.data || data;
+  const href = (data.data && data.data.href) || (data.fcmOptions && data.fcmOptions.link) || data.href || "/";
   event.waitUntil(
-    self.registration.showNotification(data.title || "Podium", {
-      body: data.body || "",
+    self.registration.showNotification(content.title || "Podium", {
+      body: content.body || "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",
-      data: { href: data.href || "/" },
+      data: { href },
     }),
   );
 });

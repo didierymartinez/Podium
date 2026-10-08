@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  Baby,
   CalendarCheck,
   GraduationCap,
   House,
   Layers,
   Megaphone,
   Settings,
+  UserRound,
   Users,
   Wallet,
   type LucideIcon,
@@ -66,12 +68,26 @@ const MY_PAYMENTS: NavItem = {
   ready: true,
   audience: "family",
 };
+const MY_KIDS: NavItem = {
+  path: "/mis-hijos",
+  label: "Mis hijos",
+  icon: Baby,
+  ready: true,
+  audience: "family",
+};
+const MY_DATA: NavItem = {
+  path: "/mis-datos",
+  label: "Mis datos",
+  icon: UserRound,
+  ready: true,
+  audience: "all",
+};
 const NOTICES: NavItem = {
   path: "/avisos",
   label: "Avisos",
   icon: Megaphone,
-  ready: false,
-  audience: "manager",
+  ready: true,
+  audience: "all",
 };
 const SETTINGS: NavItem = {
   path: "/configuracion",
@@ -89,8 +105,10 @@ export const SCHOOL_NAV: NavItem[] = [
   COACHES,
   ATTENDANCE,
   BILLING,
+  MY_KIDS,
   MY_PAYMENTS,
   NOTICES,
+  MY_DATA,
 ];
 
 function useActive(slug: string) {
@@ -181,9 +199,15 @@ export function TopTabs({ slug, access }: { slug: string; access: NavAccess }) {
 /** Navegación inferior para celular (PWA). */
 export function BottomNav({ slug, access }: { slug: string; access: NavAccess }) {
   const isActive = useActive(slug);
-  const items = [HOME, ATHLETES, GROUPS, ATTENDANCE, MY_PAYMENTS, { ...SETTINGS, label: "Ajustes" }].filter(
-    visible(access),
-  );
+  const items = [
+    HOME,
+    ATHLETES,
+    GROUPS,
+    ATTENDANCE,
+    MY_KIDS,
+    MY_PAYMENTS,
+    { ...SETTINGS, label: "Ajustes" },
+  ].filter(visible(access));
   if (items.length < 2) return null;
   return (
     <nav

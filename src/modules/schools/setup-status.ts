@@ -1,6 +1,6 @@
 import { count, eq, inArray } from "drizzle-orm";
 import { runInTenant, type Database } from "@/db/rls";
-import { coaches, enrollments, feePlans, groups, type schools } from "@/db/schema";
+import { coaches, enrollments, feePlans, groups, paymentAccounts, type schools } from "@/db/schema";
 
 export type SetupStep = { key: string; title: string; detail: string; done: boolean; href?: string };
 
@@ -9,11 +9,9 @@ export async function getSetupSteps(
   database: Database,
   school: typeof schools.$inferSelect,
 ): Promise<SetupStep[]> {
-  const { activePlans, activeGroups, activeEnrollments, activeCoaches } = await runInTenant(
-    database,
-    { schoolId: school.id },
-    async (tx) => {
-      const [[plansCount], [groupsCount], [enrollmentsCount], [coachesCount]] = await Promise.all([
+  const { activePlans, activeGroups, activeEnrollments, activeCoaches, paymentsConnected } =
+    await runInTenant(database, { schoolId: school.id }, async (tx) => {
+      const [[plansCount], [groupsCount], [enrollmentsCount], [coachesCount], accounts] = await Promise.all([
         tx.select({ value: count() }).from(feePlans).where(eq(feePlans.active, true)),
         tx.select({ value: count() }).from(groups).where(eq(groups.active, true)),
         tx
@@ -21,15 +19,16 @@ export async function getSetupSteps(
           .from(enrollments)
           .where(inArray(enrollments.status, ["ACTIVE", "PRE_ENROLLED"])),
         tx.select({ value: count() }).from(coaches).where(eq(coaches.active, true)),
+        tx.select({ id: paymentAccounts.id }).from(paymentAccounts),
       ]);
       return {
         activePlans: plansCount.value,
         activeGroups: groupsCount.value,
         activeEnrollments: enrollmentsCount.value,
         activeCoaches: coachesCount.value,
+        paymentsConnected: accounts.length > 0,
       };
-    },
-  );
+    });
   const base = `/${school.slug}/configuracion`;
 
   return [
@@ -69,13 +68,19 @@ export async function getSetupSteps(
       done: activeEnrollments > 0,
       href: `/${school.slug}/alumnos/nuevo`,
     },
-    { key: "payments", title: "Pagos en línea", detail: "Conectar Wompi", done: false },
     {
-      key: "guardians",
-      title: "Acudientes",
-      detail: "Invitar a las familias",
-      done: false,
-      href: `/${school.slug}/invitaciones`,
+      key: "payments",
+      title: "Pagos en línea",
+      detail: "Conectar Wompi",
+      done: paymentsConnected,
+      href: `${base}/cobros`,
+    },
+    {
+      key: "comms",
+      title: "Comunicaciones",
+      detail: "Invitar familias y empezar a cobrar",
+      done: Boolean(school.commsEnabledAt),
+      href: `${base}/comunicaciones`,
     },
   ];
 }

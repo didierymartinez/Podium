@@ -430,3 +430,23 @@ export function attendanceStats(
     return result;
   });
 }
+
+/** Últimos registros de asistencia de un alumno (portal de familias). */
+export function attendanceHistory(database: Database, schoolId: string, athleteId: string, limit = 10) {
+  return runInTenant(database, { schoolId }, (tx) =>
+    tx
+      .select({
+        date: sessions.date,
+        startTime: sessions.startTime,
+        groupName: groups.name,
+        status: attendance.status,
+        excuseReason: attendance.excuseReason,
+      })
+      .from(attendance)
+      .innerJoin(sessions, eq(sessions.id, attendance.sessionId))
+      .innerJoin(groups, eq(groups.id, sessions.groupId))
+      .where(eq(attendance.athleteId, athleteId))
+      .orderBy(sql`${sessions.date} desc`, sql`${sessions.startTime} desc`)
+      .limit(limit),
+  );
+}

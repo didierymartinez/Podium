@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { addDays, dateRange, formatLongDate, isoDateOf, startOfWeek, todayIn } from "@/lib/dates";
 import { holidaysBetween } from "@/lib/holidays-co";
 import { atRiskAthletes, describeRisk, readAttendancePolicy } from "@/modules/attendance/alerts";
+import { pinnedAnnouncements } from "@/modules/announcements/announcements";
 import { listSessions } from "@/modules/attendance/sessions";
 import { certificationAlerts } from "@/modules/coaches/certifications";
 import { documentAlerts } from "@/modules/documents/documents";
@@ -38,7 +39,7 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const boardFrom = startOfWeek(today);
   const boardTo = addDays(boardFrom, 13);
   await ensureSessions(school.id, school.timezone);
-  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts, atRisk] =
+  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts, atRisk, pinned] =
     await Promise.all([
       getSportsStructure(db, school.id),
       getSetupSteps(db, school),
@@ -48,6 +49,7 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
       documentAlerts(db, school.id, today),
       certificationAlerts(db, school.id, today),
       atRiskAthletes(db, school.id, today, readAttendancePolicy(school.settings.attendance)),
+      pinnedAnnouncements(db, school.id, today, null),
     ]);
   const marks = new Map<string, BoardMark>();
   for (const [date, name] of holidaysBetween(boardFrom, boardTo))
@@ -154,6 +156,13 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
           />
         )}
       </Card>
+
+      {pinned.map((p) => (
+        <Card key={p.id} className="border-sun/60 bg-sun/15 p-5" aria-label="Aviso fijado">
+          <p className="font-semibold">📌 {p.title}</p>
+          <p className="mt-1 whitespace-pre-line text-sm">{p.body}</p>
+        </Card>
+      ))}
 
       {atRisk.length > 0 && (
         <Card>

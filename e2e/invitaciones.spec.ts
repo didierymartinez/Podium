@@ -46,7 +46,7 @@ test("profesor y acudiente reciben su invitación y ven solo lo suyo", async ({ 
   await acceptInviteAsNewUser(guardian, guardianLink, "Laura Gómez");
   await expect(guardian.getByRole("heading", { name: "Mis hijos" })).toBeVisible();
   await expect(guardian.getByText("Sofía Restrepo")).toBeVisible();
-  await expect(guardian.getByText("Iniciación tarde")).toBeVisible();
+  await expect(guardian.getByLabel("Próximas clases").getByText("Iniciación tarde").first()).toBeVisible();
   // Sin acceso a administración.
   await expect(guardian.getByRole("link", { name: "Alumnos" })).toHaveCount(0);
   await guardian.goto(`${school}/alumnos`);

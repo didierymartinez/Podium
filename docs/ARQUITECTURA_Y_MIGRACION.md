@@ -104,8 +104,8 @@ Migrar no es una meta en sí; hacerlo cuando aparezca **una** de estas señales:
 - [ ] `Dockerfile` + job de CI que construye la imagen en cada PR
 - [x] `docker-compose.yml` para desarrollo local (Postgres + MinIO opcional con `--profile s3`)
 - [ ] `.env.example` con todas las variables
-- [ ] Interfaces `AuthProvider`, `Storage`, `Mailer`, `Notifier`, `PaymentProvider`
-- [x] Endpoints `/api/cron/*` protegidos con `CRON_SECRET` e idempotentes (`/api/cron/daily`; en Vercel lo programa `vercel.json`, en un VPS basta `curl -H "Authorization: Bearer $CRON_SECRET"` desde `cron`)
+- [x] Interfaces `Storage` (`src/lib/storage`), `Mailer` (`src/lib/mailer`), `Notifier` (`src/lib/notifier`), `PaymentProvider` (`src/modules/payments`); la autenticación verifica Firebase con `jose` y tiene proveedor `dev`
+- [x] Endpoints `/api/cron/*` protegidos con `CRON_SECRET` e idempotentes: `/api/cron/daily` (9:00 a. m. Bogotá) y `/api/cron/notifications` (cada 5–10 min; en Vercel Hobby queda la entrega inmediata con `after()` y el respaldo diario) (`/api/cron/daily`; en Vercel lo programa `vercel.json`, en un VPS basta `curl -H "Authorization: Bearer $CRON_SECRET"` desde `cron`)
 - [ ] Tabla `users` propia con `firebase_uid`
 - [ ] Script de backup/restauración probado (`pg_dump` → almacenamiento externo)
 

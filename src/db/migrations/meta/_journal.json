@@ -141,6 +141,48 @@
       "when": 1791453277953,
       "tag": "0019_invoice_lines_voided",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791454973149,
+      "tag": "0020_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791454974411,
+      "tag": "0021_delivery_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791455283799,
+      "tag": "0022_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791455284963,
+      "tag": "0023_announcements_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791455486797,
+      "tag": "0024_portal_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791455796157,
+      "tag": "0025_consent_revocation",
+      "breakpoints": true
     }
   ]
 }

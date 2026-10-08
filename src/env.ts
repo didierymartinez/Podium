@@ -20,6 +20,11 @@ const serverSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_REGION: z.string().optional(),
   CRON_SECRET: z.string().min(16).optional(),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().optional(),
+  /** JSON de la cuenta de servicio de Firebase (FCM HTTP v1). */
+  FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

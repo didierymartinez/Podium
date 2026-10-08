@@ -17,6 +17,7 @@ import { getSchoolContext } from "../../data";
 import { GuardianForm } from "./guardian-form";
 import { guardianStatement } from "@/modules/billing/statement";
 import { StatementCard } from "./statement-card";
+import { receivedAnnouncements } from "@/modules/announcements/announcements";
 
 export const metadata: Metadata = { title: "Acudiente" };
 
@@ -31,7 +32,10 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
   const name = `${guardian.firstName} ${guardian.lastName}`;
   const invitation =
     (await invitationStates(db, school.id, "GUARDIAN", [guardian])).get(guardian.id) ?? "none";
-  const statement = await guardianStatement(db, school.id, guardian.id);
+  const [statement, received] = await Promise.all([
+    guardianStatement(db, school.id, guardian.id),
+    receivedAnnouncements(db, school.id, { guardianId: guardian.id }),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -105,6 +109,20 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
         </Card>
       </div>
       {statement && <StatementCard slug={slug} guardianId={guardian.id} statement={statement} />}
+      <Card>
+        <SectionTitle>Avisos recibidos</SectionTitle>
+        <ul className="divide-y divide-line text-sm" aria-label="Avisos recibidos">
+          {received.map(({ announcement: a }) => (
+            <li key={a.id} className="flex items-center gap-3 py-2">
+              <Link href={`/${slug}/avisos/${a.id}`} className="flex-1 hover:text-brand">
+                {a.title}
+              </Link>
+              <span className="text-xs text-ink-soft">{a.createdAt.toISOString().slice(0, 10)}</span>
+            </li>
+          ))}
+          {received.length === 0 && <li className="py-2 text-ink-soft">Aún no ha recibido avisos.</li>}
+        </ul>
+      </Card>
     </div>
   );
 }

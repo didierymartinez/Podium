@@ -104,6 +104,8 @@ export const users = pgTable("users", {
   phone: text("phone"),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   isPlatformAdmin: boolean("is_platform_admin").notNull().default(false),
+  /** Preferencias de avisos por canal y tema (ADM-64); ver `src/modules/notifications/preferences.ts`. */
+  notificationPrefs: jsonb("notification_prefs").$type<Record<string, unknown>>().notNull().default({}),
   ...timestamps,
 });
 
@@ -120,6 +122,8 @@ export const legalAcceptances = pgTable(
     version: text("version").notNull(),
     ip: text("ip"),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Revocación de la autorización (Ley 1581): la fila se conserva como prueba. */
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
   },
   (t) => [index("legal_acceptances_user_idx").on(t.userId)],
 );
@@ -718,6 +722,9 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
     emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    /** Cuándo se procesó la entrega (push o correo) y por cuál canal: "push" | "email" | "none". */
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    deliveredVia: text("delivered_via"),
     /** Evita repetir el mismo aviso automático (p. ej. "attendance.risk:<alumno>:2026-10"). */
     dedupeKey: text("dedupe_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -963,4 +970,74 @@ export const paymentIntents = pgTable(
     ...timestamps,
   },
   (t) => [index("payment_intents_school_status_idx").on(t.schoolId, t.status)],
+);
+
+/** Dispositivos con notificaciones push (token de FCM por navegador o app instalada). */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)],
+);
+
+/** Correos automáticos ya enviados (secuencia de bienvenida), para no repetirlos. */
+export const emailLog = pgTable("email_log", {
+  key: text("key").primaryKey(),
+  sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Aviso a la escuela, grupos, niveles, categorías, deudores o personas (COM-10). */
+export const announcements = pgTable(
+  "announcements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").references(() => users.id),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    audience: jsonb("audience").$type<{ kind: string; ids: string[] }>().notNull(),
+    urgent: boolean("urgent").notNull().default(false),
+    pinnedUntil: date("pinned_until"),
+    /** Fuera del horario permitido se programa para la siguiente franja (7 a. m.). */
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    recipientCount: integer("recipient_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("announcements_school_idx").on(t.schoolId, t.createdAt)],
+);
+
+export const announcementRecipients = pgTable(
+  "announcement_recipients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    announcementId: uuid("announcement_id")
+      .notNull()
+      .references(() => announcements.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id").references(() => guardians.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id").references(() => athletes.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    /** Texto ya personalizado para esta persona (variables reemplazadas). */
+    message: text("message").notNull(),
+    whatsappSentAt: timestamp("whatsapp_sent_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("announcement_recipients_announcement_idx").on(t.announcementId),
+    index("announcement_recipients_guardian_idx").on(t.guardianId),
+  ],
 );
