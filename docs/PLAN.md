@@ -48,6 +48,8 @@ Permisos basados en roles (RBAC) con posibilidad de un usuario tener varios role
 
 ## 3. Módulos
 
+> Especificación detallada: [`GESTION_ADMINISTRATIVA.md`](GESTION_ADMINISTRATIVA.md) y [`GESTION_DEPORTIVA.md`](GESTION_DEPORTIVA.md). Este resumen es la vista general.
+
 ### 3.1 Núcleo / configuración
 - Escuela (tenant): datos, logo, colores, NIT, sedes/pistas.
 - Deportes y **modalidades** habilitadas (patinaje velocidad, artístico…).
