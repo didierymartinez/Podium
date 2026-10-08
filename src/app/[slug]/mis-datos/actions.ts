@@ -38,9 +38,21 @@ export async function savePreferencesAction(
   if (!member) return { ok: false, message: "Inicia sesión de nuevo." };
   const flag = (topic: string, channel: string) => form.get(`${topic}.${channel}`) === "on";
   await updatePreferences(db, member.user.id, {
-    billing: { push: flag("billing", "push"), email: flag("billing", "email") },
-    attendance: { push: flag("attendance", "push"), email: flag("attendance", "email") },
-    notices: { push: flag("notices", "push"), email: flag("notices", "email") },
+    billing: {
+      push: flag("billing", "push"),
+      whatsapp: flag("billing", "whatsapp"),
+      email: flag("billing", "email"),
+    },
+    attendance: {
+      push: flag("attendance", "push"),
+      whatsapp: flag("attendance", "whatsapp"),
+      email: flag("attendance", "email"),
+    },
+    notices: {
+      push: flag("notices", "push"),
+      whatsapp: flag("notices", "whatsapp"),
+      email: flag("notices", "email"),
+    },
   });
   refresh();
   return { ok: true, message: "Preferencias guardadas" };

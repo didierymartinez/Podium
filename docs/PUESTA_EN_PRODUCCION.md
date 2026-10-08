@@ -19,6 +19,7 @@ lo que falta son **cuentas, llaves y decisiones**. Cada paso indica la variable 
 | 9 | **Wompi de Podium** | Cuenta de Podium (no la de las escuelas) para cobrar suscripciones; primero sandbox. Registrar el webhook `https://<dominio>/api/webhooks/podium`. | `PODIUM_WOMPI_PUBLIC_KEY`, `PODIUM_WOMPI_PRIVATE_KEY`, `PODIUM_WOMPI_EVENTS_SECRET`, `PODIUM_WOMPI_INTEGRITY_SECRET` |
 | 10 | **Tareas programadas** | `vercel.json` ya programa `/api/cron/daily` a las 9:00 a. m. de Bogotá. Opcional (Pro): `/api/cron/notifications` cada hora. | `CRON_SECRET` (`openssl rand -hex 24`) |
 | 11 | **Super admin** | Email del equipo de Podium que entra a `/admin`; luego activar el segundo factor en `/admin/dos-pasos`. | `PLATFORM_ADMIN_EMAILS` |
+| 12 | **WhatsApp Cloud API** (#64) | En Meta Business: verificar el negocio, crear la app con el producto WhatsApp y registrar **el número de Podium**. Crear y enviar a aprobación la plantilla de **utilidad** `aviso_podium` en español: *"{{1}}: {{2}}. Míralo en Podium: {{3}}"* ({{1}} escuela, {{2}} resumen, {{3}} enlace). Token de sistema permanente con `whatsapp_business_messaging`. Registrar el webhook `https://<dominio>/api/webhooks/whatsapp` (campo `messages`) con el token de verificación. | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`; opcionales `WHATSAPP_TEMPLATE` y `WHATSAPP_TEMPLATE_LANG` (por defecto `aviso_podium` / `es`) |
 
 Webhook de cada escuela (lo configura la escuela en su Wompi): `https://<dominio>/api/webhooks/wompi/<slug>`
 (se muestra en Configuración → Cobros).
@@ -37,5 +38,7 @@ Webhook de cada escuela (lo configura la escuela en su Wompi): `https://<dominio
 4. Activar notificaciones push en un celular con la PWA instalada y enviar un aviso.
 5. Conectar el Wompi **sandbox** de una escuela de prueba, pagar una mensualidad desde "Mis pagos" y ver el webhook aplicado.
 6. Pagar la suscripción en sandbox (link y tarjeta de prueba) y ver la escuela "Activa".
-7. Llamar el cron a mano: `curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/daily`.
+7. WhatsApp: con la plantilla aprobada, aceptar el permiso de WhatsApp en una cuenta de familia, enviar un aviso y ver
+   en la base el estado `delivered`/`read`; responder "SALIR" y comprobar que lo siguiente llega por correo.
+8. Llamar el cron a mano: `curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/daily`.
 8. Super admin: `/admin` pide segundo factor; "Entrar como" muestra el banner de solo lectura.

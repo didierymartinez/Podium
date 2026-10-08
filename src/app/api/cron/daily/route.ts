@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { deliveryChannels } from "@/app/deliver";
 import { db } from "@/db/client";
 import { serverEnv } from "@/env";
 import { mailer } from "@/lib/mailer";
@@ -22,7 +23,13 @@ export async function GET(request: Request) {
   const results = await runDaily(
     db,
     new Date(),
-    createDailyJobs({ mailer: mailer(), notifier: notifier(), appUrl, podiumKeys: podiumPaymentKeys() }),
+    createDailyJobs({
+      mailer: mailer(),
+      notifier: notifier(),
+      appUrl,
+      podiumKeys: podiumPaymentKeys(),
+      whatsapp: deliveryChannels().whatsapp,
+    }),
   );
   const failed = results.filter((r) => !r.ok).length;
   return Response.json(

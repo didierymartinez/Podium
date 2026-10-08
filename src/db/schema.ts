@@ -833,7 +833,12 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
     emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
-    /** Cuándo se procesó la entrega (push o correo) y por cuál canal: "push" | "email" | "none". */
+    /** WhatsApp automático (#64): id de Meta y estado (sent, delivered, read, failed). */
+    whatsappSentAt: timestamp("whatsapp_sent_at", { withTimezone: true }),
+    whatsappMessageId: text("whatsapp_message_id"),
+    whatsappStatus: text("whatsapp_status"),
+    whatsappError: text("whatsapp_error"),
+    /** Cuándo se procesó la entrega y por cuál canal: "push" | "whatsapp" | "email" | "none". */
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     deliveredVia: text("delivered_via"),
     /** Evita repetir el mismo aviso automático (p. ej. "attendance.risk:<alumno>:2026-10"). */
@@ -842,6 +847,9 @@ export const notifications = pgTable(
   },
   (t) => [
     index("notifications_user_idx").on(t.userId, t.createdAt),
+    index("notifications_whatsapp_idx")
+      .on(t.whatsappMessageId)
+      .where(sql`${t.whatsappMessageId} is not null`),
     uniqueIndex("notifications_dedupe_uq")
       .on(t.userId, t.dedupeKey)
       .where(sql`${t.dedupeKey} is not null`),

@@ -36,6 +36,12 @@ Las escuelas ya viven en WhatsApp (grupos de padres). En el MVP Podium **prepara
 ❌ Es manual; no hay confirmación de entrega en Podium (se marca "enviado" al tocar).
 
 ### Fase 2 — **WhatsApp automático con la API (número de Podium)**
+
+> **Estado (#64):** implementado con Meta Cloud API (`src/lib/whatsapp-cloud`). La cascada de entrega es push → WhatsApp →
+> correo, con consentimiento por escuela, preferencias por tema, horario de 7 a. m. a 8 p. m. (las clases son urgentes),
+> cupo mensual por plan, estados por webhook y baja con "SALIR". Usa una sola plantilla de utilidad genérica
+> (`aviso_podium`, §4.4); las plantillas específicas del §5 se pueden agregar después. Falta la parte de Meta
+> (verificación, número y aprobación): ver `docs/PUESTA_EN_PRODUCCION.md`.
 **WhatsApp Cloud API** de Meta (directo o vía un proveedor como 360dialog o Twilio) con **un número de Podium** que envía en nombre de cada escuela:
 
 - Las plantillas incluyen el nombre de la escuela: *"Club Patín Veloz: la clase de hoy 4 p. m. se cancela por lluvia."*

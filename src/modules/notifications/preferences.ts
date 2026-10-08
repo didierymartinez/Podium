@@ -7,13 +7,18 @@ export const NOTIFICATION_TOPICS = {
   notices: "Avisos de la escuela",
 } as const;
 export type NotificationTopic = keyof typeof NOTIFICATION_TOPICS;
-export type Channel = "push" | "email";
+export type Channel = "push" | "whatsapp" | "email";
 
-const channelPrefs = z.object({ push: z.boolean().default(true), email: z.boolean().default(true) });
+const channelPrefs = z.object({
+  push: z.boolean().default(true),
+  whatsapp: z.boolean().default(true),
+  email: z.boolean().default(true),
+});
+const ALL_ON = { push: true, whatsapp: true, email: true };
 export const preferencesSchema = z.object({
-  billing: channelPrefs.default({ push: true, email: true }),
-  attendance: channelPrefs.default({ push: true, email: true }),
-  notices: channelPrefs.default({ push: true, email: true }),
+  billing: channelPrefs.default(ALL_ON),
+  attendance: channelPrefs.default(ALL_ON),
+  notices: channelPrefs.default(ALL_ON),
 });
 export type NotificationPreferences = z.infer<typeof preferencesSchema>;
 

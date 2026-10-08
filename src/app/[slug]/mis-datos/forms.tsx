@@ -65,6 +65,7 @@ export function PreferencesForm({ slug, initial }: { slug: string; initial: Noti
           <tr>
             <th className="py-1 font-semibold">Tema</th>
             <th className="py-1 text-center font-semibold">Push</th>
+            <th className="py-1 text-center font-semibold">WhatsApp</th>
             <th className="py-1 text-center font-semibold">Correo</th>
           </tr>
         </thead>
@@ -72,13 +73,13 @@ export function PreferencesForm({ slug, initial }: { slug: string; initial: Noti
           {(Object.keys(TOPICS) as (keyof typeof TOPICS)[]).map((t) => (
             <tr key={t}>
               <td className="py-1.5">{TOPICS[t]}</td>
-              {(["push", "email"] as const).map((c) => (
+              {(["push", "whatsapp", "email"] as const).map((c) => (
                 <td key={c} className="py-1.5 text-center">
                   <input
                     type="checkbox"
                     name={`${t}.${c}`}
                     defaultChecked={initial[t][c]}
-                    aria-label={`${TOPICS[t]} por ${c === "push" ? "push" : "correo"}`}
+                    aria-label={`${TOPICS[t]} por ${c === "push" ? "push" : c === "whatsapp" ? "WhatsApp" : "correo"}`}
                     className="size-4 accent-brand"
                   />
                 </td>

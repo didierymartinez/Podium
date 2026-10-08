@@ -36,6 +36,16 @@ const serverSchema = z.object({
   PODIUM_WOMPI_PRIVATE_KEY: z.string().optional(),
   PODIUM_WOMPI_EVENTS_SECRET: z.string().optional(),
   PODIUM_WOMPI_INTEGRITY_SECRET: z.string().optional(),
+  /** WhatsApp Cloud API con el número de Podium (#64); sin estas llaves no se envía WhatsApp. */
+  WHATSAPP_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  /** Secreto de la app de Meta para validar la firma del webhook. */
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  /** Token que se registra en Meta para verificar el webhook. */
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  /** Plantilla de utilidad aprobada ({{1}} escuela, {{2}} resumen, {{3}} enlace) e idioma. */
+  WHATSAPP_TEMPLATE: z.string().optional(),
+  WHATSAPP_TEMPLATE_LANG: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

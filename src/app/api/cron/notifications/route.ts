@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { deliveryChannels } from "@/app/deliver";
 import { db } from "@/db/client";
 import { serverEnv } from "@/env";
 import { mailer } from "@/lib/mailer";
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
     mailer: mailer(),
     notifier: notifier(),
     appUrl,
+    whatsapp: deliveryChannels().whatsapp,
   });
   const results = await runDaily(db, new Date(), { announcementsSent, notificationsDelivered });
   return Response.json({ ok: results.every((r) => r.ok), schools: results.length });

@@ -39,3 +39,15 @@ export const monthlyRevenue = (plan: Plan, interval: Interval, discountPercent =
   Math.round(priceOf(plan, interval, discountPercent) / (interval === "ANNUAL" ? 12 : 1));
 
 export const INTERVAL_LABELS: Record<Interval, string> = { MONTHLY: "Mensual", ANNUAL: "Anual" };
+
+/** Cupo mensual de mensajes de WhatsApp incluido en cada plan (docs/WHATSAPP_COMUNICACIONES.md §7). */
+const WHATSAPP_QUOTA: Record<PlanCode, number> = {
+  semilla: 500,
+  club: 1_500,
+  academia: 5_000,
+  elite: 10_000,
+};
+
+/** Sin suscripción (prueba gratis) se usa el cupo del plan más pequeño. */
+export const whatsappQuota = (code: string | null) =>
+  code && isPlanCode(code) ? WHATSAPP_QUOTA[code] : WHATSAPP_QUOTA.semilla;

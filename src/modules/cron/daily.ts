@@ -14,7 +14,7 @@ import { sendPaymentReminders } from "@/modules/billing/reminders";
 import { wompiProvider } from "@/modules/payments/wompi";
 import type { Mailer } from "@/lib/mailer/types";
 import type { Notifier } from "@/lib/notifier/types";
-import { deliverPending } from "@/modules/notifications/delivery";
+import { deliverPending, type DeliveryChannels } from "@/modules/notifications/delivery";
 import { sendTrialEmails } from "@/modules/onboarding/emails";
 import { sendScheduledAnnouncements } from "@/modules/announcements/announcements";
 import { commsEnabled } from "@/modules/schools/comms";
@@ -50,6 +50,8 @@ export type JobDeps = {
   /** Cobro de la suscripción a Podium (#21); sin llaves solo se avisan los vencimientos. */
   podiumKeys?: ProviderKeys | null;
   cardApi?: CardApi;
+  /** WhatsApp automático (#64), si hay credenciales. */
+  whatsapp?: DeliveryChannels["whatsapp"];
 };
 
 export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
