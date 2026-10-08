@@ -29,6 +29,8 @@ const serverSchema = z.object({
   TURNSTILE_SECRET_KEY: z.string().optional(),
   /** Intentos de ingreso/registro por IP: "máximo/segundos" (por defecto 20 cada 10 minutos). */
   AUTH_RATE_LIMIT: z.string().optional(),
+  /** Envíos del formulario público de pre-inscripción por IP: "máximo/segundos" (por defecto 10 por hora). */
+  SIGNUP_RATE_LIMIT: z.string().optional(),
   /** Emails (separados por coma) que son super admin de Podium (#17). */
   PLATFORM_ADMIN_EMAILS: z.string().optional(),
   /** Cuenta Wompi de Podium para cobrar la suscripción de las escuelas (#21). */

@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/db/client";
 import { serverEnv } from "@/env";
 import { todayIn } from "@/lib/dates";
-import { hitRateLimit } from "@/modules/security/rate-limit";
+import { hitRateLimit, parseLimit } from "@/modules/security/rate-limit";
 import { verifyTurnstile } from "@/modules/security/turnstile";
 import { signupSchema, submitSignup } from "@/modules/signup/public-signup";
 import { deliverSoon } from "../../deliver";
@@ -27,7 +27,11 @@ export async function submitSignupAction(
   turnstileToken: string | null,
 ): Promise<SignupState> {
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || null;
-  const limit = await hitRateLimit(db, `signup:${ip ?? "sin-ip"}`, { max: 10, windowSeconds: 3600 });
+  const limit = await hitRateLimit(
+    db,
+    `signup:${ip ?? "sin-ip"}`,
+    parseLimit(serverEnv().SIGNUP_RATE_LIMIT, { max: 10, windowSeconds: 3600 }),
+  );
   if (!limit.allowed) return { ok: false, message: "Demasiados envíos. Intenta de nuevo más tarde." };
   const secret = serverEnv().TURNSTILE_SECRET_KEY;
   if (secret && !(await verifyTurnstile(turnstileToken ?? undefined, { secret, ip })))

@@ -449,6 +449,20 @@
       "when": 1791472651933,
       "tag": "0063_venues_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1791473330238,
+      "tag": "0064_einvoices",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1791473331993,
+      "tag": "0065_einvoices_rls",
+      "breakpoints": true
     }
   ]
 }

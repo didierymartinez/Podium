@@ -40,5 +40,8 @@ Webhook de cada escuela (lo configura la escuela en su Wompi): `https://<dominio
 6. Pagar la suscripción en sandbox (link y tarjeta de prueba) y ver la escuela "Activa".
 7. WhatsApp: con la plantilla aprobada, aceptar el permiso de WhatsApp en una cuenta de familia, enviar un aviso y ver
    en la base el estado `delivered`/`read`; responder "SALIR" y comprobar que lo siguiente llega por correo.
-8. Llamar el cron a mano: `curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/daily`.
+8. Facturación electrónica (#70, por escuela): con una cuenta **sandbox de Alegra** con numeración electrónica de
+   prueba, conectarla en Configuración → Cobros (correo, token e id del ítem de servicio), pagar una cuenta de cobro
+   y verificar en Alegra la factura con su CUFE. Si algún campo de la API cambió, ajustar `src/modules/einvoicing/alegra.ts`.
+9. Llamar el cron a mano: `curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/daily`.
 8. Super admin: `/admin` pide segundo factor; "Entrar como" muestra el banner de solo lectura.

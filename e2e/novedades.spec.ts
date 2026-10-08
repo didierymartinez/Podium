@@ -50,6 +50,7 @@ test("excusa del acudiente, novedad médica y clase de reposición", async ({ pa
 
   // La escuela la ve pre-marcada, reporta una novedad médica y suma una reposición.
   await page.goto(`${school}/asistencia/${sessionId}`);
+  await page.waitForLoadState("networkidle");
   await expect(page.getByText("Excusa del acudiente: Cita médica")).toBeVisible();
   await page.getByRole("combobox", { name: "Alumno", exact: true }).selectOption({ label: "Sofía Restrepo" });
   await page.getByLabel("Novedad").fill("Esguince de tobillo");

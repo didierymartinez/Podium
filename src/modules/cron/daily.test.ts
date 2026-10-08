@@ -73,6 +73,7 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
       lateFees: 0,
       onlinePaymentsReconciled: 0,
       collectionFollowUps: 0,
+      einvoicesIssued: 0,
       paymentReminders: 0,
       announcementsSent: 0,
       badgesAwarded: 0,

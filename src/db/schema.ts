@@ -1925,3 +1925,47 @@ export const stockMovements = pgTable(
   },
   (t) => [index("stock_movements_product_idx").on(t.productId)],
 );
+
+/** Conexión de la escuela con su proveedor de facturación electrónica (ADM-26). Token cifrado. */
+export const einvoiceAccounts = pgTable("einvoice_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .unique()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull().default("alegra"),
+  username: text("username").notNull(),
+  tokenEncrypted: text("token_encrypted").notNull(),
+  /** Ítem de servicio del catálogo del proveedor con el que se facturan las líneas. */
+  itemId: text("item_id").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  ...timestamps,
+});
+
+export const einvoiceStatusEnum = pgEnum("einvoice_status", ["PENDING", "ISSUED", "ERROR"]);
+
+/** Factura electrónica emitida (o por emitir) para una cuenta de cobro pagada. */
+export const einvoices = pgTable(
+  "einvoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .unique()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    status: einvoiceStatusEnum("status").notNull().default("PENDING"),
+    externalId: text("external_id"),
+    number: text("number"),
+    cufe: text("cufe"),
+    error: text("error"),
+    attempts: integer("attempts").notNull().default(0),
+    issuedAt: timestamp("issued_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [index("einvoices_school_status_idx").on(t.schoolId, t.status)],
+);

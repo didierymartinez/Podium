@@ -69,6 +69,7 @@ test("el profesor toma la asistencia de hoy y el tablero lo refleja", async ({ p
   await expect(coach.getByRole("heading", { name: "Clases de hoy" })).toBeVisible();
   await coach.getByRole("link", { name: /Todos los días/ }).click();
   await coach.waitForURL(/\/asistencia\/[0-9a-f-]{36}$/);
+  await coach.waitForLoadState("networkidle");
 
   await coach.getByRole("button", { name: "Todos presentes" }).click();
   await coach
@@ -167,6 +168,9 @@ test("clase extra con alumnos citados, reprogramación y sustituto", async ({ pa
   // Sustituto y reprogramación de la clase regular de hoy.
   await page.goto(`${school}/asistencia`);
   await page.getByRole("link", { name: /Competencia.*16:00/ }).click();
+  await page.waitForURL(/\/asistencia\/[0-9a-f-]{36}$/);
+  // La página de la clase es interactiva: esperar la hidratación antes de elegir en los selectores.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Sustituto").selectOption({ label: "Ana Ruiz" });
   await page.getByRole("button", { name: "Guardar sustituto" }).click();
   await expect(page.getByText("Sustituto: Ana Ruiz")).toBeVisible();

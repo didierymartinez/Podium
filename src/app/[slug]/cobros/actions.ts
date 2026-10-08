@@ -26,7 +26,7 @@ import { sendManualReminders } from "@/modules/billing/reminders";
 import { approveTransferReport, rejectTransferReport } from "@/modules/billing/transfer-reports";
 import { wompiProvider } from "@/modules/payments/wompi";
 import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
-import { deliverSoon } from "../../deliver";
+import { deliverSoon, einvoiceSoon } from "../../deliver";
 import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
 
 const ONLY_ADMIN: ActionState = {
@@ -132,6 +132,7 @@ export async function recordPaymentAction(
     return { ok: false, message: messages[result.error] };
   }
   deliverSoon(m.school.id);
+  einvoiceSoon(m.school);
   redirect(`/${slug}/cobros/pagos/${result.paymentId}`);
 }
 

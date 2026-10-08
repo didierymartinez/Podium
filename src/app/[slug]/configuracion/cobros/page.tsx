@@ -11,6 +11,8 @@ import { WompiCard } from "./wompi-card";
 import { listConcepts } from "@/modules/billing/concepts";
 import { paymentAccountStatus } from "@/modules/billing/online";
 import { headers } from "next/headers";
+import { EInvoiceCard } from "./einvoice-card";
+import { getAccount, recentEInvoices } from "@/modules/einvoicing/einvoicing";
 
 export const metadata: Metadata = { title: "Cobros" };
 
@@ -18,10 +20,12 @@ export default async function BillingSettingsPage({ params }: PageProps<"/[slug]
   const { slug } = await params;
   const { school, roles } = await getSchoolContext(slug);
   const canEdit = canManageSettings(roles);
-  const [plans, concepts, account] = await Promise.all([
+  const [plans, concepts, account, einvoiceAccount, einvoiceList] = await Promise.all([
     listFeePlans(db, school.id),
     listConcepts(db, school.id),
     paymentAccountStatus(db, school.id),
+    getAccount(db, school.id),
+    recentEInvoices(db, school.id, 10),
   ]);
   const h = await headers();
   const origin =
@@ -49,6 +53,24 @@ export default async function BillingSettingsPage({ params }: PageProps<"/[slug]
         canEdit={canEdit}
         account={account}
         webhookUrl={`${origin}/api/webhooks/wompi/${slug}`}
+      />
+      <EInvoiceCard
+        slug={slug}
+        canEdit={canEdit}
+        account={
+          einvoiceAccount && {
+            username: einvoiceAccount.username,
+            itemId: einvoiceAccount.itemId,
+            enabled: einvoiceAccount.enabled,
+            verifiedAt: einvoiceAccount.verifiedAt?.toISOString() ?? null,
+          }
+        }
+        recent={einvoiceList.map(({ e, code }) => ({
+          code,
+          status: e.status,
+          number: e.number,
+          error: e.error,
+        }))}
       />
       <ConceptsCard
         slug={slug}

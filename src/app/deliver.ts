@@ -7,6 +7,8 @@ import { notifier } from "@/lib/notifier";
 import { whatsapp, whatsappTemplate } from "@/lib/whatsapp-cloud";
 import { todayIn } from "@/lib/dates";
 import { awardBadges } from "@/modules/badges/badges";
+import { alegraProvider } from "@/modules/einvoicing/alegra";
+import { issuePending } from "@/modules/einvoicing/einvoicing";
 import { deliverPending } from "@/modules/notifications/delivery";
 
 export const appUrl = () => serverEnv().NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -45,5 +47,14 @@ export function awardBadgesSoon(
     } catch (err) {
       console.error("[insignias]", err);
     }
+  });
+}
+
+/** Emite las facturas electrónicas pendientes después de responder (#70); la tarea diaria reintenta. */
+export function einvoiceSoon(school: { id: string; timezone: string }) {
+  after(async () => {
+    await issuePending(db, school.id, alegraProvider(), todayIn(school.timezone)).catch((err) =>
+      console.error("[factura electrónica]", err),
+    );
   });
 }

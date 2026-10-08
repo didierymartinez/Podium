@@ -16,6 +16,9 @@ import { InvoiceActions } from "./invoice-actions";
 
 export const metadata: Metadata = { title: "Cuenta de cobro" };
 
+import { einvoiceFor } from "@/modules/einvoicing/einvoicing";
+import { RetryEInvoiceButton } from "./retry-einvoice";
+
 export default async function InvoicePage({ params }: PageProps<"/[slug]/cobros/cuentas/[invoiceId]">) {
   const { slug, invoiceId } = await params;
   const { school, roles } = await getSchoolContext(slug);
@@ -27,6 +30,7 @@ export default async function InvoicePage({ params }: PageProps<"/[slug]/cobros/
   const balance = invoice.status === "VOID" ? 0 : balanceOf(invoice);
   const overdue = balance > 0 && invoice.dueOn < today;
   const status = INVOICE_STATUS[invoice.status];
+  const einvoice = await einvoiceFor(db, school.id, invoice.id);
 
   return (
     <div className="space-y-4">
@@ -119,6 +123,24 @@ export default async function InvoicePage({ params }: PageProps<"/[slug]/cobros/
             />
           ) : (
             <Tile className="text-sm text-ink-soft">Las cuentas anuladas no se pueden modificar.</Tile>
+          )}
+          {einvoice && (
+            <Tile className="space-y-1 text-sm" aria-label="Factura electrónica">
+              <p className="font-semibold">Factura electrónica</p>
+              {einvoice.status === "ISSUED" ? (
+                <p>
+                  Emitida {einvoice.number ?? ""}{" "}
+                  {einvoice.cufe ? `· CUFE ${einvoice.cufe.slice(0, 16)}…` : ""}
+                </p>
+              ) : einvoice.status === "ERROR" ? (
+                <>
+                  <p className="text-danger">Error: {einvoice.error}</p>
+                  <RetryEInvoiceButton slug={slug} invoiceId={invoice.id} />
+                </>
+              ) : (
+                <p className="text-ink-soft">Pendiente de emitir.</p>
+              )}
+            </Tile>
           )}
         </div>
       </div>

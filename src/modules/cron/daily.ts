@@ -24,6 +24,9 @@ import { runSubscriptionJob } from "@/modules/subscription/subscription";
 import { cronSchools, type CronSchool } from "./schools";
 import { awardBadges } from "@/modules/badges/badges";
 import { notifyLoadSpikes } from "@/modules/training/periodization";
+import { issuePending } from "@/modules/einvoicing/einvoicing";
+import { alegraProvider } from "@/modules/einvoicing/alegra";
+import type { EInvoiceProvider } from "@/modules/einvoicing/provider";
 
 /** En solo lectura no se generan cobros ni se envían avisos; los pagos de las familias sí se concilian. */
 const READ_ONLY_JOBS = new Set(["subscription", "onlinePaymentsReconciled", "notificationsDelivered"]);
@@ -51,6 +54,8 @@ export type JobDeps = {
   /** Cobro de la suscripción a Podium (#21); sin llaves solo se avisan los vencimientos. */
   podiumKeys?: ProviderKeys | null;
   cardApi?: CardApi;
+  /** Proveedor de facturación electrónica (#70); por defecto Alegra. */
+  einvoiceProvider?: EInvoiceProvider;
   /** WhatsApp automático (#64), si hay credenciales. */
   whatsapp?: DeliveryChannels["whatsapp"];
 };
@@ -81,6 +86,8 @@ export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
   onlinePaymentsReconciled: async (db, school, _today, now) =>
     reconcileIntents(db, wompiProvider(), school, now, await billingPolicyOf(db, school.id)),
   collectionFollowUps: (db, school, today) => runCollectionFollowUps(db, school, today),
+  einvoicesIssued: (db, school, today) =>
+    issuePending(db, school.id, deps.einvoiceProvider ?? alegraProvider(), today),
   paymentReminders: async (db, school, _today, now) =>
     (await commsEnabled(db, school.id)) ? sendPaymentReminders(db, school, now) : 0,
   announcementsSent: (db, school, _today, now) => sendScheduledAnnouncements(db, school, now),
