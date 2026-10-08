@@ -20,6 +20,7 @@ import {
   updatePlan,
   type AssignResult,
 } from "@/modules/training/training";
+import { createPeriod, deletePeriod, periodSchema } from "@/modules/training/periodization";
 import { getActionContext } from "../action-context";
 
 const staff = (roles: readonly SchoolRole[]) => canManagePeople(roles) || roles.includes("COACH");
@@ -110,5 +111,27 @@ export async function saveSessionReportAction(
     isManager: canManagePeople(member.roles),
   });
   if (ok) refresh();
+  return { ok };
+}
+
+export async function createPeriodAction(
+  slug: string,
+  input: unknown,
+): Promise<{ ok: boolean; message?: string }> {
+  const member = await getActionContext(slug, staff);
+  if (!member) return { ok: false, message: "No tienes permiso para esta acción." };
+  const parsed = periodSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Revisa los datos." };
+  const id = await createPeriod(db, member.ctx, parsed.data, { isManager: canManagePeople(member.roles) });
+  if (!id) return { ok: false, message: "No puedes planificar este grupo." };
+  refresh();
+  return { ok: true };
+}
+
+export async function deletePeriodAction(slug: string, periodId: string) {
+  const member = await getActionContext(slug, staff);
+  if (!member) return { ok: false };
+  const ok = await deletePeriod(db, member.ctx, periodId, { isManager: canManagePeople(member.roles) });
+  refresh();
   return { ok };
 }

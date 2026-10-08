@@ -1810,3 +1810,35 @@ export const bodyMeasurements = pgTable(
   },
   (t) => [index("body_measurements_athlete_idx").on(t.athleteId, t.measuredOn)],
 );
+
+export const periodKindEnum = pgEnum("period_kind", ["MACRO", "MESO"]);
+export const periodPhaseEnum = pgEnum("period_phase", [
+  "GENERAL_PREP",
+  "SPECIFIC_PREP",
+  "COMPETITIVE",
+  "TRANSITION",
+]);
+
+/** Macrociclo (temporada) y mesociclos de un grupo (DEP-33). */
+export const trainingPeriods = pgTable(
+  "training_periods",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    kind: periodKindEnum("kind").notNull(),
+    phase: periodPhaseEnum("phase"),
+    name: text("name").notNull(),
+    objective: text("objective").notNull().default(""),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    competitionId: uuid("competition_id").references(() => competitions.id, { onDelete: "set null" }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("training_periods_group_idx").on(t.groupId, t.startsOn)],
+);

@@ -21,3 +21,11 @@ export const FULFILLMENT_LABELS = { YES: "Sí", PARTIAL: "Parcial", NO: "No" } a
 /** Fase sugerida para un ejercicio según su componente. */
 export const phaseFor = (component: keyof typeof COMPONENT_LABELS) =>
   component === "WARMUP" ? "WARMUP" : component === "COOLDOWN" ? "COOLDOWN" : "MAIN";
+
+export const PERIOD_KIND_LABELS = { MACRO: "Macrociclo", MESO: "Mesociclo" } as const;
+export const PERIOD_PHASE_LABELS = {
+  GENERAL_PREP: "Preparación general",
+  SPECIFIC_PREP: "Preparación específica",
+  COMPETITIVE: "Competitivo",
+  TRANSITION: "Transición",
+} as const;

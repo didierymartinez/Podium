@@ -108,6 +108,26 @@ export default async function TrainingPage({ params, searchParams }: PageProps<"
       </Card>
 
       <Card>
+        <SectionTitle>Planificación por grupo</SectionTitle>
+        <ul className="flex flex-wrap gap-2" aria-label="Planificación por grupo">
+          {myGroups.map((g) => (
+            <li key={g.id}>
+              <Link
+                href={`/${slug}/entrenamiento/grupos/${g.id}`}
+                className={buttonClass("secondary", "h-9")}
+              >
+                {g.name}
+              </Link>
+            </li>
+          ))}
+          {myGroups.length === 0 && <li className="text-sm text-ink-soft">No tienes grupos activos.</li>}
+        </ul>
+        <p className="mt-2 text-xs text-ink-soft">
+          Temporada, mesociclos y carga de entrenamiento con alertas.
+        </p>
+      </Card>
+
+      <Card>
         <SectionTitle>Biblioteca de ejercicios</SectionTitle>
         <form className="mb-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]" role="search">
           <Input

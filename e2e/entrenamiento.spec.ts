@@ -89,3 +89,51 @@ test("entrenamiento: biblioteca, plan desde la biblioteca, asignación, plan del
     "Faltó tiempo para la curva",
   );
 });
+
+test("planificación del grupo: periodos de la temporada y carga sRPE", async ({ page }) => {
+  await signUp(page);
+  const school = await createSchool(page);
+  await createFeePlans(page, school, [["Mensual", "100000"]]);
+  await page.goto(`${school}/grupos/nuevo`);
+  await page.locator('input[name="name"]').fill("Todos los días");
+  const days = page.getByLabel("Día", { exact: true });
+  while ((await days.count()) < 7) await page.getByRole("button", { name: "Agregar día" }).click();
+  for (let i = 0; i < 7; i++) {
+    await days.nth(i).selectOption(String(i));
+    await page.getByLabel("Desde").nth(i).fill("06:00");
+    await page.getByLabel("Hasta").nth(i).fill("08:00");
+  }
+  await page.getByRole("button", { name: "Crear grupo" }).click();
+  await page.waitForURL(`**${school}/grupos`);
+
+  // Registro post-sesión de hoy con RPE: alimenta la carga.
+  await page.goto(`${school}/asistencia`);
+  await page
+    .getByRole("link", { name: /Todos los días/ })
+    .first()
+    .click();
+  await page.waitForURL(/\/asistencia\/[0-9a-f-]{36}$/);
+  await page.waitForLoadState("networkidle");
+  const card = page.getByLabel("Plan del día");
+  await card.getByLabel("Esfuerzo del grupo (RPE 0–10)").selectOption("6");
+  await card.getByRole("button", { name: "Guardar registro" }).click();
+  await expect(card.getByText("Registro de la sesión guardado.")).toBeVisible();
+
+  await page.goto(`${school}/entrenamiento`);
+  await page
+    .getByRole("list", { name: "Planificación por grupo" })
+    .getByRole("link", { name: "Todos los días" })
+    .click();
+  await page.waitForURL(/\/entrenamiento\/grupos\/[0-9a-f-]{36}$/);
+  await page.waitForLoadState("networkidle");
+  const form = page.getByRole("form", { name: "Nuevo periodo" });
+  await form.getByRole("combobox", { name: /^Tipo/ }).selectOption({ label: "Macrociclo" });
+  await form.getByLabel("Nombre del periodo").fill("Temporada de pista");
+  await form.getByLabel("Objetivo principal").fill("Llegar a la válida en forma");
+  await form.getByRole("button", { name: "Agregar periodo" }).click();
+  await expect(page.getByRole("list", { name: "Periodos" })).toContainText("Temporada de pista");
+  await expect(page.getByLabel("Carga de entrenamiento")).not.toContainText(
+    "Aún no hay registros post-sesión",
+  );
+  await expect(page.getByLabel("Carga de entrenamiento")).toContainText("720");
+});
