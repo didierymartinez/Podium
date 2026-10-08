@@ -4,4 +4,5 @@ SaaS para escuelas deportivas (multi-deporte, iniciando con **patinaje**): gesti
 
 - Plan del producto: [`docs/PLAN.md`](docs/PLAN.md)
 - Registro de escuelas (self-service): [`docs/ONBOARDING_ESCUELAS.md`](docs/ONBOARDING_ESCUELAS.md)
+- Arquitectura y plan de migración: [`docs/ARQUITECTURA_Y_MIGRACION.md`](docs/ARQUITECTURA_Y_MIGRACION.md)
 - Evaluación de tecnologías Google: [`docs/EVALUACION_GOOGLE.md`](docs/EVALUACION_GOOGLE.md)

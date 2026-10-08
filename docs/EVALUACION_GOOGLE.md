@@ -1,6 +1,6 @@
 # Evaluación: tecnologías Google (Firebase / Google Cloud) para Podium
 
-> Estado: **propuesta** — pendiente de confirmar. Si se aprueba, se actualiza la sección 6 de [`PLAN.md`](PLAN.md).
+> Estado: **decidido parcialmente.** Se adoptó un esquema híbrido **Vercel + Neon + Google (Firebase Auth y FCM)**; ver sección 6 de [`PLAN.md`](PLAN.md) y [`ARQUITECTURA_Y_MIGRACION.md`](ARQUITECTURA_Y_MIGRACION.md). Este documento queda como referencia para una futura migración a Google Cloud.
 > Contexto: un solo desarrollador, PWA en Next.js, multi-escuela (multi-tenant), datos financieros (cartera, pagos), Colombia.
 > Los precios son aproximados; validar en la calculadora de Google Cloud antes de decidir.
 

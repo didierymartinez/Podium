@@ -13,6 +13,7 @@
 | Multi-sede | **No en el MVP** | Una sede por escuela en la interfaz (la entidad `Venue` existe para no migrar después) |
 | Cliente | **PWA primero** | Una sola app web instalable para admin, profesores y acudientes |
 | Equipo | **Un desarrollador (fundador)** | Stack mínimo, un solo despliegue, nada de microservicios |
+| Infraestructura | **Vercel + Neon + Firebase Auth/FCM**, portable a VPS/nube | Ver sección 6 y [`ARQUITECTURA_Y_MIGRACION.md`](ARQUITECTURA_Y_MIGRACION.md) |
 | Alta de escuelas | **Self-service**: cada usuario crea su escuela, con prueba gratis de 30 días y pago en línea de la suscripción | Sin aprobaciones manuales; ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 
 ---
@@ -168,24 +169,29 @@ Todas las tablas de negocio llevan `school_id` (tenant).
 
 ---
 
-## 6. Arquitectura propuesta
+## 6. Arquitectura
 
 **Principio:** un desarrollador → **un solo proyecto, un solo lenguaje (TypeScript), un solo despliegue**. Monolito modular; se separa solo si algún día hace falta.
+**Stack elegido: Vercel + Neon + Google (Firebase)**, construido para poder migrar a VPS u otra nube sin reescribir (ver [`ARQUITECTURA_Y_MIGRACION.md`](ARQUITECTURA_Y_MIGRACION.md)).
 
-| Capa | Propuesta | Por qué |
+| Capa | Elección | Por qué |
 |---|---|---|
 | App (admin, profesores, acudientes) | **Next.js (App Router) como PWA** + Tailwind + shadcn/ui | Un solo código para web y "app" instalable en el celular |
-| Backend | **Server Actions / Route Handlers de Next.js** (mismo proyecto) | Sin API separada que mantener |
-| Base de datos | **PostgreSQL** (Neon o Supabase) con `school_id` en cada tabla + **Row Level Security** | Aislamiento fuerte entre escuelas |
-| ORM | **Drizzle** (o Prisma) | Tipado y migraciones |
-| Auth | **Better Auth** / Auth.js: email + contraseña y **código OTP por email**; WhatsApp OTP después | Acudientes sin fricción |
-| Jobs programados | **Cron del hosting** (Vercel Cron) llamando endpoints idempotentes; `pg-boss` si crece | Sin Redis ni infraestructura extra |
-| Archivos | Cloudflare R2 / Supabase Storage | Fotos, comprobantes, documentos |
+| Backend | **Server Actions / Route Handlers de Next.js** (runtime Node.js, no Edge) | Sin API separada; portable a cualquier servidor Node |
+| Hosting | **Vercel** (región `iad1`, EE. UU. este) | Despliegue en cada push, vistas previas por rama, cero servidores |
+| Base de datos | **Neon PostgreSQL** (AWS `us-east-1`, junto a Vercel) con `school_id` + **Row Level Security** | PostgreSQL estándar, plan gratis para empezar, ramas de BD para pruebas |
+| ORM | **Drizzle** + migraciones SQL en el repo | Tipado; las migraciones corren igual en cualquier Postgres |
+| Cuentas | **Firebase Authentication** (Google) | Email/contraseña, Google Sign-In, verificación y recuperación listos; 2FA para super admin |
+| Push | **Firebase Cloud Messaging** (Google) | Web Push gratis para la PWA |
+| Archivos | **Cloudflare R2** vía API S3 (alternativa: Google Cloud Storage) | Sin costo de salida; API S3 = portable a cualquier proveedor o VPS (MinIO) |
+| Jobs programados | **Vercel Cron** → endpoints HTTP idempotentes protegidos con secreto | Cambiar de programador (Cloud Scheduler, cron del VPS) sin tocar código |
+| Email | **Resend** | Simple y barato |
 | Pagos | Interfaz `PaymentProvider` → **Wompi** | Cambiar/añadir pasarela sin tocar el dominio |
-| Notificaciones | Interfaz `Notifier` → email (**Resend**), Web Push (PWA); WhatsApp (Meta Cloud API) en fase 2 | |
+| Notificaciones | Interfaz `Notifier` → email, push (FCM); WhatsApp (Meta Cloud API) en fase 2 | |
 | Offline (asistencia) | Service Worker + IndexedDB, cola de sincronización | Pistas con mala señal |
-| Hosting | **Vercel** + Neon/Supabase (planes gratuitos/baratos al inicio) | Cero servidores que administrar |
-| Observabilidad | Sentry | |
+| Observabilidad | Sentry | Funciona igual en cualquier hosting |
+
+**Costo estimado MVP:** ≈ USD 0 durante el desarrollo; **≈ USD 20–45/mes** con clientes (Vercel Pro es obligatorio para uso comercial; Neon de pago al superar el plan gratis).
 
 **Estructura del proyecto:**
 ```
