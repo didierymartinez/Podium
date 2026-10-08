@@ -55,3 +55,25 @@ test("importar alumnos desde Excel: plantilla, vista previa con errores y confir
   await page.goto(`${school}/cobros/cuentas`);
   await expect(page.getByText("$ 80.000").first()).toBeVisible();
 });
+
+test("tablero del administrador muestra los indicadores del mes", async ({ page }) => {
+  await signUp(page);
+  const school = await createSchool(page);
+  await createFeePlans(page, school, [["Mensual", "100000"]]);
+  await createGroup(page, school, "Grupo A", 4, "Mensual · $ 100.000");
+  await page.goto(`${school}/alumnos/importar`);
+  await page.getByLabel("Archivo de alumnos").setInputFiles(
+    csv([`Ana;Pérez;2015-01-01;Luz;Pérez;${randomPhone()};Grupo A;;50000`]),
+  );
+  await page.getByRole("button", { name: "Revisar archivo" }).click();
+  await page.getByRole("button", { name: "Importar 1 alumnos" }).click();
+  await expect(page.getByText("Importación lista")).toBeVisible();
+
+  await page.goto(school);
+  const kpis = page.getByLabel("Indicadores del mes");
+  await expect(kpis).toBeVisible();
+  await expect(kpis.getByText("Alumnos activos")).toBeVisible();
+  await expect(kpis.getByText("1 de 4 cupos")).toBeVisible();
+  await expect(kpis.getByText("Facturado $ 50.000")).toBeVisible();
+  await expect(page.getByRole("table", { name: "Facturado vs. recaudado por mes" })).toBeAttached();
+});

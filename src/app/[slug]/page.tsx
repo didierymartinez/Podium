@@ -15,6 +15,7 @@ import { DOCUMENT_STATUS_LABELS } from "@/modules/documents/status";
 import { closureOn, listClosures } from "@/modules/calendar/closures";
 import { nextGenerationDate } from "@/modules/billing/schedule";
 import { readBillingPolicy } from "@/modules/billing/policy";
+import { billedVsCollected, businessMetrics } from "@/modules/dashboard/metrics";
 import { listGroups } from "@/modules/groups/groups";
 import { shortTimeRange } from "@/modules/groups/schedule";
 import { canManagePeople } from "@/modules/schools/permissions";
@@ -23,6 +24,7 @@ import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { ensureSessions } from "./asistencia/sync";
 import { getSchoolContext } from "./data";
+import { BusinessKpis } from "./business-kpis";
 import { MemberHome } from "./member-home";
 
 export async function generateMetadata({ params }: PageProps<"/[slug]">): Promise<Metadata> {
@@ -39,18 +41,31 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const boardFrom = startOfWeek(today);
   const boardTo = addDays(boardFrom, 13);
   await ensureSessions(school.id, school.timezone);
-  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts, atRisk, pinned] =
-    await Promise.all([
-      getSportsStructure(db, school.id),
-      getSetupSteps(db, school),
-      listGroups(db, school.id),
-      listSessions(db, school.id, { from: boardFrom, to: boardTo }),
-      listClosures(db, school.id, boardFrom, boardTo),
-      documentAlerts(db, school.id, today),
-      certificationAlerts(db, school.id, today),
-      atRiskAthletes(db, school.id, today, readAttendancePolicy(school.settings.attendance)),
-      pinnedAnnouncements(db, school.id, today, null),
-    ]);
+  const [
+    structure,
+    steps,
+    allGroups,
+    boardSessions,
+    closures,
+    docAlerts,
+    certAlerts,
+    atRisk,
+    pinned,
+    metrics,
+    trend,
+  ] = await Promise.all([
+    getSportsStructure(db, school.id),
+    getSetupSteps(db, school),
+    listGroups(db, school.id),
+    listSessions(db, school.id, { from: boardFrom, to: boardTo }),
+    listClosures(db, school.id, boardFrom, boardTo),
+    documentAlerts(db, school.id, today),
+    certificationAlerts(db, school.id, today),
+    atRiskAthletes(db, school.id, today, readAttendancePolicy(school.settings.attendance)),
+    pinnedAnnouncements(db, school.id, today, null),
+    businessMetrics(db, school.id, today),
+    billedVsCollected(db, school.id, today, 6),
+  ]);
   const marks = new Map<string, BoardMark>();
   for (const [date, name] of holidaysBetween(boardFrom, boardTo))
     marks.set(date, { kind: "holiday", label: name });
@@ -81,6 +96,10 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
           <CalendarDays className="size-4" /> {formatLongDate(today)}
         </span>
       </div>
+
+      {(metrics.activeAthletes > 0 || metrics.billed > 0 || metrics.collected > 0) && (
+        <BusinessKpis slug={school.slug} metrics={metrics} trend={trend} />
+      )}
 
       <Card className="p-4 sm:p-6">
         <SectionTitle
