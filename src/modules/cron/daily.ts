@@ -7,6 +7,7 @@ import { runInTenant } from "@/db/rls";
 import { schools } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { addLateFees, generateMonth } from "@/modules/billing/invoices";
+import { runCollectionFollowUps } from "@/modules/billing/collections";
 import { reconcileIntents } from "@/modules/billing/online";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import { sendPaymentReminders } from "@/modules/billing/reminders";
@@ -75,6 +76,7 @@ export const createDailyJobs = (deps: JobDeps): Record<string, DailyJob> => ({
     addLateFees(db, systemCtx(school), today, await billingPolicyOf(db, school.id)),
   onlinePaymentsReconciled: async (db, school, _today, now) =>
     reconcileIntents(db, wompiProvider(), school, now, await billingPolicyOf(db, school.id)),
+  collectionFollowUps: (db, school, today) => runCollectionFollowUps(db, school, today),
   paymentReminders: async (db, school, _today, now) =>
     (await commsEnabled(db, school.id)) ? sendPaymentReminders(db, school, now) : 0,
   announcementsSent: (db, school, _today, now) => sendScheduledAnnouncements(db, school, now),

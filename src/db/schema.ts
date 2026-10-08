@@ -1193,3 +1193,68 @@ export const paymentReports = pgTable(
   },
   (t) => [index("payment_reports_school_idx").on(t.schoolId, t.status)],
 );
+
+export const collectionNoteKindEnum = pgEnum("collection_note_kind", ["CALL", "MESSAGE", "VISIT", "NOTE"]);
+export const promiseStatusEnum = pgEnum("promise_status", ["OPEN", "KEPT", "BROKEN"]);
+
+/** Bitácora de gestión de cobro por responsable de pago (ADM-44), con compromiso opcional. */
+export const collectionNotes = pgTable(
+  "collection_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id, { onDelete: "cascade" }),
+    kind: collectionNoteKindEnum("kind").notNull(),
+    note: text("note").notNull(),
+    promiseOn: date("promise_on"),
+    promiseAmount: integer("promise_amount"),
+    promiseStatus: promiseStatusEnum("promise_status"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("collection_notes_guardian_idx").on(t.guardianId)],
+);
+
+export const paymentPlanStatusEnum = pgEnum("payment_plan_status", ["ACTIVE", "COMPLETED", "CANCELED"]);
+
+/** Acuerdo de pago: la deuda dividida en cuotas con fecha (ADM-45). */
+export const paymentPlans = pgTable(
+  "payment_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id, { onDelete: "cascade" }),
+    total: integer("total").notNull(),
+    startsOn: date("starts_on").notNull(),
+    status: paymentPlanStatusEnum("status").notNull().default("ACTIVE"),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("payment_plans_guardian_idx").on(t.guardianId, t.status)],
+);
+
+export const paymentPlanInstallments = pgTable(
+  "payment_plan_installments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => paymentPlans.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    dueOn: date("due_on").notNull(),
+    amount: integer("amount").notNull(),
+  },
+  (t) => [uniqueIndex("payment_plan_installments_uq").on(t.planId, t.position)],
+);

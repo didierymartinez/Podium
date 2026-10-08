@@ -267,6 +267,20 @@
       "when": 1791461968341,
       "tag": "0037_payment_reports_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791462496987,
+      "tag": "0038_collections",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791462498492,
+      "tag": "0039_collections_rls",
+      "breakpoints": true
     }
   ]
 }

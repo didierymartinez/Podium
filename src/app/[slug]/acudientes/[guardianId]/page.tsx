@@ -17,6 +17,9 @@ import { getSchoolContext } from "../../data";
 import { GuardianForm } from "./guardian-form";
 import { guardianStatement } from "@/modules/billing/statement";
 import { StatementCard } from "./statement-card";
+import { CollectionNotesCard, PaymentPlanCard } from "./collection-cards";
+import { getActivePaymentPlan, listCollectionNotes } from "@/modules/billing/collections";
+import { isoDateOf, todayIn } from "@/lib/dates";
 import { receivedAnnouncements } from "@/modules/announcements/announcements";
 
 export const metadata: Metadata = { title: "Acudiente" };
@@ -32,9 +35,12 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
   const name = `${guardian.firstName} ${guardian.lastName}`;
   const invitation =
     (await invitationStates(db, school.id, "GUARDIAN", [guardian])).get(guardian.id) ?? "none";
-  const [statement, received] = await Promise.all([
+  const today = todayIn(school.timezone);
+  const [statement, received, notes, plan] = await Promise.all([
     guardianStatement(db, school.id, guardian.id),
     receivedAnnouncements(db, school.id, { guardianId: guardian.id }),
+    listCollectionNotes(db, school.id, guardian.id),
+    getActivePaymentPlan(db, school.id, guardian.id, today),
   ]);
 
   return (
@@ -109,6 +115,40 @@ export default async function GuardianPage({ params }: PageProps<"/[slug]/acudie
         </Card>
       </div>
       {statement && <StatementCard slug={slug} guardianId={guardian.id} statement={statement} />}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <CollectionNotesCard
+          slug={slug}
+          guardianId={guardian.id}
+          notes={notes.map((n) => ({
+            id: n.id,
+            kind: n.kind,
+            note: n.note,
+            date: isoDateOf(n.createdAt, school.timezone),
+            promiseOn: n.promiseOn,
+            promiseAmount: n.promiseAmount,
+            promiseStatus: n.promiseStatus,
+          }))}
+        />
+        <PaymentPlanCard
+          slug={slug}
+          guardianId={guardian.id}
+          owed={statement?.owed ?? 0}
+          today={today}
+          plan={
+            plan && {
+              id: plan.plan.id,
+              total: plan.plan.total,
+              paid: plan.paid,
+              installments: plan.installments.map((i) => ({
+                position: i.position,
+                dueOn: i.dueOn,
+                amount: i.amount,
+                state: i.state,
+              })),
+            }
+          }
+        />
+      </div>
       <Card>
         <SectionTitle>Avisos recibidos</SectionTitle>
         <ul className="divide-y divide-line text-sm" aria-label="Avisos recibidos">

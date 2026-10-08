@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
 import { auditLogs, enrollments, platformInvoices, schools, subscriptions, users } from "@/db/schema";
-import { addDays, instantOf, isoDateOf, todayIn, type IsoDate } from "@/lib/dates";
+import { addDays, addMonths, instantOf, isoDateOf, todayIn, type IsoDate } from "@/lib/dates";
 import { emailLayout, PODIUM_BRAND } from "@/lib/mailer/templates";
 import type { Mailer } from "@/lib/mailer/types";
 import { formatCOP } from "@/lib/money";
@@ -27,15 +27,7 @@ type Ctx = { schoolId: string; actorUserId: string | null };
 
 const daysSince = (from: Date, now: Date) => Math.floor((now.getTime() - from.getTime()) / DAY_MS);
 
-/** "2026-01-31" + 1 mes → "2026-02-28" (se ajusta al último día del mes). */
-export function addMonths(date: IsoDate, months: number): IsoDate {
-  const [y, m, d] = date.split("-").map(Number);
-  const index = y * 12 + (m - 1) + months;
-  const year = Math.floor(index / 12);
-  const month = (index % 12) + 1;
-  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
-}
+export { addMonths } from "@/lib/dates";
 
 /** Periodo que cubre un pago: desde `start` hasta el día anterior al mismo día del mes (o año) siguiente. */
 export const periodEndOf = (start: IsoDate, interval: Interval) =>

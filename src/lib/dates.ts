@@ -77,3 +77,13 @@ function offsetOf(date: IsoDate, timeZone: string): string {
 export function instantOf(date: IsoDate, time: string, timeZone: string): Date {
   return new Date(`${date}T${time.slice(0, 5)}:00${offsetOf(date, timeZone)}`);
 }
+
+/** "2026-01-31" + 1 mes → "2026-02-28" (se ajusta al último día del mes). */
+export function addMonths(date: IsoDate, months: number): IsoDate {
+  const [y, m, d] = date.split("-").map(Number);
+  const index = y * 12 + (m - 1) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
+}

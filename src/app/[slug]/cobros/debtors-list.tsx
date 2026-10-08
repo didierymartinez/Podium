@@ -20,6 +20,9 @@ type Debtor = {
   overdue: number;
   oldestDueOn: string;
   buckets: Record<string, number>;
+  /** Gestión de cobro (ADM-44/45): acuerdo vigente y compromiso abierto. */
+  plan?: boolean;
+  promiseOn?: string | null;
 };
 
 const AGE_FILTERS = [
@@ -149,6 +152,8 @@ export function DebtorsList({
             <div className="text-right">
               <p className="font-semibold tabular-nums">{formatCOP(d.total)}</p>
               {d.overdue > 0 ? <Chip tone="danger">Vencida desde {d.oldestDueOn}</Chip> : <Chip>Al día</Chip>}
+              {d.plan && <Chip tone="violet">Acuerdo de pago</Chip>}
+              {d.promiseOn && <Chip tone="sun">Compromiso {d.promiseOn}</Chip>}
             </div>
             <a
               href={whatsappLink(

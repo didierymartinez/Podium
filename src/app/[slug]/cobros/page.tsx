@@ -11,6 +11,7 @@ import { nextGenerationDate } from "@/modules/billing/schedule";
 import { AGING_BUCKETS, agingReport, billedInPeriod, collectionSummary } from "@/modules/billing/statement";
 import { listGroups } from "@/modules/groups/groups";
 import { getSchoolContext } from "../data";
+import { collectionFlags } from "@/modules/billing/collections";
 import { DebtorsList } from "./debtors-list";
 
 export const metadata: Metadata = { title: "Cobros" };
@@ -27,6 +28,11 @@ export default async function BillingHomePage({ params }: PageProps<"/[slug]/cob
     billedInPeriod(db, school.id, monthStart, today),
     listGroups(db, school.id),
   ]);
+  const flags = await collectionFlags(
+    db,
+    school.id,
+    aging.debtors.map((d) => d.guardianId),
+  );
   const collectedTotal = collected.reduce((s, c) => s + c.total, 0);
   const overdue = aging.total - aging.totals.current;
   const max = Math.max(1, ...Object.values(aging.totals));
@@ -59,7 +65,7 @@ export default async function BillingHomePage({ params }: PageProps<"/[slug]/cob
             slug={slug}
             schoolName={school.name}
             groups={groups.map((g) => ({ id: g.id, name: g.name }))}
-            debtors={aging.debtors}
+            debtors={aging.debtors.map((d) => ({ ...d, ...flags.get(d.guardianId) }))}
           />
         </Card>
         <div className="space-y-4">
