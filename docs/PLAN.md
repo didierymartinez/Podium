@@ -3,6 +3,18 @@
 > SaaS para escuelas deportivas. Deporte inicial: **patinaje** (velocidad, artístico, hockey, freestyle).
 > Dos ejes: **deportivo** (entrenamientos, asistencia, rendimiento, competencias) y **administrativo** (matrículas, cartera, pagos, reportes).
 
+## Decisiones tomadas
+
+| Tema | Decisión | Impacto |
+|---|---|---|
+| Mercado | **Colombia** | COP, zona `America/Bogota`, pasarela Wompi (PSE/Nequi/tarjeta), Ley 1581, documentos CC/TI/RC/CE/PPT, DIAN en fase 3 |
+| Modelo de cobro de las escuelas | **Mensualidad** | Facturación recurrente mensual con día de corte; no hay paquetes de clases en el MVP |
+| Profesores | **Empleados** | No se calcula pago por clase; reportes de horas solo informativos |
+| Multi-sede | **No en el MVP** | Una sede por escuela en la interfaz (la entidad `Venue` existe para no migrar después) |
+| Cliente | **PWA primero** | Una sola app web instalable para admin, profesores y acudientes |
+| Equipo | **Un desarrollador (fundador)** | Stack mínimo, un solo despliegue, nada de microservicios |
+| Alta de escuelas | **Manual por el super admin (Podium)** | Ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
+
 ---
 
 ## 1. Visión y propuesta de valor
@@ -21,7 +33,7 @@
 
 | Rol | Alcance | Puede |
 |---|---|---|
-| **Super admin (Podium)** | Toda la plataforma | Gestionar escuelas (tenants), planes de suscripción, soporte |
+| **Super admin (Podium)** | Toda la plataforma | Dar de alta escuelas, planes de suscripción, soporte — ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 | **Administrador de escuela** | Su escuela (todas las sedes) | Todo: configuración, finanzas, usuarios, reportes |
 | **Coordinador / secretaría** | Su escuela o sede | Matrículas, cartera, pagos, horarios; sin configuración sensible |
 | **Profesor / entrenador** | Sus grupos | Asistencia, planes, evaluaciones, marcas, inscribir a competencias; **no ve finanzas** (configurable: ver "al día / en mora") |
@@ -81,16 +93,21 @@ Permisos basados en roles (RBAC) con posibilidad de un usuario tener varios role
 - Exportar listado de inscritos (formato para la liga/federación).
 
 ### 3.8 Cartera, cobros y pagos
-- **Conceptos de cobro**: matrícula, mensualidad, clase suelta, paquete de clases, inscripción a competencia, uniforme, patines/alquiler, eventos.
-- **Planes**: mensual, trimestral, por número de clases, con descuentos (hermanos, pronto pago, becas/beneficios) y recargos por mora.
-- **Facturación recurrente automática**: generar cuentas de cobro cada periodo según matrícula.
+- **Conceptos de cobro**: matrícula (anual), **mensualidad**, inscripción a competencia, uniforme, eventos.
+- **Mensualidad** (modelo único del MVP):
+  - Valor definido por **tarifa** (p. ej. "Iniciación 3 días/semana", "Competencia 5 días/semana"); cada matrícula apunta a una tarifa.
+  - La escuela configura el **día de generación** (p. ej. día 1), el **día de vencimiento** (p. ej. día 10) y el **recargo por mora** (valor fijo o %, opcional).
+  - Ingreso a mitad de mes: cobrar mes completo, proporcional o desde el mes siguiente (configurable).
+  - Descuentos recurrentes: hermanos, pronto pago (si paga antes del día X), becas (% o valor fijo, con fecha fin).
+  - Alumno **congelado** (lesión, viaje): no genera mensualidad en esos meses.
+- **Facturación recurrente automática**: un job diario genera las cuentas de cobro del mes a cada acudiente responsable (agrupa hermanos en un solo cobro).
 - **Estado de cuenta** por alumno/acudiente: saldo, vencidos, edad de la cartera (0–30, 31–60, 61–90, +90).
-- **Pagos en línea**: pasarela local (Colombia: Wompi, PayU, Mercado Pago, ePayco → PSE, tarjeta, Nequi, Daviplata, Bancolombia QR). Conciliación automática por webhook.
-- **Pagos manuales**: efectivo/transferencia registrados por secretaría con soporte (foto del comprobante), recibo de caja.
+- **Pagos en línea**: **Wompi** (PSE, tarjeta, Nequi, Bancolombia). Link de pago por cobro; conciliación automática por webhook. Cada escuela usa **su propia cuenta Wompi** (el dinero llega directo a la escuela, Podium no recauda dineros de terceros).
+- **Pagos manuales**: efectivo/transferencia registrados por la escuela con soporte (foto del comprobante) y recibo de caja.
 - Abonos parciales, notas crédito, anulaciones con auditoría.
-- **Recordatorios automáticos** (antes del vencimiento, al vencer, en mora) por WhatsApp/email/push.
-- Facturación electrónica DIAN vía proveedor (Alegra, Siigo, Facturatech…) — **fase 2**.
-- Egresos básicos (nómina de profesores, arriendo de pista, materiales) para ver utilidad — **fase 2**.
+- **Recordatorios automáticos** (antes del vencimiento, al vencer, en mora) por email/push y WhatsApp.
+- Facturación electrónica DIAN vía proveedor (Alegra, Siigo, Facturatech…) — **fase 3**.
+- Egresos básicos (nómina de profesores, arriendo de pista, materiales) para ver utilidad — **fase 3**.
 
 ### 3.9 Comunicación
 - Avisos a toda la escuela, a un grupo o individuales.
@@ -146,39 +163,43 @@ Todas las tablas de negocio llevan `school_id` (tenant).
 | `Payment` + `PaymentAllocation` | método, pasarela, referencia, aplicado a facturas |
 | `Notification`, `Announcement` | comunicación |
 | `AuditLog` | quién cambió qué (obligatorio en finanzas) |
+| Plataforma | `SchoolLead`, `Plan`, `Subscription`, `PlatformInvoice`, `Invitation`, `PaymentProviderAccount`, `LegalAcceptance` — detalle en [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 
 ---
 
 ## 6. Arquitectura propuesta
 
-**Principio:** un solo lenguaje (TypeScript) de punta a punta, monolito modular bien separado — rápido para un equipo pequeño, fácil de partir después.
+**Principio:** un desarrollador → **un solo proyecto, un solo lenguaje (TypeScript), un solo despliegue**. Monolito modular; se separa solo si algún día hace falta.
 
 | Capa | Propuesta | Por qué |
 |---|---|---|
-| Web admin (escuela/profesores) | **Next.js** (React) + Tailwind + shadcn/ui | Productivo, SSR, gran ecosistema |
-| App móvil (profesor, alumno, acudiente) | **React Native (Expo)**; arrancar como **PWA** en MVP | Comparte lógica/tipos; PWA reduce tiempo al mercado |
-| Backend / API | **NestJS** (o Next.js API + tRPC si se quiere aún más simple) | Módulos claros por dominio |
-| Base de datos | **PostgreSQL** con multi-tenancy por `school_id` + **Row Level Security** | Aislamiento fuerte de datos entre escuelas |
-| ORM | Prisma o Drizzle | Tipado, migraciones |
-| Jobs / colas | BullMQ + Redis | Facturación recurrente, recordatorios, generación de sesiones |
-| Archivos | S3 / Cloudflare R2 | Fotos, comprobantes, documentos, videos de ejercicios |
-| Auth | Email + **OTP por WhatsApp/SMS** (acudientes rara vez recuerdan contraseñas) | Fricción mínima |
-| Pagos | Abstracción `PaymentProvider` → Wompi primero | Cambiar/añadir pasarela sin tocar el dominio |
-| Notificaciones | Abstracción `Notifier` → email (Resend/SES), push (Expo), WhatsApp (Twilio/360dialog/Meta Cloud API) | |
-| Infra | Vercel/Render/Railway al inicio → AWS cuando haya tracción | Bajo costo operativo inicial |
-| Observabilidad | Sentry + logs estructurados | |
+| App (admin, profesores, acudientes) | **Next.js (App Router) como PWA** + Tailwind + shadcn/ui | Un solo código para web y "app" instalable en el celular |
+| Backend | **Server Actions / Route Handlers de Next.js** (mismo proyecto) | Sin API separada que mantener |
+| Base de datos | **PostgreSQL** (Neon o Supabase) con `school_id` en cada tabla + **Row Level Security** | Aislamiento fuerte entre escuelas |
+| ORM | **Drizzle** (o Prisma) | Tipado y migraciones |
+| Auth | **Better Auth** / Auth.js: email + contraseña y **código OTP por email**; WhatsApp OTP después | Acudientes sin fricción |
+| Jobs programados | **Cron del hosting** (Vercel Cron) llamando endpoints idempotentes; `pg-boss` si crece | Sin Redis ni infraestructura extra |
+| Archivos | Cloudflare R2 / Supabase Storage | Fotos, comprobantes, documentos |
+| Pagos | Interfaz `PaymentProvider` → **Wompi** | Cambiar/añadir pasarela sin tocar el dominio |
+| Notificaciones | Interfaz `Notifier` → email (**Resend**), Web Push (PWA); WhatsApp (Meta Cloud API) en fase 2 | |
+| Offline (asistencia) | Service Worker + IndexedDB, cola de sincronización | Pistas con mala señal |
+| Hosting | **Vercel** + Neon/Supabase (planes gratuitos/baratos al inicio) | Cero servidores que administrar |
+| Observabilidad | Sentry | |
 
-**Estructura del monorepo (sugerida):**
+**Estructura del proyecto:**
 ```
-apps/
-  web/        # Next.js – panel admin y profesores
-  mobile/     # Expo – alumnos, acudientes, profesores
-  api/        # NestJS
-packages/
-  domain/     # tipos y reglas de negocio compartidas
-  ui/         # componentes compartidos
-  db/         # esquema y migraciones
+src/
+  app/
+    (platform)/admin/      # consola super admin de Podium (alta de escuelas)
+    (school)/[slug]/...    # app de cada escuela (admin, profesor, acudiente)
+    api/                   # webhooks (Wompi), cron
+  modules/                 # dominio por módulo: schools, athletes, groups,
+                           # attendance, billing, payments, training, ...
+  db/                      # esquema Drizzle y migraciones
+  lib/                     # auth, tenant, notifier, payment-provider
 ```
+
+**Identificación de la escuela (tenant):** por ruta `podium.app/<slug>` en el MVP (sin DNS ni certificados extra). Subdominios `<slug>.podium.app` o dominio propio pueden añadirse después.
 
 ---
 
@@ -199,27 +220,33 @@ packages/
 - Validar: ¿cómo cobran hoy?, ¿qué pagarían?, ¿qué los haría cambiar de Excel/WhatsApp?
 - Prototipo navegable (Figma) de los 5 flujos clave.
 
-### Fase 1 — MVP "administrativo + asistencia" (8–10 semanas)
+### Fase 1 — MVP "administrativo + asistencia" (≈10–12 semanas, 1 dev)
 Objetivo: que una escuela deje Excel para cobrar y tomar lista.
-1. Escuela, sedes, usuarios, roles.
-2. Alumnos, acudientes, matrículas, grupos y horarios.
-3. Asistencia desde el móvil (PWA).
-4. Planes de pago, facturación recurrente, estado de cuenta, pagos manuales.
-5. Pago en línea (Wompi) + recordatorios por email/WhatsApp.
-6. Tablero básico: recaudo, cartera vencida, alumnos activos, asistencia.
 
-### Fase 2 — Deportivo (6–8 semanas)
+| Semanas | Entregable |
+|---|---|
+| 1–2 | Proyecto base, auth, multi-tenant (RLS), **consola super admin y alta de escuelas** |
+| 3–4 | Configuración de escuela, alumnos, acudientes, importación desde Excel |
+| 5 | Grupos, horarios y generación de sesiones |
+| 6 | Asistencia en la PWA (con modo offline) |
+| 7–8 | Tarifas, matrículas, generación mensual de cobros, estado de cuenta, pagos manuales |
+| 9 | Wompi (link de pago + webhook) y recordatorios por email |
+| 10 | Portal del acudiente (cobros, pagos, asistencia de sus hijos) |
+| 11–12 | Tablero (recaudo, cartera, activos, asistencia), pulido y **piloto con 1–3 escuelas** |
+
+### Fase 2 — Deportivo (≈8 semanas)
 - Niveles y evaluaciones, registro de marcas y progreso.
 - Competencias, convocatorias, autorizaciones y resultados.
 - Biblioteca de ejercicios y planes de sesión.
-- App del acudiente/alumno con progreso y logros.
+- Progreso y logros visibles para alumno/acudiente.
+- Recordatorios por WhatsApp.
 
 ### Fase 3 — Crecimiento
-- Facturación electrónica DIAN, egresos y nómina de profesores.
-- Inscripción pública / embudo de leads y clase de prueba.
-- App nativa (Expo), check-in QR, gamificación.
+- Facturación electrónica DIAN, egresos.
+- Registro autónomo de escuelas (self-service) con prueba gratis y cobro automático de la suscripción.
+- Multi-sede, inscripción pública / clase de prueba, check-in QR, gamificación.
 - Segundo deporte vía plantilla (natación o fútbol).
-- Integraciones con ligas/federaciones, multi-sede avanzada, marketplace de escuelas.
+- App nativa (Expo) solo si la PWA se queda corta.
 
 ---
 
@@ -240,10 +267,6 @@ Objetivo: que una escuela deje Excel para cobrar y tomar lista.
 ---
 
 ## 11. Preguntas abiertas
-1. ¿Mercado inicial solo Colombia o Latam desde el principio? (define pasarela, facturación, categorías de federación).
-2. ¿Las escuelas cobran por mes fijo, por clases o mixto? ¿Hay becas/patrocinios?
-3. ¿Los profesores son empleados, contratistas por clase o socios? (impacta reportes de nómina).
-4. ¿Se necesita multi-sede en el MVP?
-5. ¿Prioridad: web primero o app móvil primero para profesores y acudientes?
-6. ¿Equipo de desarrollo disponible y presupuesto/tiempo objetivo para el MVP?
-7. ¿Nombre/marca final "Podium" confirmado?
+1. ¿Nombre/marca final "Podium" confirmado y dominio disponible?
+2. ¿Precio de la suscripción por rango de alumnos? (validar en Fase 0).
+3. ¿Escuelas piloto identificadas para la Fase 0?
