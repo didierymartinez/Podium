@@ -1,0 +1,29 @@
+# Entorno local: PostgreSQL 16. La app corre con `pnpm dev` (o descomenta el servicio app).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: podium
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # app:
+  #   build:
+  #     context: .
+  #     args:
+  #       NEXT_PUBLIC_AUTH_PROVIDER: dev
+  #   env_file: .env
+  #   environment:
+  #     DATABASE_URL: postgres://podium_app:podium_app_dev@db:5432/podium
+  #     ALLOW_DEV_AUTH: "true"
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+
+volumes:
+  pgdata:

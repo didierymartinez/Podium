@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: podium_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MIGRATIONS_DATABASE_URL: postgres://postgres:postgres@localhost:5432/podium_test
+      TEST_DATABASE_URL: postgres://podium_app:podium_app_dev@localhost:5432/podium_test
+      DATABASE_URL: postgres://podium_app:podium_app_dev@localhost:5432/podium_test
+      SESSION_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+      NEXT_PUBLIC_AUTH_PROVIDER: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Migraciones
+        run: |
+          pnpm db:migrate
+          psql "$MIGRATIONS_DATABASE_URL" -c "ALTER ROLE podium_app LOGIN PASSWORD 'podium_app_dev'"
+      - run: pnpm test
+      - run: pnpm build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir imagen (verifica portabilidad)
+        run: docker build -t podium:ci --build-arg NEXT_PUBLIC_AUTH_PROVIDER=dev .
