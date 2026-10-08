@@ -26,6 +26,9 @@ import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
 import { BadgesCard } from "@/components/badges-card";
 import { BodyCard } from "@/components/body-card";
+import { RoutineCard } from "@/components/routine-card";
+import { activeRoutine, recentWorkouts, workoutProgress } from "@/modules/training/routines";
+import { toRoutineView } from "@/modules/training/routine-view";
 import { bodyProfile } from "@/modules/athletes/body";
 import { toBodyView } from "@/modules/athletes/body-view";
 import { listBadges } from "@/modules/badges/badges";
@@ -62,6 +65,11 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         competitions: await athleteCompetitions(db, school.id, a.id),
         badges: await listBadges(db, school.id, a.id),
         body: await bodyProfile(db, school.id, a.id, { includeHealth: false }),
+        routine: toRoutineView(
+          await activeRoutine(db, school.id, a.id),
+          await workoutProgress(db, school.id, a.id),
+          await recentWorkouts(db, school.id, a.id),
+        ),
         history: await attendanceHistory(db, school.id, a.id, 8),
         documents: await listAthleteDocuments(db, school.id, a.id, today),
       })),
@@ -112,6 +120,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
           competitions,
           badges,
           body,
+          routine,
         }) => {
           const name = `${a.firstName} ${a.lastName}`;
           const category = findAgeCategory(
@@ -233,6 +242,16 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                 />
               )}
               {badges.length > 0 && <BadgesCard title={`Insignias de ${a.firstName}`} badges={badges} />}
+              {routine.routine && (
+                <RoutineCard
+                  slug={slug}
+                  athleteId={a.id}
+                  firstName={a.firstName}
+                  mode="family"
+                  today={today}
+                  {...routine}
+                />
+              )}
               <BodyCard
                 slug={slug}
                 athleteId={a.id}

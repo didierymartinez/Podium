@@ -51,7 +51,9 @@ test("egresos, utilidad del mes e inventario con ventas", async ({ page }) => {
   await page.getByLabel("Descripción").fill("Arriendo de la pista");
   await page.getByLabel("Valor").fill("45000");
   await page.getByRole("button", { name: "Registrar egreso" }).click();
-  await expect(page.getByRole("list", { name: "Egresos", exact: true })).toContainText("Arriendo de la pista");
+  await expect(page.getByRole("list", { name: "Egresos", exact: true })).toContainText(
+    "Arriendo de la pista",
+  );
   const kpis = page.getByLabel("Utilidad del mes");
   await expect(kpis).toContainText("Ventas de contado$ 60.000");
   await expect(kpis).toContainText("Egresos$ 45.000");

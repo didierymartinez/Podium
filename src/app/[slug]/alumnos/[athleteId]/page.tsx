@@ -34,6 +34,9 @@ import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
 import { BadgesCard } from "@/components/badges-card";
 import { BodyCard } from "@/components/body-card";
+import { RoutineCard } from "@/components/routine-card";
+import { activeRoutine, recentWorkouts, workoutProgress } from "@/modules/training/routines";
+import { toRoutineView } from "@/modules/training/routine-view";
 import { bodyProfile } from "@/modules/athletes/body";
 import { toBodyView } from "@/modules/athletes/body-view";
 import { listBadges } from "@/modules/badges/badges";
@@ -64,18 +67,33 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats, billing, injuries, progress, evaluations, competitions, badges, body] =
-    await Promise.all([
-      listAthleteDocuments(db, school.id, athleteId, today),
-      attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
-      athleteBillingStatus(db, school.id, [athleteId], today),
-      listInjuries(db, school.id, athleteId),
-      athleteProgress(db, school.id, athleteId, todayIn(school.timezone)),
-      athleteEvaluations(db, school.id, athleteId),
-      athleteCompetitions(db, school.id, athleteId),
-      listBadges(db, school.id, athleteId),
-      bodyProfile(db, school.id, athleteId, { includeHealth: true }),
-    ]);
+  const [
+    documents,
+    stats,
+    billing,
+    injuries,
+    progress,
+    evaluations,
+    competitions,
+    badges,
+    body,
+    routine,
+    lifts,
+    workouts,
+  ] = await Promise.all([
+    listAthleteDocuments(db, school.id, athleteId, today),
+    attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
+    athleteBillingStatus(db, school.id, [athleteId], today),
+    listInjuries(db, school.id, athleteId),
+    athleteProgress(db, school.id, athleteId, todayIn(school.timezone)),
+    athleteEvaluations(db, school.id, athleteId),
+    athleteCompetitions(db, school.id, athleteId),
+    listBadges(db, school.id, athleteId),
+    bodyProfile(db, school.id, athleteId, { includeHealth: true }),
+    activeRoutine(db, school.id, athleteId),
+    workoutProgress(db, school.id, athleteId),
+    recentWorkouts(db, school.id, athleteId),
+  ]);
   const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
   const age = ageOn(athlete.birthDate, today);
@@ -177,6 +195,14 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
           <PerformanceCard tests={toProgressView(progress)} />
           <CompetitionHistory history={competitions} />
           <BadgesCard badges={badges} />
+          <RoutineCard
+            slug={slug}
+            athleteId={athleteId}
+            firstName={athlete.firstName}
+            mode="staff"
+            today={today}
+            {...toRoutineView(routine, lifts, workouts)}
+          />
           <BodyCard
             slug={slug}
             athleteId={athleteId}

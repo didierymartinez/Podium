@@ -2032,3 +2032,95 @@ export const whatsappMessages = pgTable(
       .where(sql`${t.waMessageId} is not null`),
   ],
 );
+
+/** Rutina individual del alumno (gimnasio / grupo de competencia). Una activa por alumno. */
+export const routines = pgTable(
+  "routines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    notes: text("notes"),
+    active: boolean("active").notNull().default(true),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("routines_athlete_idx").on(t.athleteId)],
+);
+
+export const routineDays = pgTable("routine_days", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  routineId: uuid("routine_id")
+    .notNull()
+    .references(() => routines.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  position: integer("position").notNull(),
+});
+
+export const routineExercises = pgTable("routine_exercises", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  dayId: uuid("day_id")
+    .notNull()
+    .references(() => routineDays.id, { onDelete: "cascade" }),
+  exerciseId: uuid("exercise_id").references(() => exercises.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  sets: integer("sets").notNull(),
+  reps: text("reps").notNull(),
+  weightKg: doublePrecision("weight_kg"),
+  restSeconds: integer("rest_seconds"),
+  notes: text("notes"),
+  position: integer("position").notNull(),
+});
+
+/** Entreno registrado (por el profesor o por el alumno/familia). */
+export const workoutLogs = pgTable(
+  "workout_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    routineDayId: uuid("routine_day_id").references(() => routineDays.id, { onDelete: "set null" }),
+    performedOn: date("performed_on").notNull(),
+    notes: text("notes"),
+    byFamily: boolean("by_family").notNull().default(false),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("workout_logs_athlete_idx").on(t.athleteId, t.performedOn)],
+);
+
+export const workoutSets = pgTable(
+  "workout_sets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    logId: uuid("log_id")
+      .notNull()
+      .references(() => workoutLogs.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    exerciseName: text("exercise_name").notNull(),
+    setNumber: integer("set_number").notNull(),
+    reps: integer("reps").notNull(),
+    weightKg: doublePrecision("weight_kg"),
+  },
+  (t) => [index("workout_sets_log_idx").on(t.logId)],
+);
