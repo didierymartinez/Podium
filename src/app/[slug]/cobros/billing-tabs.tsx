@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Inbox, LayoutDashboard, Receipt } from "lucide-react";
+import { FileText, Inbox, LayoutDashboard, Receipt, Vault } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
@@ -17,6 +17,7 @@ export function BillingTabs({ slug }: { slug: string }) {
       exclude: `/${slug}/cobros/pagos/por-verificar`,
     },
     { href: `/${slug}/cobros/pagos/por-verificar`, label: "Por verificar", icon: Inbox },
+    { href: `/${slug}/cobros/caja`, label: "Caja", icon: Vault },
   ];
   return (
     <nav className="flex flex-wrap gap-1.5" aria-label="Cobros">

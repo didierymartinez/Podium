@@ -1258,3 +1258,27 @@ export const paymentPlanInstallments = pgTable(
   },
   (t) => [uniqueIndex("payment_plan_installments_uq").on(t.planId, t.position)],
 );
+
+/** Cierre de caja diario por usuario (ADM-50): esperado por medio vs. efectivo contado. Inmutable. */
+export const cashClosings = pgTable(
+  "cash_closings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    date: date("date").notNull(),
+    /** Total recibido por medio de pago ese día. */
+    expected: jsonb("expected").$type<Record<string, number>>().notNull(),
+    countedCash: integer("counted_cash").notNull(),
+    /** Contado − esperado en efectivo (negativo = faltante). */
+    difference: integer("difference").notNull(),
+    notes: text("notes"),
+    paymentIds: jsonb("payment_ids").$type<string[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("cash_closings_user_day_uq").on(t.schoolId, t.userId, t.date)],
+);

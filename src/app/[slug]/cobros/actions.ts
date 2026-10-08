@@ -8,6 +8,7 @@ import { db } from "@/db/client";
 import { todayIn } from "@/lib/dates";
 import { parseCOP } from "@/lib/money";
 import { storage } from "@/lib/storage";
+import { closeCash } from "@/modules/billing/cash";
 import { saveConcept, setConceptActive } from "@/modules/billing/concepts";
 import {
   addCreditNote,
@@ -310,4 +311,24 @@ export async function rejectTransferAction(
   deliverSoon(m.school.id);
   refresh();
   return { ok: true };
+}
+
+export async function closeCashAction(
+  slug: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  // El cierre de caja cuadra pagos de familias: se permite también en solo lectura.
+  const m = await billing(slug, false, true);
+  if (!m) return FORBIDDEN_STATE;
+  const result = await closeCash(db, m.ctx, m.today, m.school.timezone, {
+    countedCash: parseCOP(formReader(form).text("countedCash")) ?? 0,
+    notes: formReader(form).text("notes"),
+  });
+  if (!result.ok) {
+    if ("error" in result) return { ok: false, message: "La caja de hoy ya está cerrada." };
+    return { ok: false, message: "Revisa los campos marcados", errors: result.errors };
+  }
+  refresh();
+  return { ok: true, message: "Caja cerrada" };
 }

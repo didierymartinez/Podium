@@ -281,6 +281,20 @@
       "when": 1791462498492,
       "tag": "0039_collections_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791463007928,
+      "tag": "0040_cash_closings",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791463009514,
+      "tag": "0041_cash_closings_rls",
+      "breakpoints": true
     }
   ]
 }
