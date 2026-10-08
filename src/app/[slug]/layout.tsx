@@ -22,6 +22,7 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
     admin: canManageSettings(roles),
     coach: roles.includes("COACH"),
     family: roles.includes("GUARDIAN"),
+    gym: school.type === "GYM",
   };
   const isOwner = canManageSubscription(roles);
   const daysLeft =

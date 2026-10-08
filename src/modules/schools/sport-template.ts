@@ -4,9 +4,13 @@
  * solo una plantilla. Las categorías son un ejemplo: cada escuela debe ajustarlas al reglamento de su liga.
  */
 
-export type Sport = "SKATING" | "SWIMMING";
+export type Sport = "SKATING" | "SWIMMING" | "FITNESS";
 
-export const SPORT_LABELS: Record<Sport, string> = { SKATING: "Patinaje", SWIMMING: "Natación" };
+export const SPORT_LABELS: Record<Sport, string> = {
+  SKATING: "Patinaje",
+  SWIMMING: "Natación",
+  FITNESS: "Gimnasio",
+};
 
 export const SKATING_DISCIPLINES = [
   { code: "speed", name: "Velocidad", sport: "SKATING" },
@@ -20,8 +24,17 @@ export const SWIMMING_DISCIPLINES = [
   { code: "swim-comp", name: "Competitiva", sport: "SWIMMING" },
 ] as const;
 
+/** Vertical gimnasio (#74): entrenamiento personal y funcional. */
+export const FITNESS_DISCIPLINES = [
+  { code: "fitness", name: "Entrenamiento personal", sport: "FITNESS" },
+] as const;
+
 /** Todas las modalidades disponibles, de todos los deportes. */
-export const ALL_DISCIPLINES = [...SKATING_DISCIPLINES, ...SWIMMING_DISCIPLINES] as const;
+export const ALL_DISCIPLINES = [
+  ...SKATING_DISCIPLINES,
+  ...SWIMMING_DISCIPLINES,
+  ...FITNESS_DISCIPLINES,
+] as const;
 
 export type DisciplineCode = (typeof ALL_DISCIPLINES)[number]["code"];
 
@@ -60,8 +73,15 @@ const GENERIC_LEVELS: LevelTemplate[] = [
   { name: "Competencia", goal: "Rendimiento federado" },
 ];
 
+const FITNESS_LEVELS: LevelTemplate[] = [
+  { name: "Principiante", goal: "Técnica de los movimientos básicos y hábito" },
+  { name: "Intermedio", goal: "Progresión de cargas y acondicionamiento" },
+  { name: "Avanzado", goal: "Rendimiento y objetivos específicos" },
+];
+
 export function levelsFor(code: DisciplineCode): LevelTemplate[] {
   if (sportOf(code) === "SWIMMING") return SWIMMING_LEVELS;
+  if (sportOf(code) === "FITNESS") return FITNESS_LEVELS;
   return code === "speed" ? SPEED_LEVELS : GENERIC_LEVELS;
 }
 
@@ -88,8 +108,19 @@ export const SWIMMING_AGE_CATEGORIES: AgeCategoryTemplate[] = [
   { name: "Máster", minAge: 25, maxAge: null },
 ];
 
+/** Gimnasio: grupos de edad amplios (no hay categorías federadas). */
+export const FITNESS_AGE_CATEGORIES: AgeCategoryTemplate[] = [
+  { name: "Menores", minAge: null, maxAge: 17 },
+  { name: "Adultos", minAge: 18, maxAge: 59 },
+  { name: "Mayores de 60", minAge: 60, maxAge: null },
+];
+
 export const ageCategoriesFor = (sport: Sport) =>
-  sport === "SWIMMING" ? SWIMMING_AGE_CATEGORIES : SKATING_AGE_CATEGORIES;
+  sport === "SWIMMING"
+    ? SWIMMING_AGE_CATEGORIES
+    : sport === "FITNESS"
+      ? FITNESS_AGE_CATEGORIES
+      : SKATING_AGE_CATEGORIES;
 
 export type TestTemplate = {
   name: string;
@@ -182,6 +213,7 @@ export const SWIMMING_TESTS: TestTemplate[] = [
 export function testsFor(code: DisciplineCode): TestTemplate[] {
   const common = SPEED_TESTS.filter((t) => t.common);
   if (sportOf(code) === "SWIMMING") return [...SWIMMING_TESTS, ...common];
+  if (sportOf(code) === "FITNESS") return common;
   return code === "speed" ? SPEED_TESTS : common;
 }
 
@@ -213,7 +245,10 @@ const SWIMMING_CRITERIA: Record<string, string[]> = {
   Competencia: ["Marcas mínimas de su categoría", "Participación en el calendario de liga"],
 };
 
+const FITNESS_CRITERIA = ["Técnica de los movimientos básicos", "Constancia", "Progresión de cargas"];
+
 export function criteriaFor(code: DisciplineCode, levelName: string): string[] {
+  if (sportOf(code) === "FITNESS") return FITNESS_CRITERIA;
   if (sportOf(code) === "SWIMMING") return SWIMMING_CRITERIA[levelName] ?? GENERIC_CRITERIA;
   return code === "speed" ? (SPEED_CRITERIA[levelName] ?? GENERIC_CRITERIA) : GENERIC_CRITERIA;
 }

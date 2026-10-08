@@ -83,6 +83,12 @@ Costo: unas pocas columnas y enums en el modelo de datos. No hay pantallas nueva
 
 ## 6. Vertical "Podium Gym" (cuando se decida)
 
+> **Estado (#74):** MVP construido detrás del tipo de organización "Gimnasio o entrenamiento personal": plantilla de
+> entrenamiento personal, planes por periodo y ticketeras, venta y renovación con cuenta de cobro, ingreso en
+> recepción o con el QR del gimnasio (descuenta visitas), retención (por vencer e inactivos) y, para el socio, su
+> membresía, rutina y entrenos (#73) y composición corporal (#63). Falta validar con gimnasios reales (§7) antes de
+> invertir en torniquetes, reservas de clases y débito automático.
+
 ### 6.1 Módulos específicos
 | Módulo | Contenido |
 |---|---|

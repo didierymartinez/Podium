@@ -53,6 +53,7 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
   const [state, action, pending] = useActionState<CreateSchoolState, FormData>(createSchoolAction, {});
   const [name, setName] = useState(state.values?.name ?? "");
   const [slug, setSlug] = useState(state.values?.slug ?? "");
+  const [type, setType] = useState(state.values?.type ?? "SPORTS_SCHOOL");
   const [slugEdited, setSlugEdited] = useState(Boolean(state.values?.slug));
   const [slugStatus, setSlugStatus] = useState<{ slug: string; available: boolean; message?: string } | null>(
     null,
@@ -126,18 +127,32 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
         </datalist>
       </Field>
 
+      <Field label="Tipo de organización" error={state.errors?.type?.[0]}>
+        <Select name="type" value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="SPORTS_SCHOOL">Escuela deportiva</option>
+          <option value="GYM">Gimnasio o entrenamiento personal</option>
+        </Select>
+      </Field>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Modalidad principal" error={state.errors?.discipline?.[0]}>
-          <Select name="discipline" required defaultValue={state.values?.discipline ?? "speed"}>
-            {(Object.keys(SPORT_LABELS) as Sport[]).map((sport) => (
-              <optgroup key={sport} label={SPORT_LABELS[sport]}>
-                {ALL_DISCIPLINES.filter((d) => d.sport === sport).map((d) => (
-                  <option key={d.code} value={d.code}>
-                    {SPORT_LABELS[sport]} · {d.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
+          <Select
+            key={type}
+            name="discipline"
+            required
+            defaultValue={type === "GYM" ? "fitness" : (state.values?.discipline ?? "speed")}
+          >
+            {(Object.keys(SPORT_LABELS) as Sport[])
+              .filter((sport) => (type === "GYM" ? sport === "FITNESS" : sport !== "FITNESS"))
+              .map((sport) => (
+                <optgroup key={sport} label={SPORT_LABELS[sport]}>
+                  {ALL_DISCIPLINES.filter((d) => d.sport === sport).map((d) => (
+                    <option key={d.code} value={d.code}>
+                      {SPORT_LABELS[sport]} · {d.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
           </Select>
         </Field>
         <Field label="¿Cuántos alumnos tienen?" error={state.errors?.estimatedStudents?.[0]}>

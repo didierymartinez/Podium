@@ -43,9 +43,11 @@ export const createSchoolSchema = z.object({
   city: z.string().trim().min(2, "Escribe la ciudad").max(80),
   discipline: z.enum(DISCIPLINE_CODES, "Elige la modalidad principal"),
   estimatedStudents: z.enum(ESTIMATED_STUDENTS_OPTIONS, "Elige un rango de alumnos"),
+  /** Escuela deportiva o gimnasio / entrenamiento personal (#74). */
+  type: z.enum(["SPORTS_SCHOOL", "GYM"]).default("SPORTS_SCHOOL"),
 });
 
-export type CreateSchoolInput = z.infer<typeof createSchoolSchema>;
+export type CreateSchoolInput = z.input<typeof createSchoolSchema>;
 
 export type CreateSchoolResult =
   { ok: true; schoolId: string; slug: string } | { ok: false; error: "slug_taken" };
@@ -63,7 +65,9 @@ export async function createSchool(
 ): Promise<CreateSchoolResult> {
   const schoolId = randomUUID();
   const endsAt = trialEndsAt(now);
-  const discipline = ALL_DISCIPLINES.find((d) => d.code === input.discipline)!;
+  const type = input.type ?? "SPORTS_SCHOOL";
+  // Un gimnasio arranca con la plantilla de entrenamiento personal.
+  const discipline = ALL_DISCIPLINES.find((d) => d.code === (type === "GYM" ? "fitness" : input.discipline))!;
 
   try {
     await runInTenant(database, { schoolId, userId: ownerUserId }, async (tx) => {
@@ -74,6 +78,7 @@ export async function createSchool(
         city: input.city,
         ownerUserId,
         estimatedStudents: input.estimatedStudents,
+        type,
         status: "TRIAL",
         trialEndsAt: endsAt,
         settings: { billing: DEFAULT_BILLING_POLICY },

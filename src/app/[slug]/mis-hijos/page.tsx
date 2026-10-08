@@ -26,6 +26,7 @@ import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
 import { BadgesCard } from "@/components/badges-card";
 import { BodyCard } from "@/components/body-card";
+import { memberSummary } from "@/modules/gym/memberships";
 import { RoutineCard } from "@/components/routine-card";
 import { activeRoutine, recentWorkouts, workoutProgress } from "@/modules/training/routines";
 import { toRoutineView } from "@/modules/training/routine-view";
@@ -65,6 +66,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         competitions: await athleteCompetitions(db, school.id, a.id),
         badges: await listBadges(db, school.id, a.id),
         body: await bodyProfile(db, school.id, a.id, { includeHealth: false }),
+        membership: school.type === "GYM" ? await memberSummary(db, school.id, a.id, today) : null,
         routine: toRoutineView(
           await activeRoutine(db, school.id, a.id),
           await workoutProgress(db, school.id, a.id),
@@ -121,6 +123,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
           badges,
           body,
           routine,
+          membership,
         }) => {
           const name = `${a.firstName} ${a.lastName}`;
           const category = findAgeCategory(
@@ -242,6 +245,25 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                 />
               )}
               {badges.length > 0 && <BadgesCard title={`Insignias de ${a.firstName}`} badges={badges} />}
+              {membership && (
+                <Card aria-label={`Membresía de ${a.firstName}`} className="space-y-1 text-sm">
+                  <SectionTitle>Membresía</SectionTitle>
+                  {membership.current ? (
+                    <p>
+                      <span className="font-semibold">{membership.current.planName}</span> · vence el{" "}
+                      {membership.current.endsOn}
+                      {membership.current.kind === "VISITS"
+                        ? ` · quedan ${(membership.current.visitsTotal ?? 0) - membership.current.visitsUsed} visitas`
+                        : ""}
+                    </p>
+                  ) : (
+                    <p className="text-danger">
+                      No tienes una membresía vigente: pide la renovación en recepción.
+                    </p>
+                  )}
+                  <p className="text-ink-soft">{membership.visitsLast30} ingresos en los últimos 30 días.</p>
+                </Card>
+              )}
               {routine.routine && (
                 <RoutineCard
                   slug={slug}

@@ -52,7 +52,7 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "PAST_DUE",
   "CANCELED",
 ]);
-export const sportEnum = pgEnum("sport", ["SKATING", "SWIMMING"]);
+export const sportEnum = pgEnum("sport", ["SKATING", "SWIMMING", "FITNESS"]);
 export const documentTypeEnum = pgEnum("document_type", ["NIT", "CC", "CE"]);
 export const personDocumentTypeEnum = pgEnum("person_document_type", [
   "RC",
@@ -2123,4 +2123,73 @@ export const workoutSets = pgTable(
     weightKg: doublePrecision("weight_kg"),
   },
   (t) => [index("workout_sets_log_idx").on(t.logId)],
+);
+
+export const membershipKindEnum = pgEnum("membership_kind", ["PERIOD", "VISITS"]);
+
+/** Planes de membresía del gimnasio (EVALUACION_GIMNASIOS §6.1). */
+export const membershipPlans = pgTable(
+  "membership_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: membershipKindEnum("kind").notNull(),
+    /** Vigencia en días (periodo) o validez de la ticketera. */
+    days: integer("days").notNull(),
+    /** Solo ticketeras. */
+    visits: integer("visits"),
+    price: integer("price").notNull(),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("membership_plans_school_name_uq").on(t.schoolId, t.name)],
+);
+
+/** Membresía vendida a un socio. */
+export const memberships = pgTable(
+  "memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id").references(() => membershipPlans.id, { onDelete: "set null" }),
+    planName: text("plan_name").notNull(),
+    kind: membershipKindEnum("kind").notNull(),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    visitsTotal: integer("visits_total"),
+    visitsUsed: integer("visits_used").notNull().default(0),
+    price: integer("price").notNull(),
+    invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("memberships_athlete_idx").on(t.athleteId, t.endsOn)],
+);
+
+/** Ingresos al gimnasio (recepción o QR del socio). */
+export const gymCheckins = pgTable(
+  "gym_checkins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id").references(() => memberships.id, { onDelete: "set null" }),
+    source: text("source").notNull(), // "reception" | "self"
+    checkedInOn: date("checked_in_on").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("gym_checkins_daily_uq").on(t.athleteId, t.checkedInOn)],
 );

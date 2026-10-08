@@ -500,6 +500,7 @@ export const SWIMMING_EXERCISES: ExerciseTemplate[] = [
 ];
 
 const SWIMMING_CODES = new Set(["swim", "swim-comp"]);
+const NON_SKATING_CODES = new Set([...SWIMMING_CODES, "fitness"]);
 
 export function exercisesFor(code: string) {
   if (SWIMMING_CODES.has(code)) return SWIMMING_EXERCISES;
@@ -508,4 +509,4 @@ export function exercisesFor(code: string) {
 
 /** Ejercicios comunes según el deporte de la modalidad. */
 export const commonExercisesFor = (code: string) =>
-  SWIMMING_CODES.has(code) ? COMMON_EXERCISES.filter((e) => !e.skatingOnly) : COMMON_EXERCISES;
+  NON_SKATING_CODES.has(code) ? COMMON_EXERCISES.filter((e) => !e.skatingOnly) : COMMON_EXERCISES;

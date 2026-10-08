@@ -3,6 +3,7 @@
 import {
   Baby,
   ClipboardList,
+  CreditCard,
   ChartColumn,
   CalendarCheck,
   GraduationCap,
@@ -23,18 +24,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "./ui";
 
-type Audience = "all" | "manager" | "admin" | "coach" | "family";
+type Audience = "all" | "manager" | "admin" | "coach" | "family" | "gym";
 type NavItem = { path: string; label: string; icon: LucideIcon; ready: boolean; audience: Audience };
 
 /** Qué ve cada persona: administración (propietario, admin, coordinador), profesores y familias. */
-export type NavAccess = { manager: boolean; admin: boolean; coach: boolean; family?: boolean };
+export type NavAccess = { manager: boolean; admin: boolean; coach: boolean; family?: boolean; gym?: boolean };
 
 const visible = (access: NavAccess) => (item: NavItem) =>
   item.audience === "all" ||
   (item.audience === "manager" && access.manager) ||
   (item.audience === "admin" && access.admin) ||
   (item.audience === "coach" && (access.coach || access.manager)) ||
-  (item.audience === "family" && Boolean(access.family) && !access.manager);
+  (item.audience === "family" && Boolean(access.family) && !access.manager) ||
+  (item.audience === "gym" && Boolean(access.gym) && access.manager);
 
 /** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
 const HOME: NavItem = { path: "", label: "Inicio", icon: House, ready: true, audience: "all" };
@@ -66,6 +68,13 @@ const MARKS: NavItem = {
   icon: Timer,
   ready: true,
   audience: "coach",
+};
+const MEMBERSHIPS: NavItem = {
+  path: "/membresias",
+  label: "Membresías",
+  icon: CreditCard,
+  ready: true,
+  audience: "gym",
 };
 const TRAINING: NavItem = {
   path: "/entrenamiento",
@@ -150,6 +159,7 @@ export const SCHOOL_NAV: NavItem[] = [
   HOME,
   ATHLETES,
   GROUPS,
+  MEMBERSHIPS,
   COACHES,
   ATTENDANCE,
   TRAINING,

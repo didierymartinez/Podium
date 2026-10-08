@@ -14,7 +14,7 @@ import { isSlugAvailable } from "@/modules/schools/queries";
 import { SLUG_ERROR_MESSAGES, validateSlug } from "@/modules/schools/slug";
 
 export type CreateSchoolState = {
-  errors?: Partial<Record<"name" | "slug" | "city" | "discipline" | "estimatedStudents", string[]>>;
+  errors?: Partial<Record<"name" | "slug" | "city" | "discipline" | "estimatedStudents" | "type", string[]>>;
   values?: Record<string, string>;
 };
 
@@ -24,7 +24,7 @@ export async function createSchoolAction(
 ): Promise<CreateSchoolState> {
   const user = await requireVerifiedUser();
   const values = Object.fromEntries(
-    ["name", "slug", "city", "discipline", "estimatedStudents"].map((k) => [
+    ["name", "slug", "city", "discipline", "estimatedStudents", "type"].map((k) => [
       k,
       String(formData.get(k) ?? ""),
     ]),
