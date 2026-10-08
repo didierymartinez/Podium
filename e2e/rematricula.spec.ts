@@ -42,7 +42,8 @@ test("re-matrícula anual: cobro por familia y confirmación de datos", async ({
   const card = family.getByLabel("Re-matrícula");
   await expect(card).toContainText("Re-matrícula 2099");
   await card.getByRole("button", { name: "Mis datos están al día" }).click();
-  await expect(family.getByText("¡Gracias! Confirmaste tus datos.")).toBeVisible();
+  // Al confirmar, la tarjeta de re-matrícula desaparece.
+  await expect(card).toBeHidden();
 
   await page.reload();
   await expect(campaign.getByText("Datos ok")).toBeVisible();

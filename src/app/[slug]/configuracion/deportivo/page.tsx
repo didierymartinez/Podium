@@ -4,6 +4,8 @@ import { canManageSettings } from "@/modules/schools/permissions";
 import { getStructure } from "@/modules/sports/structure";
 import { getSchoolContext } from "../../data";
 import { CategoriesCard, DisciplinesCard, LevelsCard, TestsCard } from "./structure-editor";
+import { TargetsCard } from "./targets-card";
+import { listTargets } from "@/modules/sports/performances";
 
 export const metadata: Metadata = { title: "Estructura deportiva" };
 
@@ -11,7 +13,7 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
   const { slug } = await params;
   const { school, roles } = await getSchoolContext(slug);
   const canEdit = canManageSettings(roles);
-  const s = await getStructure(db, school.id);
+  const [s, targets] = await Promise.all([getStructure(db, school.id), listTargets(db, school.id)]);
   const active = s.disciplines.filter((d) => d.active);
   return (
     <div className="grid gap-4 xl:grid-cols-2">
@@ -68,6 +70,15 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
             context: t.context,
             active: t.active,
           }))}
+        />
+        <TargetsCard
+          slug={slug}
+          canEdit={canEdit}
+          tests={s.tests
+            .filter((t) => t.active)
+            .map((t) => ({ id: t.id, name: t.name, kind: t.kind, unit: t.unit }))}
+          categories={s.categories.map((c) => ({ id: c.id, name: c.name }))}
+          targets={targets.map((t) => ({ testId: t.testId, ageCategoryId: t.ageCategoryId, value: t.value }))}
         />
       </div>
     </div>

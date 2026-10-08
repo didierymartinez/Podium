@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -1319,4 +1320,52 @@ export const reenrollments = pgTable(
     confirmedByUserId: uuid("confirmed_by_user_id").references(() => users.id),
   },
   (t) => [uniqueIndex("reenrollments_campaign_athlete_uq").on(t.campaignId, t.athleteId)],
+);
+
+export const performanceContextEnum = pgEnum("performance_context", ["TRAINING", "CONTROL", "COMPETITION"]);
+export const timingEnum = pgEnum("timing", ["MANUAL", "ELECTRONIC"]);
+
+/** Marcas de los deportistas en las pruebas de la escuela (DEP-50). */
+export const performances = pgTable(
+  "performances",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    testId: uuid("test_id")
+      .notNull()
+      .references(() => sportTests.id, { onDelete: "cascade" }),
+    /** Valor en la unidad de la prueba (tiempos en segundos con milésimas). */
+    value: doublePrecision("value").notNull(),
+    recordedOn: date("recorded_on").notNull(),
+    context: performanceContextEnum("context").notNull(),
+    timing: timingEnum("timing"),
+    notes: text("notes"),
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("performances_athlete_test_idx").on(t.athleteId, t.testId)],
+);
+
+/** Marca mínima u objetivo por prueba y categoría (DEP-54). */
+export const performanceTargets = pgTable(
+  "performance_targets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    testId: uuid("test_id")
+      .notNull()
+      .references(() => sportTests.id, { onDelete: "cascade" }),
+    ageCategoryId: uuid("age_category_id")
+      .notNull()
+      .references(() => ageCategories.id, { onDelete: "cascade" }),
+    value: doublePrecision("value").notNull(),
+  },
+  (t) => [uniqueIndex("performance_targets_uq").on(t.testId, t.ageCategoryId)],
 );

@@ -9,6 +9,7 @@ import {
   Layers,
   Megaphone,
   Settings,
+  Timer,
   UserRound,
   Users,
   Wallet,
@@ -52,6 +53,13 @@ const ATTENDANCE: NavItem = {
   path: "/asistencia",
   label: "Asistencia",
   icon: CalendarCheck,
+  ready: true,
+  audience: "coach",
+};
+const MARKS: NavItem = {
+  path: "/marcas",
+  label: "Marcas",
+  icon: Timer,
   ready: true,
   audience: "coach",
 };
@@ -112,6 +120,7 @@ export const SCHOOL_NAV: NavItem[] = [
   GROUPS,
   COACHES,
   ATTENDANCE,
+  MARKS,
   BILLING,
   REPORTS,
   MY_KIDS,
