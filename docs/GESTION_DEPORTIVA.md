@@ -88,7 +88,7 @@ Deporte (Patinaje)
 |---|---|---|
 | DEP-10 | **Grupo**: nombre, modalidad, nivel(es), categorías sugeridas, profesor titular y auxiliares, cupo, tarifa sugerida, estado | MVP |
 | DEP-11 | **Horario recurrente**: días y horas (p. ej. Lun-Mié-Vie 4:00–6:00 p. m.), vigencia desde/hasta | MVP |
-| DEP-12 | Generación automática de **sesiones** para las próximas 8 semanas, **saltando festivos y vacaciones** del calendario de la escuela | MVP |
+| DEP-12 | Generación automática de **sesiones** para las próximas 8 semanas desde el horario de cada grupo, **incluyendo fines de semana y festivos** (los festivos son solo referencia en el tablero) y omitiendo únicamente los **días sin clase** que configure la escuela. Idempotente: al cambiar el horario se ajustan las clases futuras sin asistencia; el pasado y lo registrado no se tocan | MVP |
 | DEP-13 | **Cancelar** sesión (lluvia, pista ocupada, evento) con motivo → aviso a acudientes; **reprogramar** a otra fecha/hora | MVP |
 | DEP-14 | Sesión **extra** (entreno adicional, preparación de competencia) con alumnos seleccionados | MVP |
 | DEP-15 | **Profesor sustituto** para una sesión | MVP |
@@ -331,6 +331,6 @@ Configurables (activar/desactivar). Se muestran en el perfil y generan notificac
 
 | Fase | Deportivo |
 |---|---|
-| **MVP** | Plantilla de patinaje, niveles y categorías automáticas, grupos y horarios, sesiones con festivos, cancelaciones, asistencia offline, alertas de deserción, observaciones, reportes de asistencia |
+| **MVP** | Plantilla de patinaje, niveles y categorías automáticas, grupos y horarios, sesiones (festivos como referencia), días sin clase, cancelaciones, asistencia offline, alertas de deserción, observaciones, reportes de asistencia |
 | **F2** | Biblioteca y planes de sesión, evaluaciones y promociones, marcas y PB, cronómetro, competencias completas, lesiones, logros, perfil deportivo completo |
 | **F3** | Macrociclos, carga de entrenamiento, check-in QR, objetivos, antropometría, publicaciones para redes, segundo deporte |

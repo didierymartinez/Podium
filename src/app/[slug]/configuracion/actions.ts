@@ -8,7 +8,9 @@ import { displayPhone } from "@/lib/phone";
 import { createFeePlan, feePlanSchema, setFeePlanActive, updateFeePlan } from "@/modules/billing/fee-plans";
 import { billingPolicySchema } from "@/modules/billing/policy";
 import { updateBillingPolicy } from "@/modules/billing/settings";
+import { closureSchema, createClosure, deleteClosure } from "@/modules/calendar/closures";
 import { schoolProfileSchema, updateSchoolProfile } from "@/modules/schools/profile";
+import { resyncSessions } from "../asistencia/sync";
 import { FORBIDDEN_STATE, getManagerContext, type ActionState } from "./context";
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "");
@@ -123,6 +125,34 @@ export async function setFeePlanActiveAction(
   const manager = await getManagerContext(slug);
   if (!manager) return FORBIDDEN_STATE;
   await setFeePlanActive(db, manager.ctx, feePlanId, active);
+  refresh();
+  return { ok: true };
+}
+
+export async function createClosureAction(
+  slug: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const manager = await getManagerContext(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  const parsed = closureSchema.safeParse({
+    startDate: text(form, "startDate"),
+    endDate: text(form, "endDate") || text(form, "startDate"),
+    reason: text(form, "reason"),
+  });
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  await createClosure(db, manager.ctx, parsed.data);
+  await resyncSessions(manager.school);
+  refresh();
+  return { ok: true, message: "Día sin clase guardado" };
+}
+
+export async function deleteClosureAction(slug: string, closureId: string): Promise<ActionState> {
+  const manager = await getManagerContext(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  await deleteClosure(db, manager.ctx, closureId);
+  await resyncSessions(manager.school);
   refresh();
   return { ok: true };
 }

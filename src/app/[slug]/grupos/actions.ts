@@ -14,6 +14,7 @@ import {
 } from "@/modules/groups/groups";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { FORBIDDEN_STATE, getActionContext, type ActionState } from "../action-context";
+import { resyncSessions } from "../asistencia/sync";
 
 export async function saveGroupAction(
   slug: string,
@@ -66,6 +67,7 @@ export async function saveGroupAction(
     if (err instanceof InvalidReferenceError) return { ok: false, message: err.message };
     throw err;
   }
+  await resyncSessions(manager.school);
   redirect(`/${slug}/grupos`);
 }
 
@@ -77,6 +79,7 @@ export async function setGroupActiveAction(
   const manager = await getActionContext(slug, canManagePeople);
   if (!manager) return FORBIDDEN_STATE;
   await setGroupActive(db, manager.ctx, groupId, active);
+  await resyncSessions(manager.school);
   refresh();
   return { ok: true };
 }

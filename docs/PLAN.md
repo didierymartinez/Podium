@@ -66,7 +66,7 @@ Permisos basados en roles (RBAC) con posibilidad de un usuario tener varios role
 
 ### 3.3 Grupos y horarios
 - Grupo: modalidad, nivel, categoría, sede, profesor(es), cupo máximo, horario recurrente (p. ej. Lun-Mié-Vie 4–6 pm).
-- Generación automática de **sesiones** a partir del horario; cancelación/reprogramación (lluvia, festivos) con notificación.
+- Generación automática de **sesiones** a partir del horario (fines de semana y festivos incluidos; los festivos son solo referencia); días sin clase configurables; cancelación/reprogramación (lluvia, torneo) con notificación.
 - Calendario por sede, por profesor, por alumno.
 
 ### 3.4 Asistencia

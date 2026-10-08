@@ -68,6 +68,9 @@ export const enrollmentStatusEnum = pgEnum("enrollment_status", [
 export const invitationRoleEnum = pgEnum("invitation_role", ["GUARDIAN", "ATHLETE", "COACH"]);
 export const invitationStatusEnum = pgEnum("invitation_status", ["PENDING", "ACCEPTED", "CANCELED"]);
 export const coachRoleEnum = pgEnum("coach_role", ["HEAD", "ASSISTANT"]);
+export const sessionStatusEnum = pgEnum("session_status", ["SCHEDULED", "CANCELED"]);
+export const sessionSourceEnum = pgEnum("session_source", ["SCHEDULE", "EXTRA"]);
+export const attendanceStatusEnum = pgEnum("attendance_status", ["PRESENT", "LATE", "ABSENT", "EXCUSED"]);
 export const withdrawalReasonEnum = pgEnum("withdrawal_reason", [
   "ECONOMIC",
   "SCHEDULE",
@@ -498,5 +501,74 @@ export const invitations = pgTable(
     index("invitations_school_status_idx").on(t.schoolId, t.status),
     index("invitations_guardian_idx").on(t.guardianId),
     index("invitations_coach_idx").on(t.coachId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Calendario, clases y asistencia (docs/GESTION_DEPORTIVA.md §3–4)
+// ---------------------------------------------------------------------------
+
+/** Días sin clase definidos por la escuela (vacaciones, cierres). Los festivos son solo referencia. */
+export const schoolClosures = pgTable(
+  "school_closures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("school_closures_school_idx").on(t.schoolId, t.startDate)],
+);
+
+/** Clase concreta de un grupo en una fecha (generada desde el horario o extra). */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+    status: sessionStatusEnum("status").notNull().default("SCHEDULED"),
+    source: sessionSourceEnum("source").notNull().default("SCHEDULE"),
+    cancelReason: text("cancel_reason"),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("sessions_group_date_time_uq").on(t.groupId, t.date, t.startTime),
+    index("sessions_school_date_idx").on(t.schoolId, t.date),
+  ],
+);
+
+export const attendance = pgTable(
+  "attendance",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    status: attendanceStatusEnum("status").notNull(),
+    excuseReason: text("excuse_reason"),
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("attendance_session_athlete_uq").on(t.sessionId, t.athleteId),
+    index("attendance_athlete_idx").on(t.athleteId),
   ],
 );

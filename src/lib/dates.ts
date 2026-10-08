@@ -43,8 +43,37 @@ export const formatWeekdayShort = (date: IsoDate) =>
 export const formatDayNumber = (date: IsoDate) => String(toUtc(date).getUTCDate());
 export const formatLongDate = (date: IsoDate) =>
   formatter({ day: "numeric", month: "long", year: "numeric" }).format(toUtc(date));
+export const formatShortDate = (date: IsoDate) =>
+  formatter({ day: "numeric", month: "short" }).format(toUtc(date)).replace(".", "");
+/** "jueves 8 de octubre" */
+export const formatDayTitle = (date: IsoDate) =>
+  formatter({ weekday: "long", day: "numeric", month: "long" }).format(toUtc(date)).replace(",", "");
+
+/** "24 dic – 6 ene" o una sola fecha si coinciden. */
+export function formatDateSpan(start: IsoDate, end: IsoDate) {
+  return start === end ? formatShortDate(start) : `${formatShortDate(start)} – ${formatShortDate(end)}`;
+}
+
+export const isIsoDate = (value: unknown): value is IsoDate =>
+  typeof value === "string" &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
 
 /** Fecha ISO de un instante en una zona horaria. */
 export function isoDateOf(instant: Date, timeZone: string): IsoDate {
   return todayIn(timeZone, instant);
+}
+
+/** Desfase de la zona horaria en una fecha, p. ej. "-05:00" para Bogotá. */
+function offsetOf(date: IsoDate, timeZone: string): string {
+  const part = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
+    .formatToParts(new Date(`${date}T12:00:00Z`))
+    .find((p) => p.type === "timeZoneName")?.value;
+  const match = part?.match(/GMT([+-]\d{2}:\d{2})/);
+  return match ? match[1] : "+00:00";
+}
+
+/** Instante de una fecha y hora locales de la escuela ("2026-10-08", "18:00"). */
+export function instantOf(date: IsoDate, time: string, timeZone: string): Date {
+  return new Date(`${date}T${time.slice(0, 5)}:00${offsetOf(date, timeZone)}`);
 }

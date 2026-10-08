@@ -31,7 +31,7 @@
 |---|---|---|
 | ADM-01 | Datos de la escuela: nombre, logo, colores, NIT/CC, dirección, teléfono, redes, régimen tributario | MVP |
 | ADM-02 | Sede única (pista): nombre, dirección, ubicación en mapa | MVP |
-| ADM-03 | **Calendario**: festivos de Colombia precargados (incluye traslados de Ley Emiliani), vacaciones de la escuela (p. ej. diciembre–enero), días sin clase | MVP |
+| ADM-03 | **Calendario**: festivos de Colombia calculados (incluye traslados de Ley Emiliani) **solo como referencia** —muchas escuelas entrenan fines de semana y festivos—; la escuela marca sus **días sin clase** (vacaciones, cierres de pista, un festivo concreto) en Configuración → Calendario | MVP |
 | ADM-04 | **Política de cobro**: día de generación (1–28), día de vencimiento, recargo por mora (fijo o %; una vez o mensual), política de ingreso a mitad de mes, días de gracia | MVP |
 | ADM-05 | **Política de mora**: a partir de cuántos días se marca "en mora"; acciones opcionales (aviso al profesor, bloqueo de convocatorias, bloqueo de asistencia — desactivado por defecto) | MVP |
 | ADM-06 | Numeración consecutiva de recibos de caja y cuentas de cobro con prefijo configurable (`RC-0001`, `CC-0001`) | MVP |

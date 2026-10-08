@@ -48,7 +48,7 @@ const ATTENDANCE: NavItem = {
   path: "/asistencia",
   label: "Asistencia",
   icon: CalendarCheck,
-  ready: false,
+  ready: true,
   audience: "coach",
 };
 const BILLING: NavItem = {
@@ -128,7 +128,7 @@ export function SideRail({ slug, logo, access }: { slug: string; logo: React.Rea
 /** Pestañas tipo píldora de la barra superior (escritorio). */
 export function TopTabs({ slug, access }: { slug: string; access: NavAccess }) {
   const isActive = useActive(slug);
-  const tabs = [HOME, ATHLETES, GROUPS].filter(visible(access));
+  const tabs = [HOME, ATHLETES, GROUPS, ATTENDANCE].filter(visible(access));
   if (tabs.length < 2) return null;
   return (
     <nav className="hidden items-center gap-1.5 lg:flex" aria-label="Accesos rápidos">

@@ -27,3 +27,11 @@ describe("dates", () => {
     expect(formatLongDate("2026-10-08")).toBe("8 de octubre de 2026");
   });
 });
+
+describe("instantOf", () => {
+  it("convierte hora local de Bogotá a instante UTC", async () => {
+    const { instantOf } = await import("./dates");
+    expect(instantOf("2026-10-08", "18:00", "America/Bogota").toISOString()).toBe("2026-10-08T23:00:00.000Z");
+    expect(instantOf("2026-10-08", "18:00:00", "UTC").toISOString()).toBe("2026-10-08T18:00:00.000Z");
+  });
+});

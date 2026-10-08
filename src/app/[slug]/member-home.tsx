@@ -1,11 +1,15 @@
-import { CalendarCheck, Clock, MessageCircle, Users, Wallet } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, MessageCircle, Users, Wallet } from "lucide-react";
+import Link from "next/link";
 import { Avatar, Card, Chip, SectionTitle, Tile } from "@/components/ui";
 import { db } from "@/db/client";
 import { todayIn } from "@/lib/dates";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ENROLLMENT_STATUS_LABELS, ageOn } from "@/modules/athletes/enrollment-status";
 import { describeSchedule } from "@/modules/groups/schedule";
+import { listSessions } from "@/modules/attendance/sessions";
 import { getMemberHome } from "@/modules/portal/member-home";
+import { ensureSessions } from "./asistencia/sync";
+import { SessionStatusChip } from "./asistencia/status-chip";
 import type { schools } from "@/db/schema";
 
 /** Inicio de quien no administra la escuela: acudientes, alumnos y profesores. */
@@ -19,6 +23,11 @@ export async function MemberHome({
   const home = await getMemberHome(db, school.id, user.id);
   const today = todayIn(school.timezone);
   const firstName = user.name.split(" ")[0];
+  let todaySessions: Awaited<ReturnType<typeof listSessions>> = [];
+  if (home.coachGroups.length > 0) {
+    await ensureSessions(school.id, school.timezone);
+    todaySessions = await listSessions(db, school.id, { from: today, to: today }, { coachUserId: user.id });
+  }
 
   return (
     <div className="space-y-5">
@@ -26,6 +35,45 @@ export async function MemberHome({
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Hola, {firstName}</h1>
         <p className="mt-1 text-ink-soft">Bienvenido(a) a {school.name}.</p>
       </div>
+
+      {home.coachGroups.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-lg font-semibold tracking-tight">Clases de hoy</h2>
+            <Link href={`/${school.slug}/asistencia`} className="text-sm font-semibold text-brand">
+              Ver asistencia
+            </Link>
+          </div>
+          {todaySessions.length === 0 ? (
+            <Card className="p-5 text-sm text-ink-soft">Hoy no tienes clases.</Card>
+          ) : (
+            <ul className="grid gap-3 lg:grid-cols-2">
+              {todaySessions.map((s) => (
+                <li key={s.id}>
+                  <Link
+                    href={`/${school.slug}/asistencia/${s.id}`}
+                    className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-4 shadow-soft transition hover:border-brand/40"
+                  >
+                    <span
+                      className="h-10 w-1.5 shrink-0 rounded-full"
+                      style={{ background: s.groupColor }}
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{s.groupName}</p>
+                      <p className="text-sm text-ink-soft">
+                        {s.startTime} – {s.endTime}
+                      </p>
+                    </div>
+                    <SessionStatusChip session={s} today={today} />
+                    <ChevronRight className="size-4 text-ink-faint" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {home.coachGroups.length > 0 && (
         <section className="space-y-3">

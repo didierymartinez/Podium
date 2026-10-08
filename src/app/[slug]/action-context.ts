@@ -21,5 +21,10 @@ export async function getActionContext(slug: string, allowed: (roles: readonly S
   const user = await requireVerifiedUser();
   const member = await getMemberSchool(db, slug, user.id);
   if (!member || !allowed(member.roles)) return null;
-  return { user, school: member.school, ctx: { schoolId: member.school.id, actorUserId: user.id } };
+  return {
+    user,
+    school: member.school,
+    roles: member.roles,
+    ctx: { schoolId: member.school.id, actorUserId: user.id },
+  };
 }

@@ -2,9 +2,12 @@ import { CalendarDays, Clock, Layers, Sparkles, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
-import { WeekBoard } from "@/components/week-board";
+import { WeekBoard, type BoardMark } from "@/components/week-board";
 import { db } from "@/db/client";
-import { formatLongDate, isoDateOf, todayIn } from "@/lib/dates";
+import { addDays, dateRange, formatLongDate, isoDateOf, startOfWeek, todayIn } from "@/lib/dates";
+import { holidaysBetween } from "@/lib/holidays-co";
+import { listSessions } from "@/modules/attendance/sessions";
+import { closureOn, listClosures } from "@/modules/calendar/closures";
 import { nextGenerationDate } from "@/modules/billing/schedule";
 import { readBillingPolicy } from "@/modules/billing/policy";
 import { listGroups } from "@/modules/groups/groups";
@@ -13,6 +16,7 @@ import { canManagePeople } from "@/modules/schools/permissions";
 import { getSportsStructure } from "@/modules/schools/queries";
 import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
+import { ensureSessions } from "./asistencia/sync";
 import { getSchoolContext } from "./data";
 import { MemberHome } from "./member-home";
 
@@ -26,15 +30,27 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
   const { school, user, roles } = await getSchoolContext(slug);
   if (!canManagePeople(roles)) return <MemberHome school={school} user={user} />;
-  const [structure, steps, allGroups] = await Promise.all([
+  const today = todayIn(school.timezone);
+  const boardFrom = startOfWeek(today);
+  const boardTo = addDays(boardFrom, 13);
+  await ensureSessions(school.id, school.timezone);
+  const [structure, steps, allGroups, boardSessions, closures] = await Promise.all([
     getSportsStructure(db, school.id),
     getSetupSteps(db, school),
     listGroups(db, school.id),
+    listSessions(db, school.id, { from: boardFrom, to: boardTo }),
+    listClosures(db, school.id, boardFrom, boardTo),
   ]);
+  const marks = new Map<string, BoardMark>();
+  for (const [date, name] of holidaysBetween(boardFrom, boardTo))
+    marks.set(date, { kind: "holiday", label: name });
+  for (const date of dateRange(boardFrom, 14)) {
+    const closure = closureOn(date, closures);
+    if (closure) marks.set(date, { kind: "closure", label: closure.reason });
+  }
   const activeGroups = allGroups.filter((g) => g.active);
   const billing = readBillingPolicy(school.settings.billing);
 
-  const today = todayIn(school.timezone);
   const done = steps.filter((s) => s.done).length;
   const progress = Math.round((done / steps.length) * 100);
   const mainDiscipline = structure.disciplines[0];
@@ -76,6 +92,7 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
           <WeekBoard
             today={today}
             rowLabel="Grupo"
+            marks={marks}
             rows={activeGroups.map((group) => ({
               id: group.id,
               title: group.name,
@@ -87,16 +104,21 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
                   aria-hidden
                 />
               ),
-              events: group.schedule.map((slot) => ({
-                weekday: slot.weekday,
-                color: group.color,
-                label: shortTimeRange(slot.startTime, slot.endTime),
-              })),
+              events: boardSessions
+                .filter((s) => s.groupId === group.id)
+                .map((s) => ({
+                  date: s.date,
+                  color: group.color,
+                  label: shortTimeRange(s.startTime, s.endTime),
+                  state: s.status === "CANCELED" ? "canceled" : s.recorded > 0 ? "done" : undefined,
+                  href: `/${school.slug}/asistencia/${s.id}`,
+                })),
             }))}
           />
         ) : (
           <WeekBoard
             today={today}
+            marks={marks}
             rows={(mainDiscipline?.levels ?? []).map((level) => ({
               id: level.id,
               title: level.name,
