@@ -1,5 +1,6 @@
 /** Rutas de primer nivel y palabras que no pueden usarse como URL de una escuela. */
 export const RESERVED_SLUGS = new Set([
+  "aceptar-terminos",
   "admin",
   "api",
   "app",

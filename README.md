@@ -64,6 +64,8 @@ TEST_DATABASE_URL=postgres://podium_app:podium_app_dev@localhost:5432/podium_tes
 
 ## Puesta en marcha en Vercel + Neon + Firebase
 
+Lista completa (servicios, variables, webhooks y pruebas de humo): [`docs/PUESTA_EN_PRODUCCION.md`](docs/PUESTA_EN_PRODUCCION.md).
+
 1. **Neon**: crear proyecto (región AWS `us-east-1`). Aplicar migraciones con la cadena directa del dueño; luego, en el SQL editor: `ALTER ROLE podium_app LOGIN PASSWORD '<secreto>'`. Usar la cadena *pooled* con `podium_app` como `DATABASE_URL`.
 2. **Firebase**: crear proyecto, habilitar Authentication con **Email/contraseña** y **Google**, agregar el dominio de Vercel a dominios autorizados y copiar la config web a las variables `NEXT_PUBLIC_FIREBASE_*`.
 3. **Vercel**: importar el repo, región `iad1`, variables de `.env.example` con `NEXT_PUBLIC_AUTH_PROVIDER=firebase`, un `SESSION_SECRET` aleatorio (`openssl rand -base64 48`) y una `DATA_ENCRYPTION_KEY` propia (`openssl rand -base64 32`; si se pierde, no se pueden leer los datos de salud ya guardados).

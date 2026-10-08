@@ -1,10 +1,11 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { LEGAL_VERSION } from "./users";
 import { serverEnv } from "@/env";
 import {
   SESSION_COOKIE,
@@ -21,6 +22,8 @@ export type CurrentUser = {
   isPlatformAdmin: boolean;
   /** La sesión se inició con segundo factor (requisito de la consola de Podium). */
   mfa: boolean;
+  /** Aceptó la versión vigente de términos y política de datos (#22). */
+  legalCurrent: boolean;
 };
 
 export async function startSession(userId: string, opts: { mfa?: boolean } = {}) {
@@ -44,8 +47,16 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const claims = await verifySessionToken(token, serverEnv().SESSION_SECRET);
   if (!claims) return null;
-  const [user] = await db.select().from(users).where(eq(users.id, claims.userId));
-  if (!user) return null;
+  const [row] = await db
+    .select({
+      user: users,
+      legalVersion: sql<string | null>`(select max(version) from legal_acceptances l
+        where l.user_id = "users"."id" and l.document = 'TERMS' and l.school_id is null and l.revoked_at is null)`,
+    })
+    .from(users)
+    .where(eq(users.id, claims.userId));
+  if (!row) return null;
+  const user = row.user;
   return {
     id: user.id,
     email: user.email,
@@ -53,6 +64,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     emailVerified: user.emailVerifiedAt !== null,
     isPlatformAdmin: user.isPlatformAdmin,
     mfa: claims.mfa,
+    legalCurrent: row.legalVersion !== null && row.legalVersion >= LEGAL_VERSION,
   };
 });
 
@@ -79,5 +91,7 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireVerifiedUser(): Promise<CurrentUser> {
   const user = await requireUser();
   if (!user.emailVerified) redirect("/verificar-email");
+  // Al publicar una nueva versión de los textos legales se pide aceptarla otra vez.
+  if (!user.legalCurrent) redirect("/aceptar-terminos");
   return user;
 }
