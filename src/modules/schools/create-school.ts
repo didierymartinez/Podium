@@ -29,6 +29,7 @@ import {
   testsFor,
 } from "./sport-template";
 import { trialEndsAt } from "./trial";
+import { seedExercises } from "@/modules/training/seed";
 
 export const createSchoolSchema = z.object({
   name: z.string().trim().min(3, "Escribe el nombre de la escuela").max(80),
@@ -113,6 +114,10 @@ export async function createSchool(
           })),
         ),
       );
+
+      await seedExercises(tx, schoolId, { id: createdDiscipline.id, code: discipline.code }, createdLevels, {
+        common: true,
+      });
 
       await tx.insert(sportTests).values(
         testsFor(discipline.code).map((t, i) => ({

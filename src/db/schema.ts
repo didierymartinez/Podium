@@ -1459,3 +1459,131 @@ export const athleteLevels = pgTable(
   },
   (t) => [index("athlete_levels_athlete_idx").on(t.athleteId)],
 );
+
+export const exerciseComponentEnum = pgEnum("exercise_component", [
+  "WARMUP",
+  "TECHNIQUE",
+  "PHYSICAL",
+  "SPEED",
+  "ENDURANCE",
+  "TACTICS",
+  "GAME",
+  "COOLDOWN",
+]);
+
+/** Biblioteca de ejercicios (DEP-30). `shared = false`: solo lo ve quien lo creó. */
+export const exercises = pgTable(
+  "exercises",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    disciplineId: uuid("discipline_id").references(() => disciplines.id, { onDelete: "set null" }),
+    /** Niveles sugeridos; vacío = todos. */
+    levelIds: uuid("level_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    name: text("name").notNull(),
+    component: exerciseComponentEnum("component").notNull(),
+    description: text("description").notNull().default(""),
+    mediaUrl: text("media_url"),
+    minutes: integer("minutes").notNull(),
+    materials: text("materials").notNull().default(""),
+    space: text("space").notNull().default(""),
+    shared: boolean("shared").notNull().default(true),
+    ownerUserId: uuid("owner_user_id").references(() => users.id),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("exercises_school_idx").on(t.schoolId)],
+);
+
+/** Plan de sesión (DEP-31) o plantilla reutilizable (DEP-32). */
+export const sessionPlans = pgTable(
+  "session_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    objective: text("objective").notNull().default(""),
+    isTemplate: boolean("is_template").notNull().default(false),
+    ownerUserId: uuid("owner_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("session_plans_school_idx").on(t.schoolId)],
+);
+
+export const planPhaseEnum = pgEnum("plan_phase", ["WARMUP", "MAIN", "COOLDOWN"]);
+
+export const sessionPlanItems = pgTable(
+  "session_plan_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => sessionPlans.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id").references(() => exercises.id, { onDelete: "set null" }),
+    /** Nombre al momento de agregarlo (el ejercicio puede cambiar o borrarse). */
+    title: text("title").notNull(),
+    phase: planPhaseEnum("phase").notNull(),
+    position: integer("position").notNull(),
+    minutes: integer("minutes").notNull(),
+    notes: text("notes"),
+  },
+  (t) => [index("session_plan_items_plan_idx").on(t.planId)],
+);
+
+/** Plan asignado a un grupo en un día (las sesiones se crean bajo demanda). */
+export const planAssignments = pgTable(
+  "plan_assignments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => sessionPlans.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("plan_assignments_group_date_uq").on(t.groupId, t.date)],
+);
+
+export const planFulfillmentEnum = pgEnum("plan_fulfillment", ["YES", "PARTIAL", "NO"]);
+
+/** Registro post-sesión (DEP-35): cumplimiento del plan, notas y RPE del grupo. */
+export const sessionReports = pgTable(
+  "session_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id").references(() => sessionPlans.id, { onDelete: "set null" }),
+    fulfilled: planFulfillmentEnum("fulfilled").notNull(),
+    rpe: smallint("rpe").notNull(),
+    minutes: integer("minutes").notNull(),
+    notes: text("notes"),
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("session_reports_session_uq").on(t.sessionId),
+    check("session_reports_rpe_ck", sql`${t.rpe} between 0 and 10`),
+  ],
+);

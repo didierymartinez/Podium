@@ -19,6 +19,8 @@ import { SessionStatusChip } from "../status-chip";
 import { CancelPanel } from "./cancel-panel";
 import { RosterForm } from "./roster-form";
 import { InjuryCard, MakeupCard } from "./session-extras";
+import { SessionPlanCard } from "./session-plan";
+import { sessionPlan } from "@/modules/training/training";
 
 export const metadata: Metadata = { title: "Tomar asistencia" };
 
@@ -46,6 +48,7 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
         today,
       )
     : new Map<string, { overdue: boolean }>();
+  const day = await sessionPlan(db, school.id, session.id);
 
   return (
     <div className="space-y-4">
@@ -117,6 +120,30 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
             </>
           )}
         </Alert>
+      )}
+
+      {!canceled && day && (
+        <SessionPlanCard
+          slug={slug}
+          sessionId={session.id}
+          plan={day.plan && { id: day.plan.id, name: day.plan.name, objective: day.plan.objective }}
+          items={day.items.map((i) => ({
+            id: i.id,
+            title: i.title,
+            phase: i.phase,
+            minutes: i.minutes,
+            notes: i.notes,
+          }))}
+          report={
+            day.report && {
+              fulfilled: day.report.fulfilled,
+              rpe: day.report.rpe,
+              minutes: day.report.minutes,
+              notes: day.report.notes,
+            }
+          }
+          duration={day.duration}
+        />
       )}
 
       {session.roster.length === 0 ? (

@@ -1,4 +1,5 @@
 import { and, asc, count, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
+import { seedExercises } from "@/modules/training/seed";
 import { z } from "zod";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
 import {
@@ -113,6 +114,9 @@ export function enableDiscipline(database: Database, ctx: Ctx, code: string): Pr
         })),
       ),
     );
+    await seedExercises(tx, ctx.schoolId, { id: created.id, code: template.code }, createdLevels, {
+      common: false,
+    });
     const specific = testsFor(template.code as DisciplineCode).filter((t) => !t.common);
     if (specific.length) {
       await tx.insert(sportTests).values(

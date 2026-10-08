@@ -2,6 +2,7 @@
 
 import {
   Baby,
+  ClipboardList,
   ChartColumn,
   CalendarCheck,
   GraduationCap,
@@ -61,6 +62,13 @@ const MARKS: NavItem = {
   path: "/marcas",
   label: "Marcas",
   icon: Timer,
+  ready: true,
+  audience: "coach",
+};
+const TRAINING: NavItem = {
+  path: "/entrenamiento",
+  label: "Entrenamiento",
+  icon: ClipboardList,
   ready: true,
   audience: "coach",
 };
@@ -128,6 +136,7 @@ export const SCHOOL_NAV: NavItem[] = [
   GROUPS,
   COACHES,
   ATTENDANCE,
+  TRAINING,
   MARKS,
   EVALUATIONS,
   BILLING,
