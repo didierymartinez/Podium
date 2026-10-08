@@ -13,7 +13,7 @@
 | Multi-sede | **No en el MVP** | Una sede por escuela en la interfaz (la entidad `Venue` existe para no migrar después) |
 | Cliente | **PWA primero** | Una sola app web instalable para admin, profesores y acudientes |
 | Equipo | **Un desarrollador (fundador)** | Stack mínimo, un solo despliegue, nada de microservicios |
-| Alta de escuelas | **Manual por el super admin (Podium)** | Ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
+| Alta de escuelas | **Self-service**: cada usuario crea su escuela, con prueba gratis de 30 días y pago en línea de la suscripción | Sin aprobaciones manuales; ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 
 ---
 
@@ -33,8 +33,9 @@
 
 | Rol | Alcance | Puede |
 |---|---|---|
-| **Super admin (Podium)** | Toda la plataforma | Dar de alta escuelas, planes de suscripción, soporte — ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
-| **Administrador de escuela** | Su escuela (todas las sedes) | Todo: configuración, finanzas, usuarios, reportes |
+| **Super admin (Podium)** | Toda la plataforma | Supervisar métricas, planes y cupones, soporte y abusos; **no** da de alta escuelas — ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
+| **Propietario de escuela** | Su escuela | Quien la creó: todo, incluida la suscripción con Podium y eliminar la escuela |
+| **Administrador de escuela** | Su escuela | Todo excepto suscripción y eliminar la escuela |
 | **Coordinador / secretaría** | Su escuela o sede | Matrículas, cartera, pagos, horarios; sin configuración sensible |
 | **Profesor / entrenador** | Sus grupos | Asistencia, planes, evaluaciones, marcas, inscribir a competencias; **no ve finanzas** (configurable: ver "al día / en mora") |
 | **Alumno** (mayor de edad o adolescente) | Su perfil | Ver horario, progreso, marcas, competencias, pagos |
@@ -163,7 +164,7 @@ Todas las tablas de negocio llevan `school_id` (tenant).
 | `Payment` + `PaymentAllocation` | método, pasarela, referencia, aplicado a facturas |
 | `Notification`, `Announcement` | comunicación |
 | `AuditLog` | quién cambió qué (obligatorio en finanzas) |
-| Plataforma | `SchoolLead`, `Plan`, `Subscription`, `PlatformInvoice`, `Invitation`, `PaymentProviderAccount`, `LegalAcceptance` — detalle en [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
+| Plataforma | `Plan`, `Subscription`, `BillingProfile`, `PlatformInvoice`, `Coupon`, `Invitation`, `PaymentProviderAccount`, `LegalAcceptance` — detalle en [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 
 ---
 
@@ -190,7 +191,8 @@ Todas las tablas de negocio llevan `school_id` (tenant).
 ```
 src/
   app/
-    (platform)/admin/      # consola super admin de Podium (alta de escuelas)
+    (public)/             # landing, registro, verificación, crear escuela
+    (platform)/admin/      # consola super admin (métricas, soporte)
     (school)/[slug]/...    # app de cada escuela (admin, profesor, acudiente)
     api/                   # webhooks (Wompi), cron
   modules/                 # dominio por módulo: schools, athletes, groups,
@@ -220,19 +222,20 @@ src/
 - Validar: ¿cómo cobran hoy?, ¿qué pagarían?, ¿qué los haría cambiar de Excel/WhatsApp?
 - Prototipo navegable (Figma) de los 5 flujos clave.
 
-### Fase 1 — MVP "administrativo + asistencia" (≈10–12 semanas, 1 dev)
+### Fase 1 — MVP "administrativo + asistencia" (≈12–13 semanas, 1 dev)
 Objetivo: que una escuela deje Excel para cobrar y tomar lista.
 
 | Semanas | Entregable |
 |---|---|
-| 1–2 | Proyecto base, auth, multi-tenant (RLS), **consola super admin y alta de escuelas** |
+| 1–2 | Proyecto base, auth, multi-tenant (RLS), **registro self-service** (cuenta, verificación, crear escuela, prueba) |
 | 3–4 | Configuración de escuela, alumnos, acudientes, importación desde Excel |
 | 5 | Grupos, horarios y generación de sesiones |
 | 6 | Asistencia en la PWA (con modo offline) |
 | 7–8 | Tarifas, matrículas, generación mensual de cobros, estado de cuenta, pagos manuales |
 | 9 | Wompi (link de pago + webhook) y recordatorios por email |
-| 10 | Portal del acudiente (cobros, pagos, asistencia de sus hijos) |
-| 11–12 | Tablero (recaudo, cartera, activos, asistencia), pulido y **piloto con 1–3 escuelas** |
+| 10 | **Suscripción de la escuela**: planes, cobro con tarjeta tokenizada / link, estados (mora, solo lectura), consola super admin mínima |
+| 11 | Portal del acudiente (cobros, pagos, asistencia de sus hijos) |
+| 12–13 | Tablero (recaudo, cartera, activos, asistencia), pulido y **piloto con 1–3 escuelas** |
 
 ### Fase 2 — Deportivo (≈8 semanas)
 - Niveles y evaluaciones, registro de marcas y progreso.
@@ -243,7 +246,6 @@ Objetivo: que una escuela deje Excel para cobrar y tomar lista.
 
 ### Fase 3 — Crecimiento
 - Facturación electrónica DIAN, egresos.
-- Registro autónomo de escuelas (self-service) con prueba gratis y cobro automático de la suscripción.
 - Multi-sede, inscripción pública / clase de prueba, check-in QR, gamificación.
 - Segundo deporte vía plantilla (natación o fútbol).
 - App nativa (Expo) solo si la PWA se queda corta.
@@ -252,7 +254,7 @@ Objetivo: que una escuela deje Excel para cobrar y tomar lista.
 
 ## 9. Modelo de negocio (hipótesis a validar)
 - Suscripción mensual por escuela, escalonada por **alumnos activos** (p. ej. hasta 50 / 150 / 400 / ilimitado).
-- Prueba gratis 30 días; onboarding asistido (importar Excel de alumnos).
+- **Registro self-service** con prueba gratis de 30 días sin tarjeta; asistente de configuración e importación de Excel.
 - Ingreso adicional opcional: pequeña comisión por pago en línea procesado.
 - Métricas propias del SaaS: MRR, escuelas activas, churn de escuelas, % de pagos en línea, uso semanal de asistencia por profesores.
 

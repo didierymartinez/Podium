@@ -1,166 +1,184 @@
-# Alta de escuelas (onboarding) — administrado por Podium
+# Registro de escuelas (self-service)
 
-> En el MVP **no hay registro autónomo**. Tú, como **super admin de Podium**, creas cada escuela desde una consola interna. Es lo correcto al inicio: pocas escuelas, acompañamiento cercano, control de quién entra y cero desarrollo de pagos de suscripción automáticos.
+> **Cualquier persona crea su escuela sola**, sin intervención de Podium: se registra, verifica su correo, crea la escuela, la configura con un asistente y empieza una **prueba gratis**. Al terminar la prueba elige plan y paga en línea.
+> El super admin de Podium **no aprueba ni configura nada**; solo supervisa métricas, atiende soporte y actúa ante abusos.
 
 ---
 
-## 1. Visión general del flujo
+## 1. Flujo completo
 
 ```
- Escuela interesada (WhatsApp / referido / demo)
+ Landing (podium.app) ── "Crea tu escuela gratis"
         │
         ▼
- [1] Solicitud registrada en la consola  ── estado: PROSPECTO
-        │  demo, acuerdo de precio, envío de contrato y autorización de datos
+ [1] Crear cuenta: nombre, email, celular, contraseña (o Google)
+        │  + aceptar términos y política de datos  + captcha
         ▼
- [2] Creas la escuela (tenant)            ── estado: CONFIGURANDO
-        │  slug, datos legales, plan, admin principal
-        ▼
- [3] Invitación al administrador de la escuela (email con link mágico)
+ [2] Verificar email (código de 6 dígitos)
         │
         ▼
- [4] Asistente de configuración (lo hace la escuela, o tú en sesión con ellos)
-        │  tarifas, días de corte, grupos, profesores, Wompi
+ [3] Crear escuela: nombre, URL (slug), ciudad, deporte/modalidad,
+        │  nº aproximado de alumnos           ── estado: PRUEBA (30 días)
         ▼
- [5] Importación de alumnos y acudientes (Excel)
+ [4] Asistente de configuración (se puede saltar y retomar)
+        │  perfil · cobros · grupos · profesores · alumnos (Excel) · Wompi
+        ▼
+ [5] Uso real durante la prueba (todas las funciones)
+        │  correos guía días 1, 3, 7, 20, 27
+        ▼
+ [6] Elegir plan y pagar la suscripción (tarjeta / PSE / Nequi)
         │
-        ▼
- [6] Checklist de salida en vivo → ACTIVA
-        │  se invita a profesores y acudientes
-        ▼
- [7] Operación y cobro mensual de la suscripción
-        │
-        ├─► SUSPENDIDA (mora con Podium)  ─► ACTIVA (al pagar)
-        └─► CANCELADA (retención 90 días → exportación → borrado)
+        ├─► ACTIVA ──(pago mensual)──► ACTIVA
+        │      └─ falla el pago → EN_MORA (gracia 7 días) → SOLO_LECTURA
+        └─ no paga al fin de la prueba → SOLO_LECTURA → (60 días) → CANCELADA
 ```
 
 ---
 
-## 2. Estados de una escuela
+## 2. Paso a paso
 
-| Estado | Qué significa | Acceso de la escuela |
-|---|---|---|
-| `PROSPECTO` | Lead registrado, aún sin cuenta | Ninguno |
-| `CONFIGURANDO` | Cuenta creada, montando datos | Solo administradores de la escuela; **no** se generan cobros ni se envían avisos a acudientes |
-| `PRUEBA` (opcional) | Uso real con fecha fin de prueba | Completo |
-| `ACTIVA` | Operando y al día con Podium | Completo |
-| `SUSPENDIDA` | Mora con Podium (p. ej. +15 días) | **Solo lectura** para el admin; profesores y acudientes ven aviso. **Los pagos de acudientes siguen entrando** (nunca bloquear el recaudo de la escuela) |
-| `CANCELADA` | Terminó la relación | Sin acceso; datos retenidos 90 días para exportar, luego borrado/anonimización |
+### [1] Crear cuenta (`/registro`)
+| Campo | Notas |
+|---|---|
+| Nombre completo | |
+| Email | Único en la plataforma |
+| Celular | Formato colombiano (+57); se usa para WhatsApp más adelante |
+| Contraseña | Mín. 8 caracteres; alternativa: **Continuar con Google** |
+| ☐ Acepto términos del servicio y política de tratamiento de datos | Obligatorio; se guarda versión, fecha e IP |
 
-Cada cambio de estado queda en `AuditLog` (quién, cuándo, motivo).
+Protección anti-abuso: **Cloudflare Turnstile** (captcha invisible), límite de registros por IP, bloqueo de dominios de email desechables.
 
----
+### [2] Verificar email
+Código de 6 dígitos (vence en 15 min, reenviable). Sin email verificado no se puede crear la escuela. Si entra con Google, el email ya viene verificado.
 
-## 3. Paso a paso
+### [3] Crear escuela (`/nueva-escuela`)
+Una sola pantalla, 30 segundos:
 
-### [1] Prospecto
-Formulario mínimo en la consola: nombre de la escuela, ciudad, contacto (nombre, celular, email), número aproximado de alumnos, cómo llegó, notas.
-Opcional (más adelante): formulario público "Solicitar demo" en la landing que crea el prospecto automáticamente.
-
-### [2] Crear la escuela — formulario del super admin
 | Campo | Ejemplo | Notas |
 |---|---|---|
-| Nombre comercial | Club Patín Veloz | |
-| **Slug** (URL) | `patinveloz` → `podium.app/patinveloz` | Único, minúsculas, sin espacios; validado en vivo |
-| Razón social / persona natural | Club Deportivo Patín Veloz | |
-| Tipo y número de documento | NIT 901.234.567-8 / CC | Validar dígito de verificación del NIT |
-| Ciudad / departamento | Medellín, Antioquia | |
-| Deporte(s) y modalidades | Patinaje: velocidad | Carga la **plantilla de patinaje** (niveles, categorías por edad, pruebas) |
-| Plan de suscripción | Básico (hasta 80 alumnos) | Define límite de alumnos activos |
-| Precio pactado y día de cobro | $ 120.000 / mes, día 5 | Permite precio especial para pilotos |
-| Fecha de prueba (si aplica) | 30 días | |
-| **Administrador principal** | Nombre, email, celular | Recibe la invitación |
+| Nombre de la escuela | Club Patín Veloz | |
+| URL | `podium.app/patinveloz` | Se sugiere a partir del nombre; validación de disponibilidad en vivo; palabras reservadas bloqueadas (`admin`, `api`, `registro`…) |
+| Ciudad | Medellín | Lista de municipios de Colombia |
+| Deporte y modalidad | Patinaje · velocidad | Carga la **plantilla de patinaje** (niveles, categorías por edad, pruebas) |
+| ¿Cuántos alumnos tiene? | 50–100 | Para sugerir plan y segmentar; no limita la prueba |
 
-Al guardar, el sistema en **una transacción**:
-1. Crea `School` en estado `CONFIGURANDO`, su `Venue` única y la configuración por defecto (COP, `America/Bogota`, día de generación 1, vencimiento 10).
-2. Copia la plantilla del deporte (niveles, categorías, pruebas) a la escuela — copia editable, no referencia.
-3. Crea (o reutiliza si ya existe ese email) el `User` y su `Membership` con rol `SCHOOL_ADMIN`.
-4. Crea la `Subscription` de la escuela con Podium.
-5. Envía la invitación y registra todo en `AuditLog`.
+Al guardar, en **una transacción**:
+1. Crea `School` en estado `PRUEBA` con `trial_ends_at = hoy + 30 días`, una `Venue` y configuración por defecto (COP, `America/Bogota`, generación día 1, vencimiento día 10).
+2. Copia la plantilla del deporte a la escuela (copia editable).
+3. Crea `Membership` del usuario con rol `SCHOOL_ADMIN` (**propietario**).
+4. Crea `Subscription` en estado `TRIALING`.
+5. Registra en `AuditLog` y avisa al super admin (solo notificación, no aprobación).
 
-### [3] Invitación al administrador
-- Email (y luego WhatsApp) con **link mágico de un solo uso** que vence en 72 h; puedes reenviarlo desde la consola.
-- Al entrar: define contraseña, acepta **términos del servicio** y el **contrato de transmisión de datos** (Podium es *encargado* del tratamiento; la escuela es *responsable* ante la Ley 1581). La aceptación se guarda con fecha, IP y versión del documento.
+Los **datos legales** (razón social, NIT) **no se piden aquí** para no frenar el registro; se piden al pagar la suscripción.
 
-### [4] Asistente de configuración (dentro de la app de la escuela)
-Pasos con barra de progreso; se puede pausar y retomar:
+Un mismo usuario puede crear o pertenecer a **varias escuelas** y cambiar entre ellas.
+
+### [4] Asistente de configuración
+Lista de pasos con progreso visible en el inicio ("Tu escuela está 60 % lista"). Todo es opcional y se puede retomar:
 1. **Perfil**: logo, colores, teléfono, dirección de la pista.
-2. **Cobros**: tarifas mensuales, matrícula, día de generación/vencimiento, recargo por mora, descuento por hermanos, política de ingreso a mitad de mes.
-3. **Pagos en línea**: llaves de **la cuenta Wompi de la escuela** (pública, privada, secreto de eventos) → botón "Probar conexión". Las llaves privadas se guardan **cifradas**. Se puede omitir y operar solo con pagos manuales.
-4. **Niveles y categorías**: revisar la plantilla de patinaje y ajustar.
-5. **Profesores**: nombre, email, celular → invitación.
-6. **Grupos y horarios**: nivel, profesor, cupo, días y horas.
+2. **Cobros**: tarifas mensuales, matrícula, días de generación/vencimiento, mora, descuento por hermanos, ingreso a mitad de mes.
+3. **Grupos y horarios**: nivel, profesor, cupo, días y horas.
+4. **Profesores**: invitar por email/celular.
+5. **Alumnos**: crear uno a uno o **importar Excel** (plantilla descargable, vista previa con errores, saldos iniciales como "Saldo anterior").
+6. **Pagos en línea**: conectar **su propia cuenta Wompi** (llaves cifradas, botón "Probar conexión"). Opcional: puede operar solo con pagos manuales.
+7. **Activar comunicaciones con acudientes**: botón explícito "Invitar acudientes y empezar a facturar desde [mes]".
 
-### [5] Importación de alumnos
-- Descargar **plantilla Excel** (alumno, documento, fecha de nacimiento, acudiente, celular, email, grupo, tarifa, descuento, saldo pendiente inicial).
-- Subir → **vista previa con validaciones** (documentos duplicados, emails inválidos, grupo inexistente) → confirmar.
-- Los **saldos iniciales** se cargan como un cobro "Saldo anterior" para que la cartera arranque cuadrada.
-- Hermanos se detectan por el mismo acudiente (documento/celular).
+**Datos de ejemplo:** al crear la escuela se ofrece "Explorar con datos de ejemplo" (alumnos y grupos ficticios marcados como demo, borrables con un clic) para que entiendan la app antes de cargar lo real.
 
-### [6] Checklist de salida en vivo
-La consola muestra a ti y al admin de la escuela:
-- [ ] Al menos una tarifa y un grupo con horario
-- [ ] Alumnos importados y asignados a grupo
-- [ ] Profesores invitados (y al menos uno activo)
-- [ ] Wompi conectado **o** decisión explícita de solo pagos manuales
-- [ ] Términos y contrato de datos aceptados
-- [ ] Mes de inicio de facturación definido
+### [5] Durante la prueba
+- Funcionalidad completa, sin tarjeta.
+- Mientras el paso 7 no se active, **no se envían correos a acudientes ni se generan cobros reales** (evita spam desde cuentas de prueba).
+- Banner "Te quedan N días de prueba · Elegir plan".
+- Correos automáticos de acompañamiento (onboarding por email) los días 1, 3, 7, 20 y 27 con lo que le falta configurar.
 
-Al pasar a `ACTIVA`: se envían las invitaciones a acudientes, arranca la generación de sesiones y la facturación mensual desde el mes elegido.
-
-### [7] Suscripción de la escuela con Podium (MVP manual)
-- Un job mensual crea la **factura de suscripción** de cada escuela según su plan/precio pactado.
-- La escuela la paga por **link de Wompi de Podium** o transferencia; tú marcas el pago manual en la consola.
-- Recordatorios: 3 días antes, el día, y a los 5 días; a los **15 días de mora** pasa a `SUSPENDIDA` (manual o automático, configurable).
-- Si supera el límite de alumnos activos del plan: aviso al admin y a ti — **no se bloquea**, se propone subir de plan.
+### [6] Elegir plan y pagar
+Pantalla `/[slug]/suscripcion`:
+- Planes por **alumnos activos** (p. ej. hasta 50 / 150 / 400 / ilimitado), mensual o anual con descuento.
+- Pide **datos de facturación**: razón social o nombre, NIT/CC, dirección, email de facturación.
+- Medios:
+  - **Tarjeta** → se tokeniza en Wompi (*payment source*) y Podium la **cobra automáticamente cada mes**.
+  - **PSE / Nequi / Bancolombia** → no permiten débito automático: cada mes se envía un **link de pago** con recordatorios.
+- Cobro confirmado por **webhook** → estado `ACTIVA`, recibo por email.
 
 ---
 
-## 4. Consola de super admin (`/admin`)
+## 3. Estados de la escuela
 
-Accesible solo para usuarios con rol `PLATFORM_ADMIN` (tú), con **2FA obligatorio**.
+| Estado | Qué pasa | Acceso |
+|---|---|---|
+| `PRUEBA` | 30 días gratis | Completo (sin envíos a acudientes hasta activar comunicaciones) |
+| `ACTIVA` | Suscripción al día | Completo |
+| `EN_MORA` | Falló el cobro o no pagó el link; **7 días de gracia**, reintentos de cobro días 1, 3 y 5 | Completo + banner de aviso |
+| `SOLO_LECTURA` | Prueba vencida sin pagar o mora superada | Admin puede consultar y **exportar**, no crear ni editar. **Los pagos de acudientes siguen entrando** y se registran |
+| `CANCELADA` | 60 días en solo lectura, o el propietario cancela | Sin acceso; datos retenidos 90 días y luego borrados/anonimizados |
 
-| Pantalla | Contenido |
+Transiciones automáticas por un **job diario**; cada cambio va a `AuditLog` y se notifica por email al propietario.
+
+**Límite de alumnos del plan:** al superarlo se avisa y se ofrece subir de plan; tras 7 días se **cambia de plan automáticamente** en el siguiente cobro (nunca se bloquea la operación).
+
+**Cancelación por el propietario:** desde configuración, con encuesta corta de motivo y botón de exportar datos (Excel/ZIP).
+
+---
+
+## 4. Roles dentro de la escuela
+
+| Rol | Quién | Puede |
+|---|---|---|
+| **Propietario** | Quien creó la escuela (transferible) | Todo, incluida suscripción, Wompi, eliminar escuela |
+| Administrador | Invitado por el propietario | Todo excepto suscripción y eliminar escuela |
+| Coordinador / Profesor / Acudiente / Alumno | Invitados | Según [`PLAN.md`](PLAN.md#2-roles-y-permisos) |
+
+---
+
+## 5. Rol del super admin de Podium (sin administrar registros)
+
+Consola `/admin`, solo para `PLATFORM_ADMIN`, 2FA obligatorio. **No hay aprobaciones manuales.**
+
+| Pantalla | Para qué |
 |---|---|
-| **Escuelas** | Lista con estado, plan, alumnos activos, MRR, último ingreso, mora; filtros y búsqueda |
-| **Detalle de escuela** | Datos, estado (con acciones: activar, suspender, cancelar), suscripción y pagos, usuarios, checklist de onboarding, auditoría |
-| **Nueva escuela** | Formulario del paso [2] |
-| **Prospectos** | Embudo simple: nuevo → demo → negociación → creada / perdida |
-| **Planes** | Planes de suscripción (nombre, límite de alumnos, precio de lista) |
-| **Plantillas de deporte** | Niveles, categorías y pruebas base de patinaje (y futuros deportes) |
-| **Facturación Podium** | Facturas de suscripción, pagos, MRR, escuelas en mora |
-| **Soporte: "Entrar como"** | Ver la app como el admin de una escuela para dar soporte — **solo lectura por defecto**, con motivo obligatorio, banner visible y registro en auditoría |
+| Métricas | Registros/día, escuelas en prueba, conversión prueba → pago, MRR, churn, % configuración completada |
+| Escuelas | Búsqueda y detalle (estado, plan, uso, pagos, auditoría) |
+| Acciones excepcionales | Extender prueba, aplicar descuento/cupón, suspender por abuso, reactivar |
+| Soporte "Entrar como" | Solo lectura por defecto, motivo obligatorio, banner visible, auditado |
+| Planes, cupones y plantillas de deporte | Configuración del catálogo |
 
 ---
 
-## 5. Modelo de datos adicional
+## 6. Modelo de datos adicional
 
 | Entidad | Campos clave |
 |---|---|
-| `School` | slug (único), nombre, razón social, tipo/número de documento, ciudad, **status**, trial_ends_at, activated_at, settings (JSON: moneda, zona horaria, días de corte, mora…) |
-| `SchoolLead` | nombre, contacto, alumnos estimados, fuente, etapa, notas, school_id (cuando se convierte) |
-| `Plan` | nombre, max_alumnos_activos, precio_lista |
-| `Subscription` | school_id, plan_id, precio_pactado, día_cobro, estado |
-| `PlatformInvoice` / `PlatformPayment` | facturas y pagos de la escuela a Podium |
-| `PaymentProviderAccount` | school_id, proveedor (`wompi`), llaves **cifradas**, modo (prueba/producción), verificado_at |
-| `Invitation` | email, school_id, rol, token (hash), expira_at, aceptada_at |
-| `LegalAcceptance` | user_id, school_id, documento, versión, fecha, IP |
-| `Membership` | user_id, school_id (nulo para `PLATFORM_ADMIN`), roles[] |
-
-Regla: **todas** las tablas de negocio tienen `school_id` y RLS. La consola de super admin usa una conexión/rol de base de datos aparte que puede saltar RLS, y **solo** esa consola.
+| `User` | nombre, email (único), email_verified_at, celular, password_hash / proveedor OAuth |
+| `School` | slug (único), nombre, ciudad, **status**, trial_ends_at, owner_user_id, onboarding (JSON de pasos completados), comms_enabled_at, settings (JSON) |
+| `BillingProfile` | school_id, razón social, tipo/número de documento, dirección, email de facturación |
+| `Plan` | nombre, max_alumnos_activos, precio_mensual, precio_anual |
+| `Subscription` | school_id, plan_id, status (`TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`), periodo actual, método (`card_token` / `payment_link`), wompi_payment_source_id, cupón |
+| `PlatformInvoice` / `PlatformPayment` | cobros de Podium a la escuela, intentos, referencia Wompi |
+| `Coupon` | código, % o valor, duración |
+| `PaymentProviderAccount` | school_id, proveedor `wompi`, llaves **cifradas**, modo, verificado_at |
+| `Invitation` | email/celular, school_id, rol, token (hash), expira_at, aceptada_at |
+| `LegalAcceptance` | user_id, documento, versión, fecha, IP |
+| `Membership` | user_id, school_id, roles[] |
 
 ---
 
-## 6. Validación del flujo (riesgos y cómo se cubren)
+## 7. Validación del flujo (riesgos y mitigación)
 
-| Riesgo | Cubierto por |
+| Riesgo | Mitigación |
 |---|---|
-| Datos de una escuela visibles en otra | `school_id` + RLS en Postgres, pruebas automáticas de aislamiento |
-| Podium recaudando dinero de terceros (implicaciones legales/tributarias) | Cada escuela conecta **su propia** cuenta Wompi; Podium solo recauda su suscripción |
-| Escuela en mora con Podium deja de recaudar → peor para ambos | Suspensión = solo lectura del admin, pero los pagos de acudientes siguen entrando |
-| Protección de datos de menores | Contrato de transmisión, aceptación versionada, cifrado de datos sensibles, borrado tras cancelación |
-| Arranque con cartera descuadrada | Importación de saldos iniciales como "Saldo anterior" |
-| Tú como único soporte | Asistente + plantilla Excel + checklist reducen tu tiempo por escuela; "Entrar como" para soporte rápido |
-| Crecimiento (muchas escuelas) | El mismo flujo se expone como self-service en Fase 3: el formulario del paso [2] se vuelve público y la suscripción se cobra automáticamente |
+| Registros falsos / bots | Captcha, verificación de email, límite por IP, emails desechables bloqueados |
+| Uso de Podium para spam a terceros | Sin envíos a acudientes hasta activar comunicaciones; límites de envío por escuela en prueba; suspensión por abuso |
+| Slug ofensivo o suplantación de marca | Lista de palabras reservadas/prohibidas; el super admin puede renombrar o suspender |
+| Escuelas abandonadas ocupando datos | Prueba vencida → solo lectura → cancelada → borrado automático |
+| Datos de una escuela visibles en otra | `school_id` + Row Level Security + pruebas automáticas de aislamiento |
+| Podium recaudando dinero de terceros | Cada escuela conecta **su propia** cuenta Wompi; Podium solo cobra su suscripción |
+| Mora con Podium frena el recaudo de la escuela | Ningún estado bloquea los pagos de acudientes |
+| Protección de datos de menores (Ley 1581) | Aceptación versionada de términos; la escuela es responsable y Podium encargado; cifrado de datos sensibles; borrado tras cancelación |
+| Escuela no logra configurarse sola | Asistente con progreso, datos de ejemplo, plantilla Excel, correos guía, videos cortos y chat de soporte (WhatsApp) |
+| Medios sin débito automático (PSE/Nequi) | Link de pago mensual con recordatorios + gracia de 7 días |
 
-**Tiempo estimado por escuela:** 1 sesión de 60–90 min contigo (pasos 2–6) si la escuela trae su Excel de alumnos.
+---
+
+## 8. Métricas del embudo
+Registro → email verificado → escuela creada → asistente ≥ 80 % → primera asistencia tomada → primer cobro a acudientes → **pago de suscripción**.
+Meta inicial: ≥ 25 % de escuelas creadas pagan al terminar la prueba.
