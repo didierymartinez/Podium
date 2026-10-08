@@ -20,7 +20,7 @@ export const INVOICE_STATUS_LABELS = {
 
 export type PdfKind = "cuenta" | "recibo" | "estado" | "paz-y-salvo";
 
-async function schoolHeader(
+export async function schoolHeader(
   database: Database,
   store: Storage,
   schoolId: string,

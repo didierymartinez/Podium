@@ -21,7 +21,7 @@ const LINE = rgb(0.88, 0.89, 0.92);
 const MARGIN = 48;
 
 /** Las fuentes estándar de PDF usan WinAnsi: se cambian los caracteres que no tiene. */
-function safe(text: string) {
+export function safe(text: string) {
   return text
     .replace(/[‐-―]/g, "-")
     .replace(/[‘’]/g, "'")
@@ -30,7 +30,7 @@ function safe(text: string) {
     .replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
 }
 
-function hexColor(hex: string) {
+export function hexColor(hex: string) {
   const n = Number.parseInt(hex.replace("#", ""), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }

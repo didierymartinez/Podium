@@ -7,6 +7,7 @@ import {
   GraduationCap,
   House,
   Layers,
+  Medal,
   Megaphone,
   Settings,
   Timer,
@@ -60,6 +61,13 @@ const MARKS: NavItem = {
   path: "/marcas",
   label: "Marcas",
   icon: Timer,
+  ready: true,
+  audience: "coach",
+};
+const EVALUATIONS: NavItem = {
+  path: "/evaluaciones",
+  label: "Evaluaciones",
+  icon: Medal,
   ready: true,
   audience: "coach",
 };
@@ -121,6 +129,7 @@ export const SCHOOL_NAV: NavItem[] = [
   COACHES,
   ATTENDANCE,
   MARKS,
+  EVALUATIONS,
   BILLING,
   REPORTS,
   MY_KIDS,

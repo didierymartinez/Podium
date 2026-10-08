@@ -120,3 +120,27 @@ export const SPEED_TESTS: TestTemplate[] = [
 
 export const testsFor = (code: DisciplineCode): TestTemplate[] =>
   code === "speed" ? SPEED_TESTS : SPEED_TESTS.filter((t) => t.common);
+
+/** Rúbrica de cada nivel (§2.1): criterios que se califican de 1 a 5. */
+const SPEED_CRITERIA: Record<string, string[]> = {
+  Iniciación: [
+    "Posición básica",
+    "Desplazamiento hacia adelante",
+    'Frenado en "T"',
+    "Caída segura y levantarse",
+  ],
+  Formación: [
+    "Empuje lateral completo",
+    "Cruce en curva (ambos lados)",
+    'Frenado en "T" a velocidad',
+    "Desplazamiento hacia atrás",
+  ],
+  Intermedio: ["Salida", "Posición aerodinámica sostenida", "Curva a velocidad", "Relevos en grupo"],
+  Avanzado: ["Doble empuje", "Sprints", "Lectura de carrera", "1.000 m bajo el tiempo objetivo"],
+  Competencia: ["Marcas mínimas de su categoría", "Participación en el calendario de liga"],
+};
+const GENERIC_CRITERIA = ["Técnica básica de la modalidad", "Control y equilibrio", "Actitud y disciplina"];
+
+export function criteriaFor(code: DisciplineCode, levelName: string): string[] {
+  return code === "speed" ? (SPEED_CRITERIA[levelName] ?? GENERIC_CRITERIA) : GENERIC_CRITERIA;
+}

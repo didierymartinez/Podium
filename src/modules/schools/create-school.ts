@@ -9,6 +9,7 @@ import {
   chargeConcepts,
   disciplines,
   documentTypes,
+  levelCriteria,
   levels,
   schoolMemberships,
   schools,
@@ -23,6 +24,7 @@ import {
   DISCIPLINE_CODES,
   SKATING_AGE_CATEGORIES,
   SKATING_DISCIPLINES,
+  criteriaFor,
   levelsFor,
   testsFor,
 } from "./sport-template";
@@ -89,14 +91,27 @@ export async function createSchool(
         .values({ schoolId, sport: "SKATING", code: discipline.code, name: discipline.name })
         .returning({ id: disciplines.id });
 
-      await tx.insert(levels).values(
-        levelsFor(discipline.code).map((level, i) => ({
-          schoolId,
-          disciplineId: createdDiscipline.id,
-          name: level.name,
-          goal: level.goal,
-          position: i + 1,
-        })),
+      const createdLevels = await tx
+        .insert(levels)
+        .values(
+          levelsFor(discipline.code).map((level, i) => ({
+            schoolId,
+            disciplineId: createdDiscipline.id,
+            name: level.name,
+            goal: level.goal,
+            position: i + 1,
+          })),
+        )
+        .returning({ id: levels.id, name: levels.name });
+      await tx.insert(levelCriteria).values(
+        createdLevels.flatMap((l) =>
+          criteriaFor(discipline.code, l.name).map((name, i) => ({
+            schoolId,
+            levelId: l.id,
+            name,
+            position: i + 1,
+          })),
+        ),
       );
 
       await tx.insert(sportTests).values(

@@ -29,6 +29,8 @@ import { DocumentsCard } from "./documents-card";
 import { InjuriesCard } from "./injuries-card";
 import { PerformanceCard, toProgressView } from "@/components/performance-card";
 import { athleteProgress } from "@/modules/sports/performances";
+import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-card";
+import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { GuardiansCard } from "./guardians-card";
 import { PhotoEditor } from "./photo-editor";
 
@@ -55,12 +57,13 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats, billing, injuries, progress] = await Promise.all([
+  const [documents, stats, billing, injuries, progress, evaluations] = await Promise.all([
     listAthleteDocuments(db, school.id, athleteId, today),
     attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
     athleteBillingStatus(db, school.id, [athleteId], today),
     listInjuries(db, school.id, athleteId),
     athleteProgress(db, school.id, athleteId, todayIn(school.timezone)),
+    athleteEvaluations(db, school.id, athleteId),
   ]);
   const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
@@ -159,6 +162,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
         </div>
 
         <div className="space-y-4">
+          <EvaluationsCard slug={slug} {...toEvaluationsView(evaluations)} />
           <PerformanceCard tests={toProgressView(progress)} />
           <InjuriesCard
             slug={slug}

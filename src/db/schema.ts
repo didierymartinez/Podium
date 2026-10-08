@@ -1369,3 +1369,93 @@ export const performanceTargets = pgTable(
   },
   (t) => [uniqueIndex("performance_targets_uq").on(t.testId, t.ageCategoryId)],
 );
+
+/** Criterios de la rúbrica de cada nivel (DEP-40). */
+export const levelCriteria = pgTable(
+  "level_criteria",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => levels.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [index("level_criteria_level_idx").on(t.levelId)],
+);
+
+export const evaluationStatusEnum = pgEnum("evaluation_status", [
+  "NOT_PASSED",
+  "PROPOSED",
+  "APPROVED",
+  "REJECTED",
+]);
+
+/** Evaluación técnica de un alumno en su nivel (DEP-41). */
+export const evaluations = pgTable(
+  "evaluations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => levels.id),
+    evaluatedOn: date("evaluated_on").notNull(),
+    average: doublePrecision("average").notNull(),
+    status: evaluationStatusEnum("status").notNull(),
+    strengths: text("strengths"),
+    improvements: text("improvements"),
+    comment: text("comment"),
+    evaluatorUserId: uuid("evaluator_user_id").references(() => users.id),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("evaluations_athlete_idx").on(t.athleteId)],
+);
+
+export const evaluationScores = pgTable(
+  "evaluation_scores",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    evaluationId: uuid("evaluation_id")
+      .notNull()
+      .references(() => evaluations.id, { onDelete: "cascade" }),
+    criterionName: text("criterion_name").notNull(),
+    score: integer("score").notNull(),
+  },
+  (t) => [index("evaluation_scores_eval_idx").on(t.evaluationId)],
+);
+
+/** Historial de niveles del alumno (DEP-42): el vigente es el más reciente. */
+export const athleteLevels = pgTable(
+  "athlete_levels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => levels.id),
+    since: date("since").notNull(),
+    evaluationId: uuid("evaluation_id").references(() => evaluations.id),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("athlete_levels_athlete_idx").on(t.athleteId)],
+);

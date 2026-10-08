@@ -21,6 +21,8 @@ import { getSchoolContext } from "../data";
 import { UpcomingClasses } from "./upcoming-classes";
 import { PerformanceCard, toProgressView } from "@/components/performance-card";
 import { athleteProgress } from "@/modules/sports/performances";
+import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-card";
+import { athleteEvaluations } from "@/modules/sports/evaluations";
 
 export const metadata: Metadata = { title: "Mis hijos" };
 
@@ -45,6 +47,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         stats: stats.get(a.id),
         upcoming: upcoming.get(a.id) ?? [],
         progress: await athleteProgress(db, school.id, a.id, today),
+        evaluations: await athleteEvaluations(db, school.id, a.id),
         history: await attendanceHistory(db, school.id, a.id, 8),
         documents: await listAthleteDocuments(db, school.id, a.id, today),
       })),
@@ -60,7 +63,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
       {details.length === 0 && (
         <Card className="text-center text-sm text-ink-soft">No hay alumnos vinculados a tu cuenta.</Card>
       )}
-      {details.map(({ athlete: a, stats, history, documents, upcoming, progress }) => {
+      {details.map(({ athlete: a, stats, history, documents, upcoming, progress, evaluations }) => {
         const name = `${a.firstName} ${a.lastName}`;
         const category = findAgeCategory(
           sportsAge(a.birthDate, Number(today.slice(0, 4))),
@@ -147,6 +150,13 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
               <PerformanceCard
                 title={`Marcas de ${a.firstName}`}
                 tests={toProgressView(progress, { withCategory: false })}
+              />
+            )}
+            {(evaluations.current || evaluations.evaluations.length > 0) && (
+              <EvaluationsCard
+                slug={slug}
+                title={`Nivel y evaluaciones de ${a.firstName}`}
+                {...toEvaluationsView(evaluations)}
               />
             )}
             <div>

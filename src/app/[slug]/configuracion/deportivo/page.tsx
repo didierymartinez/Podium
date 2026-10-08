@@ -6,6 +6,8 @@ import { getSchoolContext } from "../../data";
 import { CategoriesCard, DisciplinesCard, LevelsCard, TestsCard } from "./structure-editor";
 import { TargetsCard } from "./targets-card";
 import { listTargets } from "@/modules/sports/performances";
+import { listCriteria } from "@/modules/sports/evaluations";
+import { CriteriaCard } from "./criteria-card";
 
 export const metadata: Metadata = { title: "Estructura deportiva" };
 
@@ -13,7 +15,11 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
   const { slug } = await params;
   const { school, roles } = await getSchoolContext(slug);
   const canEdit = canManageSettings(roles);
-  const [s, targets] = await Promise.all([getStructure(db, school.id), listTargets(db, school.id)]);
+  const [s, targets, criteria] = await Promise.all([
+    getStructure(db, school.id),
+    listTargets(db, school.id),
+    listCriteria(db, school.id),
+  ]);
   const active = s.disciplines.filter((d) => d.active);
   return (
     <div className="grid gap-4 xl:grid-cols-2">
@@ -44,6 +50,16 @@ export default async function SportsSettingsPage({ params }: PageProps<"/[slug]/
             }))}
           />
         ))}
+        <CriteriaCard
+          slug={slug}
+          canEdit={canEdit}
+          levels={active.flatMap((d) =>
+            d.levels
+              .filter((l) => l.active)
+              .map((l) => ({ id: l.id, name: active.length > 1 ? `${d.name} · ${l.name}` : l.name })),
+          )}
+          criteria={criteria.map((c) => ({ id: c.id, levelId: c.levelId, name: c.name }))}
+        />
       </div>
       <div className="space-y-4">
         <CategoriesCard

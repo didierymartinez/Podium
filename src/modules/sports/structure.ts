@@ -1,9 +1,18 @@
 import { and, asc, count, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
-import { ageCategories, auditLogs, disciplines, groups, levels, sportTests } from "@/db/schema";
+import {
+  ageCategories,
+  auditLogs,
+  disciplines,
+  groups,
+  levelCriteria,
+  levels,
+  sportTests,
+} from "@/db/schema";
 import {
   SKATING_DISCIPLINES,
+  criteriaFor,
   levelsFor,
   testsFor,
   type DisciplineCode,
@@ -82,14 +91,27 @@ export function enableDiscipline(database: Database, ctx: Ctx, code: string): Pr
       .insert(disciplines)
       .values({ schoolId: ctx.schoolId, sport: "SKATING", code: template.code, name: template.name })
       .returning();
-    await tx.insert(levels).values(
-      levelsFor(template.code as DisciplineCode).map((l, i) => ({
-        schoolId: ctx.schoolId,
-        disciplineId: created.id,
-        name: l.name,
-        goal: l.goal,
-        position: i + 1,
-      })),
+    const createdLevels = await tx
+      .insert(levels)
+      .values(
+        levelsFor(template.code as DisciplineCode).map((l, i) => ({
+          schoolId: ctx.schoolId,
+          disciplineId: created.id,
+          name: l.name,
+          goal: l.goal,
+          position: i + 1,
+        })),
+      )
+      .returning({ id: levels.id, name: levels.name });
+    await tx.insert(levelCriteria).values(
+      createdLevels.flatMap((l) =>
+        criteriaFor(template.code as DisciplineCode, l.name).map((name, i) => ({
+          schoolId: ctx.schoolId,
+          levelId: l.id,
+          name,
+          position: i + 1,
+        })),
+      ),
     );
     const specific = testsFor(template.code as DisciplineCode).filter((t) => !t.common);
     if (specific.length) {
