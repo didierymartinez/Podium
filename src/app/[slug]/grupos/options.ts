@@ -12,11 +12,14 @@ export async function loadGroupFormOptions(schoolId: string): Promise<GroupFormO
     listCoaches(db, schoolId),
   ]);
   return {
-    disciplines: structure.disciplines.map((d) => ({
-      id: d.id,
-      name: d.name,
-      levels: d.levels.map(({ id, name, position }) => ({ id, name, position })),
-    })),
+    // Solo modalidades y niveles activos (los archivados siguen en los grupos que ya los usan).
+    disciplines: structure.disciplines
+      .filter((d) => d.active)
+      .map((d) => ({
+        id: d.id,
+        name: d.name,
+        levels: d.levels.filter((l) => l.active).map(({ id, name, position }) => ({ id, name, position })),
+      })),
     feePlans: plans
       .filter((p) => p.active)
       .map(({ id, name, monthlyAmount }) => ({ id, name, monthlyAmount })),

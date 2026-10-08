@@ -12,13 +12,20 @@ import {
   levels,
   schoolMemberships,
   schools,
+  sportTests,
   subscriptions,
   venues,
 } from "@/db/schema";
 import { DEFAULT_BILLING_POLICY } from "@/modules/billing/policy";
 import { ESTIMATED_STUDENTS_OPTIONS } from "./options";
 import { SLUG_ERROR_MESSAGES, validateSlug } from "./slug";
-import { DISCIPLINE_CODES, SKATING_AGE_CATEGORIES, SKATING_DISCIPLINES, levelsFor } from "./sport-template";
+import {
+  DISCIPLINE_CODES,
+  SKATING_AGE_CATEGORIES,
+  SKATING_DISCIPLINES,
+  levelsFor,
+  testsFor,
+} from "./sport-template";
 import { trialEndsAt } from "./trial";
 
 export const createSchoolSchema = z.object({
@@ -88,6 +95,19 @@ export async function createSchool(
           disciplineId: createdDiscipline.id,
           name: level.name,
           goal: level.goal,
+          position: i + 1,
+        })),
+      );
+
+      await tx.insert(sportTests).values(
+        testsFor(discipline.code).map((t, i) => ({
+          schoolId,
+          disciplineId: t.common ? null : createdDiscipline.id,
+          name: t.name,
+          kind: t.kind,
+          unit: t.unit,
+          lowerIsBetter: t.lowerIsBetter,
+          context: t.context,
           position: i + 1,
         })),
       );

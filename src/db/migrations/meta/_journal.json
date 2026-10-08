@@ -218,6 +218,20 @@
       "when": 1791459507043,
       "tag": "0030_platform_console",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791460563148,
+      "tag": "0031_sport_tests",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791460576589,
+      "tag": "0032_sport_tests_rls",
+      "breakpoints": true
     }
   ]
 }

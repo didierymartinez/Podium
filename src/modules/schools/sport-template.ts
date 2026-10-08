@@ -50,3 +50,38 @@ export const SKATING_AGE_CATEGORIES: AgeCategoryTemplate[] = [
   { name: "Mayores", minAge: 19, maxAge: 29 },
   { name: "Máster", minAge: 30, maxAge: null },
 ];
+
+export type TestTemplate = {
+  name: string;
+  kind: "TIME" | "DISTANCE" | "POINTS" | "REPS" | "SCORE" | "POSITION";
+  unit: string;
+  lowerIsBetter: boolean;
+  context: "TRACK" | "ROAD" | "FIELD";
+  /** Sin modalidad: pruebas físicas comunes. */
+  common?: boolean;
+};
+
+/** Pruebas de la plantilla de velocidad (§2.3); las físicas sirven para todas las modalidades. */
+export const SPEED_TESTS: TestTemplate[] = [
+  { name: "200 m contrarreloj", kind: "TIME", unit: "s", lowerIsBetter: true, context: "TRACK" },
+  { name: "500 m sprint", kind: "TIME", unit: "s", lowerIsBetter: true, context: "TRACK" },
+  { name: "1.000 m", kind: "TIME", unit: "s", lowerIsBetter: true, context: "TRACK" },
+  { name: "10.000 m puntos", kind: "POINTS", unit: "pts", lowerIsBetter: false, context: "TRACK" },
+  { name: "10.000 m eliminación", kind: "POSITION", unit: "puesto", lowerIsBetter: true, context: "TRACK" },
+  { name: "15.000 m eliminación", kind: "POSITION", unit: "puesto", lowerIsBetter: true, context: "TRACK" },
+  { name: "100 m ruta", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "200 m ruta", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "Una vuelta", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "5.000 m ruta", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "Media maratón", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "Maratón", kind: "TIME", unit: "s", lowerIsBetter: true, context: "ROAD" },
+  { name: "30 m lanzados", kind: "TIME", unit: "s", lowerIsBetter: true, context: "FIELD", common: true },
+  { name: "Salto horizontal", kind: "DISTANCE", unit: "cm", lowerIsBetter: false, context: "FIELD", common: true },
+  { name: "Salto vertical", kind: "DISTANCE", unit: "cm", lowerIsBetter: false, context: "FIELD", common: true },
+  { name: "Flexibilidad (sit and reach)", kind: "DISTANCE", unit: "cm", lowerIsBetter: false, context: "FIELD", common: true },
+  { name: "Test de Cooper", kind: "DISTANCE", unit: "m", lowerIsBetter: false, context: "FIELD", common: true },
+  { name: "Abdominales en 1 min", kind: "REPS", unit: "reps", lowerIsBetter: false, context: "FIELD", common: true },
+];
+
+export const testsFor = (code: DisciplineCode): TestTemplate[] =>
+  code === "speed" ? SPEED_TESTS : SPEED_TESTS.filter((t) => t.common);

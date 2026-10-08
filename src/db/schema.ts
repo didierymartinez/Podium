@@ -232,9 +232,35 @@ export const levels = pgTable(
     name: text("name").notNull(),
     position: integer("position").notNull(),
     goal: text("goal"),
+    active: boolean("active").notNull().default(true),
     ...timestamps,
   },
   (t) => [index("levels_discipline_idx").on(t.disciplineId)],
+);
+
+export const testKindEnum = pgEnum("test_kind", ["TIME", "DISTANCE", "POINTS", "REPS", "SCORE", "POSITION"]);
+export const testContextEnum = pgEnum("test_context", ["TRACK", "ROAD", "FIELD"]);
+
+/** Pruebas o métricas para registrar marcas (DEP-02, §2.3): "500 m sprint", "Salto horizontal"… */
+export const sportTests = pgTable(
+  "sport_tests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    /** Modalidad; nulo = prueba física común a todas. */
+    disciplineId: uuid("discipline_id").references(() => disciplines.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: testKindEnum("kind").notNull(),
+    unit: text("unit").notNull(),
+    lowerIsBetter: boolean("lower_is_better").notNull(),
+    context: testContextEnum("context").notNull(),
+    position: integer("position").notNull(),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("sport_tests_school_idx").on(t.schoolId, t.disciplineId)],
 );
 
 export const ageCategories = pgTable("age_categories", {
