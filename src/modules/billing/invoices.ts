@@ -754,7 +754,8 @@ export function getInvoice(database: Database, schoolId: string, invoiceId: stri
         .select()
         .from(invoiceLines)
         .where(eq(invoiceLines.invoiceId, invoiceId))
-        .orderBy(asc(invoiceLines.createdAt)),
+        // Las líneas de una cuenta se insertan juntas (mismo created_at): desempatar para un orden estable.
+        .orderBy(asc(invoiceLines.createdAt), asc(invoiceLines.description), asc(invoiceLines.id)),
       tx
         .select()
         .from(creditNotes)
