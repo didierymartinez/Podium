@@ -20,6 +20,10 @@ import { CancelPanel } from "./cancel-panel";
 import { RosterForm } from "./roster-form";
 import { InjuryCard, MakeupCard } from "./session-extras";
 import { SessionPlanCard } from "./session-plan";
+import { CheckInQrCard } from "./check-in-qr";
+import { checkInCount, checkInToken } from "@/modules/attendance/check-in";
+import { serverEnv } from "@/env";
+import { appUrl } from "../../../deliver";
 import { sessionPlan } from "@/modules/training/training";
 
 export const metadata: Metadata = { title: "Tomar asistencia" };
@@ -143,6 +147,16 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
             }
           }
           duration={day.duration}
+        />
+      )}
+
+      {!canceled && session.roster.length > 0 && (
+        <CheckInQrCard
+          url={new URL(
+            `/${slug}/check-in/${session.id}?t=${checkInToken(serverEnv().SESSION_SECRET, session.id)}`,
+            appUrl(),
+          ).toString()}
+          checkedIn={await checkInCount(db, school.id, session.id)}
         />
       )}
 
