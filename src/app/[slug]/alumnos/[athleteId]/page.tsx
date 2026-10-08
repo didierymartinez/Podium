@@ -10,6 +10,8 @@ import { formatLongDate, todayIn } from "@/lib/dates";
 import { displayPhone } from "@/lib/phone";
 import { getAthlete } from "@/modules/athletes/athletes";
 import { listAthleteDocuments } from "@/modules/documents/documents";
+import { attendanceStats } from "@/modules/attendance/attendance";
+import { addDays } from "@/lib/dates";
 import { fileHref } from "@/modules/files/files";
 import { invitationStates } from "@/modules/invitations/invitations";
 import { ageOn } from "@/modules/athletes/enrollment-status";
@@ -47,7 +49,11 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const documents = await listAthleteDocuments(db, school.id, athleteId, today);
+  const [documents, stats] = await Promise.all([
+    listAthleteDocuments(db, school.id, athleteId, today),
+    attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
+  ]);
+  const attendance = stats.get(athleteId);
   const age = ageOn(athlete.birthDate, today);
   const category = findAgeCategory(
     sportsAge(athlete.birthDate, Number(today.slice(0, 4))),
@@ -79,6 +85,12 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
       <div className="flex flex-wrap gap-2 px-1">
         <Chip tone="brand">{age} años</Chip>
         {category && <Chip tone="violet">Categoría {category.name}</Chip>}
+        {attendance && attendance.rate !== null && (
+          <Chip tone={attendance.rate >= 80 ? "mint" : attendance.rate >= 50 ? "sun" : "danger"}>
+            Asistencia 30 días: {attendance.rate} % ({attendance.present + attendance.late}/
+            {attendance.present + attendance.late + attendance.absent})
+          </Chip>
+        )}
         {current ? (
           <Chip tone="mint" dot>
             {current.groupName}

@@ -8,6 +8,7 @@ import { displayPhone } from "@/lib/phone";
 import { createFeePlan, feePlanSchema, setFeePlanActive, updateFeePlan } from "@/modules/billing/fee-plans";
 import { billingPolicySchema } from "@/modules/billing/policy";
 import { updateBillingPolicy } from "@/modules/billing/settings";
+import { attendancePolicySchema, updateAttendancePolicy } from "@/modules/attendance/alerts";
 import { closureSchema, createClosure, deleteClosure } from "@/modules/calendar/closures";
 import { schoolProfileSchema, updateSchoolProfile } from "@/modules/schools/profile";
 import { resyncSessions } from "../asistencia/sync";
@@ -155,4 +156,21 @@ export async function deleteClosureAction(slug: string, closureId: string): Prom
   await resyncSessions(manager.school);
   refresh();
   return { ok: true };
+}
+
+export async function updateAttendancePolicyAction(
+  slug: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const manager = await getManagerContext(slug);
+  if (!manager) return FORBIDDEN_STATE;
+  const parsed = attendancePolicySchema.safeParse({
+    consecutiveAbsences: Number(text(form, "consecutiveAbsences")),
+    minMonthlyRate: Number(text(form, "minMonthlyRate")),
+  });
+  if (!parsed.success) return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+  await updateAttendancePolicy(db, manager.ctx, parsed.data);
+  refresh();
+  return { ok: true, message: "Alertas guardadas" };
 }

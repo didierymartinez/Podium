@@ -2,7 +2,8 @@ import { CalendarCheck, ChevronRight, Clock, MessageCircle, Users, Wallet } from
 import Link from "next/link";
 import { Avatar, Card, Chip, SectionTitle, Tile } from "@/components/ui";
 import { db } from "@/db/client";
-import { todayIn } from "@/lib/dates";
+import { addDays, todayIn } from "@/lib/dates";
+import { attendanceStats } from "@/modules/attendance/attendance";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ENROLLMENT_STATUS_LABELS, ageOn } from "@/modules/athletes/enrollment-status";
 import { describeSchedule } from "@/modules/groups/schedule";
@@ -22,6 +23,13 @@ export async function MemberHome({
 }) {
   const home = await getMemberHome(db, school.id, user.id);
   const today = todayIn(school.timezone);
+  const stats = await attendanceStats(
+    db,
+    school.id,
+    [...home.athletes.map((a) => a.id), ...home.coachGroups.flatMap((g) => g.athletes.map((a) => a.id))],
+    { from: addDays(today, -30), to: today },
+  );
+  const rate = (id: string) => stats.get(id)?.rate ?? null;
   const firstName = user.name.split(" ")[0];
   let todaySessions: Awaited<ReturnType<typeof listSessions>> = [];
   if (home.coachGroups.length > 0) {
@@ -111,7 +119,9 @@ export async function MemberHome({
                       >
                         <Avatar name={a.name} size={28} />
                         <span className="min-w-0 flex-1 truncate">{a.name}</span>
-                        <span className="text-xs text-ink-soft">{ageOn(a.birthDate, today)} a</span>
+                        <span className="text-xs text-ink-soft">
+                          {ageOn(a.birthDate, today)} a{rate(a.id) !== null && ` · ${rate(a.id)} %`}
+                        </span>
                       </li>
                     ))}
                     {athletes.length === 0 && (
@@ -141,6 +151,7 @@ export async function MemberHome({
                       <p className="truncate text-lg font-semibold">{name}</p>
                       <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
                         {ageOn(a.birthDate, today)} años
+                        {rate(a.id) !== null && <Chip tone="mint">Asistencia 30 días: {rate(a.id)} %</Chip>}
                         {a.isPayer && <Chip tone="violet">Responsable de pago</Chip>}
                       </p>
                     </div>

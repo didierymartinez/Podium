@@ -1,4 +1,4 @@
-import { CalendarOff, ChevronLeft, ChevronRight, Clock, PartyPopper } from "lucide-react";
+import { CalendarOff, ChevronLeft, ChevronRight, Clock, PartyPopper, Plus, UserRoundCog } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess, PageHeader } from "@/components/page-header";
@@ -20,6 +20,7 @@ import { listSessions, type SessionItem } from "@/modules/attendance/sessions";
 import { canManagePeople } from "@/modules/schools/permissions";
 import { getSchoolContext } from "../data";
 import { SessionStatusChip } from "./status-chip";
+import { CachePages } from "@/components/pwa";
 import { ensureSessions } from "./sync";
 
 export const metadata: Metadata = { title: "Asistencia" };
@@ -56,11 +57,21 @@ export default async function AttendanceDayPage({ params, searchParams }: PagePr
           </span>
         }
         actions={
-          date !== today && (
-            <Link href={href(today)} className={buttonClass("secondary", "h-10")}>
-              Ir a hoy
-            </Link>
-          )
+          <>
+            {date !== today && (
+              <Link href={href(today)} className={buttonClass("secondary", "h-10")}>
+                Ir a hoy
+              </Link>
+            )}
+            {manager && (
+              <Link
+                href={`/${slug}/asistencia/nueva?fecha=${date}`}
+                className={buttonClass("secondary", "h-10")}
+              >
+                <Plus className="size-4" /> Clase extra
+              </Link>
+            )}
+          </>
         }
       />
 
@@ -131,6 +142,7 @@ export default async function AttendanceDayPage({ params, searchParams }: PagePr
         </div>
       )}
 
+      <CachePages urls={[`/${slug}/asistencia`, ...items.map((s) => `/${slug}/asistencia/${s.id}`)]} />
       {items.length === 0 ? (
         <Card className="text-center">
           <p className="font-semibold">No hay clases este día</p>
@@ -170,9 +182,18 @@ function SessionCard({ slug, session, today }: { slug: string; session: SessionI
         <p className={cn("truncate text-lg font-semibold", canceled && "line-through")}>
           {session.groupName}
         </p>
-        <p className="flex items-center gap-1.5 text-sm text-ink-soft">
-          <Clock className="size-3.5" /> {session.startTime} – {session.endTime}
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-ink-soft">
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="size-3.5" /> {session.startTime} – {session.endTime}
+          </span>
+          {session.source === "EXTRA" && <span className="font-semibold text-violet">Extra</span>}
+          {session.substitute && (
+            <span className="inline-flex items-center gap-1 font-semibold text-violet">
+              <UserRoundCog className="size-3.5" /> Sustituto
+            </span>
+          )}
         </p>
+        {session.note && <p className="truncate text-xs text-ink-soft">{session.note}</p>}
       </div>
       <SessionStatusChip session={session} today={today} />
     </Link>

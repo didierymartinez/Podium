@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
 import {
@@ -115,7 +115,11 @@ export type SessionItem = {
   startTime: string;
   endTime: string;
   status: "SCHEDULED" | "CANCELED";
+  source: "SCHEDULE" | "EXTRA";
   cancelReason: string | null;
+  note: string | null;
+  /** Hay un profesor sustituto asignado. */
+  substitute: boolean;
   recorded: number;
 };
 
@@ -130,15 +134,28 @@ export function listSessions(
   filter: { coachUserId?: string } = {},
 ): Promise<SessionItem[]> {
   return runInTenant(database, { schoolId }, async (tx) => {
-    let groupIds: string[] | undefined;
+    let mine: SQL | undefined;
     if (filter.coachUserId) {
+      const myCoaches = await tx
+        .select({ id: coaches.id })
+        .from(coaches)
+        .where(and(eq(coaches.userId, filter.coachUserId), eq(coaches.active, true)));
+      if (myCoaches.length === 0) return [];
+      const coachIds = myCoaches.map((c) => c.id);
       const rows = await tx
         .select({ groupId: groupCoaches.groupId })
         .from(groupCoaches)
-        .innerJoin(coaches, eq(coaches.id, groupCoaches.coachId))
-        .where(and(eq(coaches.userId, filter.coachUserId), eq(coaches.active, true)));
-      groupIds = rows.map((r) => r.groupId);
-      if (groupIds.length === 0) return [];
+        .where(inArray(groupCoaches.coachId, coachIds));
+      // Sus grupos más las clases donde es sustituto.
+      mine = or(
+        rows.length
+          ? inArray(
+              sessions.groupId,
+              rows.map((r) => r.groupId),
+            )
+          : undefined,
+        inArray(sessions.substituteCoachId, coachIds),
+      );
     }
     const rows = await tx
       .select({
@@ -150,19 +167,16 @@ export function listSessions(
         startTime: sessions.startTime,
         endTime: sessions.endTime,
         status: sessions.status,
+        source: sessions.source,
         cancelReason: sessions.cancelReason,
+        note: sessions.note,
+        substitute: sql<boolean>`${sessions.substituteCoachId} is not null`,
         recorded: count(attendance.id),
       })
       .from(sessions)
       .innerJoin(groups, eq(groups.id, sessions.groupId))
       .leftJoin(attendance, eq(attendance.sessionId, sessions.id))
-      .where(
-        and(
-          gte(sessions.date, range.from),
-          lte(sessions.date, range.to),
-          groupIds ? inArray(sessions.groupId, groupIds) : undefined,
-        ),
-      )
+      .where(and(gte(sessions.date, range.from), lte(sessions.date, range.to), mine))
       .groupBy(sessions.id, groups.id)
       .orderBy(asc(sessions.date), asc(sessions.startTime), asc(groups.name));
     return rows.map((r) => ({ ...r, startTime: hhmm(r.startTime), endTime: hhmm(r.endTime) }));

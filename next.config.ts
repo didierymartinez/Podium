@@ -6,6 +6,19 @@ const nextConfig: NextConfig = {
   // Cache Components desactivado: la app es casi toda autenticada y dinámica,
   // así que usamos el modelo de renderizado dinámico clásico.
   cacheComponents: false,
+  async headers() {
+    return [
+      {
+        // El service worker siempre se revisa en la red para que las actualizaciones lleguen.
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

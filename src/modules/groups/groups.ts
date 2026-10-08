@@ -3,6 +3,7 @@ import { z } from "zod";
 import { allVisible } from "@/db/ownership";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
 import {
+  athletes,
   auditLogs,
   coaches,
   disciplines,
@@ -202,5 +203,29 @@ async function audit(tx: Tx, ctx: Ctx, action: string, entityId: string, data: o
     entity: "group",
     entityId,
     data,
+  });
+}
+
+/** Alumnos con matrícula vigente por grupo (para citar a una clase extra). */
+export function currentMembers(database: Database, schoolId: string) {
+  return runInTenant(database, { schoolId }, async (tx) => {
+    const rows = await tx
+      .select({
+        groupId: enrollments.groupId,
+        athleteId: athletes.id,
+        firstName: athletes.firstName,
+        lastName: athletes.lastName,
+      })
+      .from(enrollments)
+      .innerJoin(athletes, eq(athletes.id, enrollments.athleteId))
+      .where(inArray(enrollments.status, ["ACTIVE", "PRE_ENROLLED"]))
+      .orderBy(asc(athletes.firstName), asc(athletes.lastName));
+    const byGroup = new Map<string, { id: string; name: string }[]>();
+    for (const r of rows) {
+      const list = byGroup.get(r.groupId) ?? [];
+      list.push({ id: r.athleteId, name: `${r.firstName} ${r.lastName}` });
+      byGroup.set(r.groupId, list);
+    }
+    return byGroup;
   });
 }

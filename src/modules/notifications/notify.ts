@@ -1,8 +1,15 @@
-import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { runInTenant, type Database, type Tx } from "@/db/rls";
-import { athleteGuardians, athletes, guardians, notifications } from "@/db/schema";
+import { athleteGuardians, athletes, guardians, notifications, schoolMemberships } from "@/db/schema";
 
-export type NotificationInput = { kind: string; title: string; body: string; href?: string | null };
+export type NotificationInput = {
+  kind: string;
+  title: string;
+  body: string;
+  href?: string | null;
+  /** Si se repite la clave para la misma persona, no se vuelve a avisar. */
+  dedupeKey?: string;
+};
 
 /** Deja un aviso en la bandeja de cada persona con cuenta (los canales push/email lo recogen después). */
 export async function notifyUsers(
@@ -13,10 +20,12 @@ export async function notifyUsers(
 ) {
   const recipients = [...new Set(userIds.filter((id): id is string => Boolean(id)))];
   if (recipients.length === 0) return 0;
-  await tx
+  const inserted = await tx
     .insert(notifications)
-    .values(recipients.map((userId) => ({ schoolId, userId, ...input, href: input.href ?? null })));
-  return recipients.length;
+    .values(recipients.map((userId) => ({ schoolId, userId, ...input, href: input.href ?? null })))
+    .onConflictDoNothing()
+    .returning({ id: notifications.id });
+  return inserted.length;
 }
 
 /** Cuentas de los acudientes de un alumno y del propio alumno si tiene cuenta. */
@@ -66,3 +75,14 @@ export function markAllRead(database: Database, schoolId: string, userId: string
       .where(and(eq(notifications.userId, userId), isNull(notifications.readAt))),
   );
 }
+
+/** Cuentas de administración (propietario, administradores y coordinadores). */
+export async function managerUserIds(tx: Tx): Promise<string[]> {
+  const rows = await tx
+    .select({ userId: schoolMemberships.userId, roles: schoolMemberships.roles })
+    .from(schoolMemberships)
+    .where(and(eq(schoolMemberships.status, "ACTIVE"), eq(schoolMemberships.schoolId, sql`app_school_id()`)));
+  return rows.filter((r) => r.roles.some((role) => MANAGER_ROLES.includes(role))).map((r) => r.userId);
+}
+
+const MANAGER_ROLES: string[] = ["OWNER", "ADMIN", "COORDINATOR"];

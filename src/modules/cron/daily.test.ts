@@ -14,14 +14,19 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
     const a = await schoolFixture(conn.db, "Cron A");
     const b = await schoolFixture(conn.db, "Cron B");
     const seen: string[] = [];
-    const results = await runDaily(conn.db, new Date(), {
-      probe: async (_db, school) => {
-        seen.push(school.slug);
-        if (school.slug === a.school.slug) throw new Error("falla controlada");
-        return 1;
+    const results = await runDaily(
+      conn.db,
+      new Date(),
+      {
+        probe: async (_db, school) => {
+          seen.push(school.slug);
+          if (school.slug === a.school.slug) throw new Error("falla controlada");
+          return 1;
+        },
       },
-    });
-    expect(seen).toEqual(expect.arrayContaining([a.school.slug, b.school.slug]));
+      [a.school.id, b.school.id],
+    );
+    expect(seen.sort()).toEqual([a.school.slug, b.school.slug].sort());
     expect(results.find((r) => r.school === a.school.slug)).toMatchObject({
       ok: false,
       error: "falla controlada",
@@ -32,9 +37,14 @@ describe.skipIf(!testDatabaseUrl)("tareas diarias (integración)", () => {
   it("las tareas reales son idempotentes", async () => {
     const f = await schoolFixture(conn.db, "Cron real");
     const only = (r: Awaited<ReturnType<typeof runDaily>>) => r.find((x) => x.school === f.school.slug);
-    const first = only(await runDaily(conn.db));
+    const first = only(await runDaily(conn.db, new Date(), undefined, [f.school.id]));
     expect(first?.ok).toBe(true);
     expect(first?.totals?.sessionsCreated).toBeGreaterThan(0);
-    expect(only(await runDaily(conn.db))?.totals).toEqual({ reactivatedEnrollments: 0, sessionsCreated: 0 });
+    expect(only(await runDaily(conn.db, new Date(), undefined, [f.school.id]))?.totals).toEqual({
+      reactivatedEnrollments: 0,
+      sessionsCreated: 0,
+      attendanceReminders: 0,
+      riskAlerts: 0,
+    });
   });
 });

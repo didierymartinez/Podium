@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, FileWarning, Layers, Sparkles, Wallet } from "lucide-react";
+import { CalendarDays, Clock, FileWarning, Layers, Sparkles, TrendingDown, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, Chip, SectionTitle, Tile, buttonClass } from "@/components/ui";
@@ -6,6 +6,7 @@ import { WeekBoard, type BoardMark } from "@/components/week-board";
 import { db } from "@/db/client";
 import { addDays, dateRange, formatLongDate, isoDateOf, startOfWeek, todayIn } from "@/lib/dates";
 import { holidaysBetween } from "@/lib/holidays-co";
+import { atRiskAthletes, describeRisk, readAttendancePolicy } from "@/modules/attendance/alerts";
 import { listSessions } from "@/modules/attendance/sessions";
 import { certificationAlerts } from "@/modules/coaches/certifications";
 import { documentAlerts } from "@/modules/documents/documents";
@@ -37,15 +38,17 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const boardFrom = startOfWeek(today);
   const boardTo = addDays(boardFrom, 13);
   await ensureSessions(school.id, school.timezone);
-  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts] = await Promise.all([
-    getSportsStructure(db, school.id),
-    getSetupSteps(db, school),
-    listGroups(db, school.id),
-    listSessions(db, school.id, { from: boardFrom, to: boardTo }),
-    listClosures(db, school.id, boardFrom, boardTo),
-    documentAlerts(db, school.id, today),
-    certificationAlerts(db, school.id, today),
-  ]);
+  const [structure, steps, allGroups, boardSessions, closures, docAlerts, certAlerts, atRisk] =
+    await Promise.all([
+      getSportsStructure(db, school.id),
+      getSetupSteps(db, school),
+      listGroups(db, school.id),
+      listSessions(db, school.id, { from: boardFrom, to: boardTo }),
+      listClosures(db, school.id, boardFrom, boardTo),
+      documentAlerts(db, school.id, today),
+      certificationAlerts(db, school.id, today),
+      atRiskAthletes(db, school.id, today, readAttendancePolicy(school.settings.attendance)),
+    ]);
   const marks = new Map<string, BoardMark>();
   for (const [date, name] of holidaysBetween(boardFrom, boardTo))
     marks.set(date, { kind: "holiday", label: name });
@@ -151,6 +154,29 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
           />
         )}
       </Card>
+
+      {atRisk.length > 0 && (
+        <Card>
+          <SectionTitle action={<TrendingDown className="size-4 text-danger" />}>
+            Alumnos en riesgo
+          </SectionTitle>
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" aria-label="Alumnos en riesgo">
+            {atRisk.slice(0, 9).map((a) => (
+              <li key={a.athleteId}>
+                <Link
+                  href={`/${school.slug}/alumnos/${a.athleteId}`}
+                  className="block rounded-2xl bg-canvas px-3 py-2 hover:bg-muted"
+                >
+                  <span className="block truncate text-sm font-semibold">{a.name}</span>
+                  <span className="block truncate text-xs text-ink-soft">
+                    {a.groupName} · {a.reasons.map(describeRisk).join(" · ")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {(docAlerts.length > 0 || certAlerts.length > 0) && (
         <Card>

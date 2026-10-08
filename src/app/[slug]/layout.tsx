@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { BottomNav, SideRail, TopTabs } from "@/components/school-nav";
+import { InstallPrompt, SyncAgent } from "@/components/pwa";
 import { TopBar } from "@/components/top-bar";
 import { Chip, LogoMark, buttonClass } from "@/components/ui";
 import { canManagePeople, canManageSettings } from "@/modules/schools/permissions";
@@ -73,7 +74,11 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
             <TopTabs slug={school.slug} access={access} />
           </div>
         </TopBar>
-        <main className="flex-1 pb-24 md:pb-6">{children}</main>
+        <main className="flex-1 space-y-4 pb-24 md:pb-6">
+          <InstallPrompt />
+          <div>{children}</div>
+        </main>
+        <SyncAgent />
       </div>
       <BottomNav slug={school.slug} access={access} />
     </div>

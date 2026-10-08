@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconButton } from "@/components/ui";
 import { firebaseAuth } from "@/lib/firebase-client";
+import { idbClear } from "@/lib/offline/idb";
 import { publicEnv } from "@/lib/public-env";
 
 export function LogoutButton() {
@@ -18,6 +19,9 @@ export function LogoutButton() {
       await signOut(firebaseAuth()).catch(() => {});
     }
     await fetch("/api/auth/session", { method: "DELETE" });
+    // Lo guardado para usar sin conexión tiene datos personales: se borra al salir.
+    navigator.serviceWorker?.controller?.postMessage({ type: "clear" });
+    await idbClear().catch(() => {});
     router.push("/");
     router.refresh();
   }

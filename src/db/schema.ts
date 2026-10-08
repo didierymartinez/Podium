@@ -159,6 +159,7 @@ export const schools = pgTable("schools", {
 /** Configuración flexible; se valida con zod en `src/modules/schools/settings.ts`. */
 export type SchoolSettings = {
   billing: Record<string, unknown> & { generationDay: number; dueDay: number };
+  attendance?: Record<string, unknown>;
 };
 
 export const schoolMemberships = pgTable(
@@ -556,12 +557,38 @@ export const sessions = pgTable(
     status: sessionStatusEnum("status").notNull().default("SCHEDULED"),
     source: sessionSourceEnum("source").notNull().default("SCHEDULE"),
     cancelReason: text("cancel_reason"),
+    /** Profesor que reemplaza a los del grupo solo en esta clase (DEP-15). */
+    substituteCoachId: uuid("substitute_coach_id").references(() => coaches.id, { onDelete: "set null" }),
+    /** Si se reprogramó, la clase nueva (la original queda cancelada). */
+    rescheduledToId: uuid("rescheduled_to_id").references((): AnyPgColumn => sessions.id, {
+      onDelete: "set null",
+    }),
+    /** Nota visible para profesores y familias (p. ej. "Clase de reposición", "Llevar casco"). */
+    note: text("note"),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("sessions_group_date_time_uq").on(t.groupId, t.date, t.startTime),
     index("sessions_school_date_idx").on(t.schoolId, t.date),
   ],
+);
+
+/** Alumnos citados a una clase extra; si una clase extra no tiene filas aquí, va todo el grupo. */
+export const sessionAthletes = pgTable(
+  "session_athletes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+  },
+  (t) => [uniqueIndex("session_athletes_uq").on(t.sessionId, t.athleteId)],
 );
 
 export const attendance = pgTable(
@@ -691,7 +718,14 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
     emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    /** Evita repetir el mismo aviso automático (p. ej. "attendance.risk:<alumno>:2026-10"). */
+    dedupeKey: text("dedupe_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+  (t) => [
+    index("notifications_user_idx").on(t.userId, t.createdAt),
+    uniqueIndex("notifications_dedupe_uq")
+      .on(t.userId, t.dedupeKey)
+      .where(sql`${t.dedupeKey} is not null`),
+  ],
 );

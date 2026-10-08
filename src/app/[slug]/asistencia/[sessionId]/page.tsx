@@ -1,26 +1,22 @@
-import { Clock, PartyPopper, Users } from "lucide-react";
+import { Clock, PartyPopper, UserRoundCog, Users } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NoAccess, PageHeader } from "@/components/page-header";
-import { Alert, Card } from "@/components/ui";
+import { Alert, Card, Chip } from "@/components/ui";
 import { db } from "@/db/client";
 import { formatDayTitle, instantOf, todayIn } from "@/lib/dates";
 import { holidaysBetween } from "@/lib/holidays-co";
 import { getSessionDetail } from "@/modules/attendance/attendance";
-import { canRecordAttendance } from "@/modules/attendance/planning";
 import { canManagePeople } from "@/modules/schools/permissions";
+import { listCoaches } from "@/modules/coaches/coaches";
+import { fileHref } from "@/modules/files/files";
 import { getSchoolContext } from "../../data";
 import { SessionStatusChip } from "../status-chip";
 import { CancelPanel } from "./cancel-panel";
 import { RosterForm } from "./roster-form";
 
 export const metadata: Metadata = { title: "Tomar asistencia" };
-
-const BLOCKED: Record<string, string> = {
-  not_coach: "Solo los profesores de este grupo pueden tomar la asistencia.",
-  too_early: "La asistencia se abre 1 hora antes de la clase.",
-  window_closed: "Pasaron más de 48 horas desde la clase: solo la administración puede corregirla.",
-};
 
 export default async function SessionPage({ params }: PageProps<"/[slug]/asistencia/[sessionId]">) {
   const { slug, sessionId } = await params;
@@ -34,13 +30,6 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
 
   const today = todayIn(school.timezone);
   const canceled = session.status === "CANCELED";
-  const permission = canRecordAttendance({
-    isManager: manager,
-    isGroupCoach: session.isGroupCoach,
-    sessionStart: instantOf(session.date, session.startTime, school.timezone),
-    sessionEnd: instantOf(session.date, session.endTime, school.timezone),
-    now: new Date(),
-  });
   const holiday = holidaysBetween(session.date, session.date).get(session.date);
   const recorded = session.roster.filter((r) => r.status).length;
 
@@ -69,11 +58,31 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
                 <Users className="size-3.5" /> {session.coachNames.join(", ")}
               </span>
             )}
+            {session.substitute && (
+              <span className="inline-flex items-center gap-1 font-semibold text-violet">
+                <UserRoundCog className="size-3.5" /> Sustituto: {session.substitute.name}
+              </span>
+            )}
           </span>
         }
         actions={<SessionStatusChip session={{ ...session, recorded }} today={today} />}
       />
 
+      {(session.source === "EXTRA" || session.note) && (
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          {session.source === "EXTRA" && <Chip tone="violet">Clase extra</Chip>}
+          {session.selectedAthletes && <Chip>Solo alumnos citados</Chip>}
+          {session.note && <span className="text-sm text-ink-soft">{session.note}</span>}
+          {session.rescheduledFrom && (
+            <Link
+              href={`/${slug}/asistencia/${session.rescheduledFrom.id}`}
+              className="text-sm font-semibold text-brand"
+            >
+              Ver clase original
+            </Link>
+          )}
+        </div>
+      )}
       {holiday && (
         <div className="flex items-center gap-3 rounded-2xl bg-sun/30 px-4 py-3 text-sm">
           <PartyPopper className="size-4 shrink-0" /> Festivo: {holiday} (solo referencia).
@@ -82,10 +91,18 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
       {canceled && (
         <Alert>
           Clase cancelada{session.cancelReason ? `: ${session.cancelReason}` : ""}. No se toma asistencia.
+          {session.rescheduledTo && (
+            <>
+              {" "}
+              <Link
+                href={`/${slug}/asistencia/${session.rescheduledTo.id}`}
+                className="font-semibold underline"
+              >
+                Ir a la clase nueva
+              </Link>
+            </>
+          )}
         </Alert>
-      )}
-      {!canceled && !permission.allowed && permission.reason && (
-        <Alert tone="info">{BLOCKED[permission.reason]}</Alert>
       )}
 
       {session.roster.length === 0 ? (
@@ -97,13 +114,34 @@ export default async function SessionPage({ params }: PageProps<"/[slug]/asisten
         <RosterForm
           slug={slug}
           sessionId={session.id}
-          roster={session.roster}
-          readOnly={canceled || !permission.allowed}
+          roster={session.roster.map((r) => ({
+            ...r,
+            photoUrl: r.photoFileId ? fileHref(slug, r.photoFileId) : null,
+            documentIssue: manager ? r.documentIssue : null,
+          }))}
+          canceled={canceled}
+          access={{
+            isManager: manager,
+            isGroupCoach: session.isGroupCoach,
+            start: instantOf(session.date, session.startTime, school.timezone).toISOString(),
+            end: instantOf(session.date, session.endTime, school.timezone).toISOString(),
+          }}
         />
       )}
 
       {manager && (
-        <CancelPanel slug={slug} sessionId={session.id} canceled={canceled} reason={session.cancelReason} />
+        <CancelPanel
+          slug={slug}
+          sessionId={session.id}
+          canceled={canceled}
+          reason={session.cancelReason}
+          rescheduled={Boolean(session.rescheduledTo)}
+          session={session}
+          substituteId={session.substitute?.id ?? null}
+          coaches={(await listCoaches(db, school.id))
+            .filter((c) => c.active)
+            .map((c) => ({ id: c.id, name: `${c.firstName} ${c.lastName}` }))}
+        />
       )}
     </div>
   );

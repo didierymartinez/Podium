@@ -127,3 +127,58 @@ test("los festivos son referencia y los días sin clase se configuran", async ({
   await page.getByRole("button", { name: "Agregar días sin clase" }).click();
   await expect(closures.getByText("Vacaciones de mitad de año")).toBeVisible();
 });
+
+test("clase extra con alumnos citados, reprogramación y sustituto", async ({ page }) => {
+  await signUp(page);
+  const school = await createSchool(page);
+  await createFeePlans(page, school, [["Iniciación", "120000"]]);
+  await createCoach(page, school, "Ana", "Ruiz");
+  await page.goto(`${school}/grupos/nuevo`);
+  await page.locator('input[name="name"]').fill("Competencia");
+  await setEveryDaySchedule(page, "16:00", "18:00");
+  await page.getByRole("button", { name: "Crear grupo" }).click();
+  await page.waitForURL(`**${school}/grupos`);
+  for (const firstName of ["Sofía", "Tomás"]) {
+    await fillNewAthlete(page, school, {
+      firstName,
+      birthDate: "2014-05-20",
+      guardianPhone: randomPhone(),
+      group: "Competencia",
+    });
+    await saveAthlete(page);
+  }
+
+  // Clase extra solo para Tomás.
+  await page.goto(`${school}/asistencia`);
+  await page.getByRole("link", { name: "Clase extra" }).click();
+  await page.locator('input[name="startTime"]').fill("06:00");
+  await page.locator('input[name="endTime"]').fill("07:00");
+  await page.locator('input[name="note"]').fill("Preparación de torneo");
+  await page.getByRole("radio", { name: "Elegir alumnos" }).click();
+  await page.getByRole("checkbox", { name: "Tomás Restrepo" }).check();
+  await page.getByRole("button", { name: "Crear clase extra" }).click();
+  await page.waitForURL(/\/asistencia\/[0-9a-f-]{36}$/);
+  await expect(page.getByText("Clase extra", { exact: true })).toBeVisible();
+  await expect(page.getByText("Preparación de torneo")).toBeVisible();
+  const roster = page.getByRole("list", { name: "Alumnos" });
+  await expect(roster.getByText("Tomás Restrepo")).toBeVisible();
+  await expect(roster.getByText("Sofía Restrepo")).toHaveCount(0);
+
+  // Sustituto y reprogramación de la clase regular de hoy.
+  await page.goto(`${school}/asistencia`);
+  await page.getByRole("link", { name: /Competencia.*16:00/ }).click();
+  await page.getByLabel("Sustituto").selectOption({ label: "Ana Ruiz" });
+  await page.getByRole("button", { name: "Guardar sustituto" }).click();
+  await expect(page.getByText("Sustituto: Ana Ruiz")).toBeVisible();
+  const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(
+    new Date(Date.now() + 86_400_000),
+  );
+  await page.locator('input[name="date"]').fill(tomorrow);
+  await page.locator('input[name="startTime"]').fill("08:00");
+  await page.locator('input[name="endTime"]').fill("10:00");
+  await page.getByRole("button", { name: "Reprogramar clase" }).click();
+  await expect(page.getByText("Clase extra", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Reprogramada del/)).toBeVisible();
+  await page.getByRole("link", { name: "Ver clase original" }).click();
+  await expect(page.getByText(/Clase cancelada: Reprogramada para el/)).toBeVisible();
+});
