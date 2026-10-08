@@ -1732,3 +1732,71 @@ export const athleteBadges = pgTable(
   },
   (t) => [uniqueIndex("athlete_badges_uq").on(t.athleteId, t.badge, t.key)],
 );
+
+/** Valoración inicial del alumno (EVALUACION_GIMNASIOS §4): punto de partida del progreso. */
+export const initialAssessments = pgTable("initial_assessments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  athleteId: uuid("athlete_id")
+    .notNull()
+    .unique()
+    .references(() => athletes.id, { onDelete: "cascade" }),
+  assessedOn: date("assessed_on").notNull(),
+  goals: text("goals").notNull().default(""),
+  sportsBackground: text("sports_background").notNull().default(""),
+  /** Antecedentes de salud: dato sensible, cifrado. */
+  healthHistoryEncrypted: text("health_history_encrypted"),
+  notes: text("notes").notNull().default(""),
+  assessedByUserId: uuid("assessed_by_user_id").references(() => users.id),
+  ...timestamps,
+});
+
+/** Permiso del acudiente para registrar medidas corporales (DEP-56). */
+export const bodyConsents = pgTable("body_consents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  athleteId: uuid("athlete_id")
+    .notNull()
+    .unique()
+    .references(() => athletes.id, { onDelete: "cascade" }),
+  grantedAt: timestamp("granted_at", { withTimezone: true }).notNull(),
+  grantedByUserId: uuid("granted_by_user_id").references(() => users.id),
+  /** "family": lo dio el acudiente en la app; "school": la escuela lo registró (p. ej. en papel). */
+  source: text("source").notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
+
+export const measurementSourceEnum = pgEnum("measurement_source", ["MANUAL", "INBODY"]);
+
+/** Medidas y composición corporal (tipo InBody). */
+export const bodyMeasurements = pgTable(
+  "body_measurements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    measuredOn: date("measured_on").notNull(),
+    source: measurementSourceEnum("source").notNull(),
+    weightKg: doublePrecision("weight_kg"),
+    heightCm: doublePrecision("height_cm"),
+    wingspanCm: doublePrecision("wingspan_cm"),
+    skeletalMuscleKg: doublePrecision("skeletal_muscle_kg"),
+    bodyFatKg: doublePrecision("body_fat_kg"),
+    bodyFatPercent: doublePrecision("body_fat_percent"),
+    visceralFat: doublePrecision("visceral_fat"),
+    bodyWaterKg: doublePrecision("body_water_kg"),
+    basalMetabolismKcal: integer("basal_metabolism_kcal"),
+    notes: text("notes"),
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("body_measurements_athlete_idx").on(t.athleteId, t.measuredOn)],
+);

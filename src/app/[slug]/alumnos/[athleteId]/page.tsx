@@ -33,6 +33,9 @@ import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-car
 import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
 import { BadgesCard } from "@/components/badges-card";
+import { BodyCard } from "@/components/body-card";
+import { bodyProfile } from "@/modules/athletes/body";
+import { toBodyView } from "@/modules/athletes/body-view";
 import { listBadges } from "@/modules/badges/badges";
 import { athleteCompetitions } from "@/modules/competitions/competitions";
 import { GuardiansCard } from "./guardians-card";
@@ -61,7 +64,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
   );
   const name = `${athlete.firstName} ${athlete.lastName}`;
   const today = todayIn(school.timezone);
-  const [documents, stats, billing, injuries, progress, evaluations, competitions, badges] =
+  const [documents, stats, billing, injuries, progress, evaluations, competitions, badges, body] =
     await Promise.all([
       listAthleteDocuments(db, school.id, athleteId, today),
       attendanceStats(db, school.id, [athleteId], { from: addDays(today, -30), to: today }),
@@ -71,6 +74,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
       athleteEvaluations(db, school.id, athleteId),
       athleteCompetitions(db, school.id, athleteId),
       listBadges(db, school.id, athleteId),
+      bodyProfile(db, school.id, athleteId, { includeHealth: true }),
     ]);
   const debt = billing.get(athleteId);
   const attendance = stats.get(athleteId);
@@ -173,6 +177,14 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
           <PerformanceCard tests={toProgressView(progress)} />
           <CompetitionHistory history={competitions} />
           <BadgesCard badges={badges} />
+          <BodyCard
+            slug={slug}
+            athleteId={athleteId}
+            firstName={athlete.firstName}
+            mode="staff"
+            today={today}
+            {...toBodyView(body)}
+          />
           <InjuriesCard
             slug={slug}
             athleteId={athleteId}

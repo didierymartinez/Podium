@@ -25,6 +25,9 @@ import { EvaluationsCard, toEvaluationsView } from "@/components/evaluations-car
 import { athleteEvaluations } from "@/modules/sports/evaluations";
 import { CompetitionHistory } from "@/components/competition-history";
 import { BadgesCard } from "@/components/badges-card";
+import { BodyCard } from "@/components/body-card";
+import { bodyProfile } from "@/modules/athletes/body";
+import { toBodyView } from "@/modules/athletes/body-view";
 import { listBadges } from "@/modules/badges/badges";
 import { athleteCompetitions, familyInvitations } from "@/modules/competitions/competitions";
 import { CompetitionInvitations } from "./competition-invitations";
@@ -56,6 +59,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
         evaluations: await athleteEvaluations(db, school.id, a.id),
         competitions: await athleteCompetitions(db, school.id, a.id),
         badges: await listBadges(db, school.id, a.id),
+        body: await bodyProfile(db, school.id, a.id, { includeHealth: false }),
         history: await attendanceHistory(db, school.id, a.id, 8),
         documents: await listAthleteDocuments(db, school.id, a.id, today),
       })),
@@ -105,6 +109,7 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
           evaluations,
           competitions,
           badges,
+          body,
         }) => {
           const name = `${a.firstName} ${a.lastName}`;
           const category = findAgeCategory(
@@ -202,6 +207,14 @@ export default async function MyKidsPage({ params }: PageProps<"/[slug]/mis-hijo
                 />
               )}
               {badges.length > 0 && <BadgesCard title={`Insignias de ${a.firstName}`} badges={badges} />}
+              <BodyCard
+                slug={slug}
+                athleteId={a.id}
+                firstName={a.firstName}
+                mode="family"
+                today={today}
+                {...toBodyView(body)}
+              />
               {competitions.length > 0 && (
                 <CompetitionHistory title={`Competencias de ${a.firstName}`} history={competitions} />
               )}
