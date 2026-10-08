@@ -10,6 +10,7 @@ import {
   Layers,
   Medal,
   Megaphone,
+  MessageCircle,
   Settings,
   Timer,
   Trophy,
@@ -129,6 +130,13 @@ const NOTICES: NavItem = {
   ready: true,
   audience: "all",
 };
+const MESSAGES: NavItem = {
+  path: "/mensajes",
+  label: "Mensajes",
+  icon: MessageCircle,
+  ready: true,
+  audience: "manager",
+};
 const SETTINGS: NavItem = {
   path: "/configuracion",
   label: "Configuración",
@@ -153,6 +161,7 @@ export const SCHOOL_NAV: NavItem[] = [
   MY_KIDS,
   MY_PAYMENTS,
   NOTICES,
+  MESSAGES,
   MY_DATA,
 ];
 

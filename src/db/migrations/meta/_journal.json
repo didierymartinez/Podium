@@ -470,6 +470,20 @@
       "when": 1791475247994,
       "tag": "0066_swimming",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1791475831993,
+      "tag": "0067_whatsapp_inbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1791475834043,
+      "tag": "0068_whatsapp_inbox_rls",
+      "breakpoints": true
     }
   ]
 }

@@ -49,6 +49,11 @@ Las escuelas ya viven en WhatsApp (grupos de padres). En el MVP Podium **prepara
 - **Respuestas** al número de Podium: respuesta automática *"Este número solo envía notificaciones de Club Patín Veloz. Escríbeles al 300 123 4567 o toca aquí: wa.me/…"* (bandeja de entrada en F3).
 
 ### Fase 3 — **Número propio de la escuela** (plan superior)
+
+> **Estado (#72):** implementado con carga manual de los datos del número (id del número, id de la cuenta y token
+> permanente) en Configuración → Comunicaciones; los avisos de esa escuela salen por su número y sus conversaciones
+> llegan a la bandeja **Mensajes** (respuesta en la ventana de 24 h, asignación al equipo). Falta el registro
+> integrado (*Embedded Signup*), que exige que Podium sea Tech Provider de Meta (#18).
 - La escuela conecta **su propio número** de WhatsApp Business mediante el registro integrado de Meta (*Embedded Signup*). Podium debe operar como **Tech Provider** de Meta o mediante un proveedor que lo ofrezca.
 - **Bandeja de entrada** en Podium: ver y responder conversaciones de las familias dentro de la ventana de 24 h, asignar a coordinador, respuestas rápidas.
 

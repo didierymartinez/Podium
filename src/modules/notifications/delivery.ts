@@ -16,6 +16,7 @@ import type { Notifier } from "@/lib/notifier/types";
 import { templateParam, waNumber } from "@/lib/whatsapp-cloud/cloud";
 import type { WhatsAppSender } from "@/lib/whatsapp-cloud/types";
 import { whatsappQuota } from "@/modules/subscription/plans";
+import { schoolSenderTx } from "@/modules/whatsapp/inbox";
 import { allows, readPreferences } from "./preferences";
 
 export type DeliveryChannels = {
@@ -24,6 +25,8 @@ export type DeliveryChannels = {
   appUrl: string;
   /** WhatsApp automático (#64); sin credenciales la cascada es push → correo. */
   whatsapp?: { sender: WhatsAppSender; template: { name: string; language: string } } | null;
+  /** Para pruebas: `fetch` del remitente con el número propio de la escuela. */
+  whatsappFetch?: typeof fetch;
 };
 
 /** Horario permitido para WhatsApp no urgente (COM-32): 7 a. m. a 8 p. m. en la zona de la escuela. */
@@ -100,8 +103,10 @@ export async function deliverPending(
     const tokensOf = (userId: string) =>
       [...tokenRows].filter((r) => r.user_id === userId).map((r) => r.token);
 
-    // WhatsApp: celular, consentimiento vigente en esta escuela y cupo mensual del plan.
-    const wa = channels.whatsapp ?? null;
+    // WhatsApp: el número propio de la escuela si lo conectó (Meta le cobra a ella, sin cupo de Podium);
+    // si no, el de Podium con el cupo del plan. Siempre con celular y consentimiento vigente.
+    const own = await schoolSenderTx(tx, schoolId, channels.whatsappFetch);
+    const wa = own ?? channels.whatsapp ?? null;
     const phoneOf = new Map<string, string>();
     const consented = new Set<string>();
     let quotaLeft = 0;
@@ -140,7 +145,7 @@ export async function deliverPending(
       for (const u of userPhones) if (waNumber(u.phone)) phoneOf.set(u.id, waNumber(u.phone)!);
       for (const g of phones) if (g.userId && waNumber(g.phone)) phoneOf.set(g.userId, waNumber(g.phone)!);
       for (const c of consents) consented.add(c.userId);
-      quotaLeft = whatsappQuota(plan?.planCode ?? null) - used;
+      quotaLeft = own ? Number.POSITIVE_INFINITY : whatsappQuota(plan?.planCode ?? null) - used;
     }
     const inHours = withinMessagingHours(now, school.timezone);
 

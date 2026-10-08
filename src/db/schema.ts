@@ -1969,3 +1969,66 @@ export const einvoices = pgTable(
   },
   (t) => [index("einvoices_school_status_idx").on(t.schoolId, t.status)],
 );
+
+/** Número propio de WhatsApp Business de la escuela (WHATSAPP Fase 3). Token cifrado. */
+export const whatsappAccounts = pgTable("whatsapp_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .unique()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  phoneNumberId: text("phone_number_id").notNull().unique(),
+  businessAccountId: text("business_account_id").notNull(),
+  displayPhone: text("display_phone"),
+  tokenEncrypted: text("token_encrypted").notNull(),
+  /** Plantilla de utilidad aprobada en la cuenta de la escuela ({{1}} escuela, {{2}} resumen, {{3}} enlace). */
+  template: text("template").notNull().default("aviso_podium"),
+  enabled: boolean("enabled").notNull().default(true),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  ...timestamps,
+});
+
+/** Conversación de la bandeja con un contacto (por celular). */
+export const whatsappConversations = pgTable(
+  "whatsapp_conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    contactPhone: text("contact_phone").notNull(),
+    contactName: text("contact_name"),
+    lastInboundAt: timestamp("last_inbound_at", { withTimezone: true }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+    unread: integer("unread").notNull().default(0),
+    assignedUserId: uuid("assigned_user_id").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => [uniqueIndex("whatsapp_conversations_uq").on(t.schoolId, t.contactPhone)],
+);
+
+export const messageDirectionEnum = pgEnum("message_direction", ["IN", "OUT"]);
+
+export const whatsappMessages = pgTable(
+  "whatsapp_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => whatsappConversations.id, { onDelete: "cascade" }),
+    direction: messageDirectionEnum("direction").notNull(),
+    body: text("body").notNull(),
+    waMessageId: text("wa_message_id"),
+    status: text("status"),
+    sentByUserId: uuid("sent_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("whatsapp_messages_conversation_idx").on(t.conversationId, t.createdAt),
+    uniqueIndex("whatsapp_messages_wa_uq")
+      .on(t.waMessageId)
+      .where(sql`${t.waMessageId} is not null`),
+  ],
+);

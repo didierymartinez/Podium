@@ -27,8 +27,10 @@ type Payload = {
   entry?: {
     changes?: {
       value?: {
+        metadata?: { phone_number_id?: string };
+        contacts?: { wa_id?: string; profile?: { name?: string } }[];
         statuses?: { id?: string; status?: string; errors?: { title?: string; message?: string }[] }[];
-        messages?: { from?: string; type?: string; text?: { body?: string } }[];
+        messages?: { id?: string; from?: string; type?: string; text?: { body?: string } }[];
       };
     }[];
   }[];
@@ -39,7 +41,7 @@ export async function handleWhatsAppWebhook(
   payload: unknown,
   sender: WhatsAppSender | null,
 ) {
-  const result = { statuses: 0, optOuts: 0, replies: 0 };
+  const result = { statuses: 0, optOuts: 0, replies: 0, inbox: 0 };
   for (const entry of (payload as Payload)?.entry ?? []) {
     for (const change of entry.changes ?? []) {
       for (const s of change.value?.statuses ?? []) {
@@ -50,9 +52,28 @@ export async function handleWhatsAppWebhook(
         );
         result.statuses += Number(row?.n ?? 0);
       }
+      const numberId = change.value?.metadata?.phone_number_id ?? "";
       for (const m of change.value?.messages ?? []) {
         if (!m.from || !/^\d{8,15}$/.test(m.from)) continue;
-        const text = (m.type === "text" ? (m.text?.body ?? "") : "").trim().toUpperCase();
+        const raw = m.type === "text" ? (m.text?.body ?? "") : `[${m.type ?? "mensaje"}]`;
+        const text = raw.trim().toUpperCase();
+        // Número propio de una escuela: va a su bandeja (sin respuesta automática).
+        const name = change.value?.contacts?.find((c) => c.wa_id === m.from)?.profile?.name ?? null;
+        const [stored] = numberId
+          ? await database.execute<{ school: string | null }>(
+              sql`select whatsapp_inbound(${numberId}, ${`+${m.from}`}, ${name}, ${raw.slice(0, 4000)}, ${m.id ?? null}) as school`,
+            )
+          : [];
+        if (stored?.school) {
+          result.inbox++;
+          if (OPT_OUT.has(text)) {
+            const [row] = await database.execute<{ n: number }>(
+              sql`select whatsapp_opt_out(${`+${m.from}`}) as n`,
+            );
+            result.optOuts += Number(row?.n ?? 0);
+          }
+          continue;
+        }
         if (OPT_OUT.has(text)) {
           const [row] = await database.execute<{ n: number }>(
             sql`select whatsapp_opt_out(${`+${m.from}`}) as n`,

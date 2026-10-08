@@ -66,3 +66,25 @@ export function waNumber(phone: string | null | undefined) {
   if (digits.length === 12 && digits.startsWith("573")) return digits;
   return null;
 }
+
+/** Verifica que el token tenga acceso al número y devuelve el número visible (+57 300…). */
+export async function verifyPhoneNumber(
+  config: { token: string; phoneNumberId: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true; displayPhone: string } | { ok: false; error: string }> {
+  try {
+    const res = await fetchImpl(
+      `https://graph.facebook.com/v21.0/${encodeURIComponent(config.phoneNumberId)}?fields=display_phone_number,verified_name`,
+      { headers: { authorization: `Bearer ${config.token}` }, signal: AbortSignal.timeout(10_000) },
+    );
+    const data = (await res.json().catch(() => ({}))) as {
+      display_phone_number?: string;
+      error?: { message?: string };
+    };
+    if (!res.ok || !data.display_phone_number)
+      return { ok: false, error: data.error?.message ?? `Meta respondió ${res.status}` };
+    return { ok: true, displayPhone: data.display_phone_number };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}

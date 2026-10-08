@@ -130,6 +130,7 @@ describe.skipIf(!testDatabaseUrl)("whatsapp automático (integración)", () => {
       statuses: 0,
       optOuts: 1,
       replies: 1,
+      inbox: 0,
     });
     await notify("Después de la baja");
     expect(await deliverPending(conn.db, channels, f.ctx.schoolId, day)).toBe(1);
