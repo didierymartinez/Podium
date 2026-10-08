@@ -1,0 +1,2 @@
+ALTER TABLE "enrollments" ADD COLUMN "discount_percent" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "enrollments" ADD CONSTRAINT "enrollments_discount_ck" CHECK ("enrollments"."discount_percent" between 0 and 100);

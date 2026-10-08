@@ -105,6 +105,7 @@ async function draftMonthTx(
       groupName: groups.name,
       planName: feePlans.name,
       monthlyAmount: feePlans.monthlyAmount,
+      discountPercent: enrollments.discountPercent,
     })
     .from(enrollments)
     .innerJoin(athletes, eq(athletes.id, enrollments.athleteId))
@@ -138,7 +139,8 @@ async function draftMonthTx(
   for (const [id, { name, items }] of byPayer) {
     const bases = items.map((r) => {
       const joinDay = periodOf(r.startDate) === period ? Number(r.startDate.slice(8, 10)) : 1;
-      return firstMonthAmount(r.monthlyAmount, joinDay, daysInMonth(period), policy);
+      const monthly = r.monthlyAmount - Math.round((r.monthlyAmount * r.discountPercent) / 100);
+      return firstMonthAmount(monthly, joinDay, daysInMonth(period), policy);
     });
     const kept = items.map((r, i) => ({ r, base: bases[i] })).filter((x) => x.base > 0);
     if (kept.length === 0) continue;
@@ -150,7 +152,9 @@ async function draftMonthTx(
       enrollmentId: r.enrollmentId,
       athleteId: r.athleteId,
       athleteName: `${r.firstName} ${r.lastName}`,
-      description: `Mensualidad ${periodLabel(period)} · ${r.firstName} · ${r.groupName} (${r.planName})`,
+      description:
+        `Mensualidad ${periodLabel(period)} · ${r.firstName} · ${r.groupName} (${r.planName})` +
+        (r.discountPercent > 0 ? ` · descuento ${r.discountPercent} %` : ""),
       baseAmount: base,
       siblingDiscount: priced[i].siblingDiscount,
       amount: priced[i].total,
@@ -407,6 +411,34 @@ export function chargeEnrollmentFee(
     await notifyInvoice(tx, ctx, invoice, "Cobro de matrícula");
     return invoice.id;
   });
+}
+
+/**
+ * Saldo anterior al empezar a usar Podium (importación, #23): una cuenta "Saldo anterior" por responsable de pago.
+ * Corre dentro de la transacción del llamador; no notifica a la familia.
+ */
+export async function chargePreviousBalanceTx(
+  tx: Tx,
+  ctx: Ctx,
+  data: { guardianId: string; items: { athleteId: string; firstName: string; amount: number }[]; today: IsoDate },
+  policy: BillingPolicy,
+) {
+  const invoice = await createInvoice(tx, ctx, {
+    guardianId: data.guardianId,
+    period: null,
+    issuedOn: data.today,
+    dueOn: data.today,
+    prefix: policy.invoicePrefix,
+    lines: data.items.map((i) => ({
+      kind: "PREVIOUS_BALANCE" as const,
+      athleteId: i.athleteId,
+      enrollmentId: null,
+      description: `Saldo anterior · ${i.firstName}`,
+      baseAmount: i.amount,
+      amount: i.amount,
+    })),
+  });
+  return invoice.id;
 }
 
 /** Tarea diaria (ADM-23): agrega el recargo por mora una vez a cada mensualidad vencida con saldo. */

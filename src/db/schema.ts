@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -434,9 +435,12 @@ export const enrollments = pgTable(
     frozenUntil: date("frozen_until"),
     withdrawalReason: withdrawalReasonEnum("withdrawal_reason"),
     statusNotes: text("status_notes"),
+    /** Descuento particular sobre la mensualidad (0–100 %), antes del descuento de hermanos. */
+    discountPercent: integer("discount_percent").notNull().default(0),
     ...timestamps,
   },
   (t) => [
+    check("enrollments_discount_ck", sql`${t.discountPercent} between 0 and 100`),
     // Un alumno no puede tener dos matrículas vigentes en el mismo grupo.
     uniqueIndex("enrollments_current_uq")
       .on(t.athleteId, t.groupId)

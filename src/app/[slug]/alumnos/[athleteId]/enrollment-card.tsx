@@ -24,6 +24,7 @@ export type EnrollmentView = {
   groupColor: string;
   feePlanName: string;
   monthlyAmount: number;
+  discountPercent: number;
   startDate: string;
   endDate: string | null;
   frozenUntil: string | null;
@@ -103,7 +104,9 @@ function EnrollmentRow({ slug, enrollment: e }: { slug: string; enrollment: Enro
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{e.groupName}</p>
           <p className="text-sm text-ink-soft">
-            {e.feePlanName} · {formatCOP(e.monthlyAmount)}/mes · desde el {formatLongDate(e.startDate)}
+            {e.feePlanName} · {formatCOP(e.monthlyAmount)}/mes
+            {e.discountPercent > 0 && ` · descuento ${e.discountPercent} %`} · desde el{" "}
+            {formatLongDate(e.startDate)}
           </p>
           {e.status === "FROZEN" && e.frozenUntil && (
             <p className="text-sm text-violet">Congelada hasta el {formatLongDate(e.frozenUntil)}</p>

@@ -127,6 +127,7 @@ export default async function AthletePage({ params }: PageProps<"/[slug]/alumnos
                 groupColor,
                 feePlanName,
                 monthlyAmount,
+                discountPercent: e.discountPercent,
                 startDate: e.startDate,
                 endDate: e.endDate,
                 frozenUntil: e.frozenUntil,

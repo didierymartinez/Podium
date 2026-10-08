@@ -183,6 +183,13 @@
       "when": 1791455796157,
       "tag": "0025_consent_revocation",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791456707991,
+      "tag": "0026_enrollment_discount",
+      "breakpoints": true
     }
   ]
 }

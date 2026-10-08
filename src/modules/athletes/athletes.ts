@@ -96,7 +96,13 @@ async function findOrCreateGuardian(tx: Tx, schoolId: string, input: GuardianInp
   return created;
 }
 
-async function insertEnrollment(tx: Tx, schoolId: string, athleteId: string, raw: EnrollmentInput) {
+async function insertEnrollment(
+  tx: Tx,
+  schoolId: string,
+  athleteId: string,
+  raw: EnrollmentInput,
+  discountPercent = 0,
+) {
   const input = enrollmentInputSchema.parse(raw);
   if (
     !(await allVisible(tx, groups, [input.groupId])) ||
@@ -124,6 +130,7 @@ async function insertEnrollment(tx: Tx, schoolId: string, athleteId: string, raw
       feePlanId: input.feePlanId,
       startDate: input.startDate,
       status: input.status,
+      discountPercent,
     })
     .returning();
   return enrollment;
@@ -140,34 +147,51 @@ export type CreateAthleteInput = {
 export function createAthlete(database: Database, ctx: Ctx, input: CreateAthleteInput) {
   return run(() =>
     runInTenant(database, { schoolId: ctx.schoolId }, async (tx) => {
-      const isAdult = ageOn(input.athlete.birthDate, input.today) >= ADULT_AGE;
-      if (!isAdult && !input.guardian) throw new DomainError("guardian_required");
-
-      const [athlete] = await tx
-        .insert(athletes)
-        .values({ schoolId: ctx.schoolId, ...athleteRow(input.athlete) })
-        .returning({ id: athletes.id });
-
-      if (input.guardian) {
-        const { relationship, ...guardianData } = input.guardian;
-        const guardian = await findOrCreateGuardian(tx, ctx.schoolId, guardianData);
-        await tx.insert(athleteGuardians).values({
-          schoolId: ctx.schoolId,
-          athleteId: athlete.id,
-          guardianId: guardian.id,
-          relationship,
-          isPayer: true,
-        });
-      }
-
-      const enrollment = input.enrollment
-        ? await insertEnrollment(tx, ctx.schoolId, athlete.id, input.enrollment)
-        : null;
-      await audit(tx, ctx, "athlete.created", "athlete", athlete.id);
-      return { athleteId: athlete.id, enrollmentId: enrollment?.id ?? null };
+      const created = await createAthleteTx(tx, ctx, input);
+      await audit(tx, ctx, "athlete.created", "athlete", created.athleteId);
+      return created;
     }),
   );
 }
+
+/**
+ * Alta dentro de una transacción existente (la usa también la importación desde Excel).
+ * Lanza `AthleteDomainError` si una regla no se cumple, para que la transacción completa se revierta.
+ */
+export async function createAthleteTx(
+  tx: Tx,
+  ctx: Ctx,
+  input: CreateAthleteInput & { discountPercent?: number },
+) {
+  const isAdult = ageOn(input.athlete.birthDate, input.today) >= ADULT_AGE;
+  if (!isAdult && !input.guardian) throw new DomainError("guardian_required");
+
+  const [athlete] = await tx
+    .insert(athletes)
+    .values({ schoolId: ctx.schoolId, ...athleteRow(input.athlete) })
+    .returning({ id: athletes.id });
+
+  let guardianId: string | null = null;
+  if (input.guardian) {
+    const { relationship, ...guardianData } = input.guardian;
+    const guardian = await findOrCreateGuardian(tx, ctx.schoolId, guardianData);
+    guardianId = guardian.id;
+    await tx.insert(athleteGuardians).values({
+      schoolId: ctx.schoolId,
+      athleteId: athlete.id,
+      guardianId: guardian.id,
+      relationship,
+      isPayer: true,
+    });
+  }
+
+  const enrollment = input.enrollment
+    ? await insertEnrollment(tx, ctx.schoolId, athlete.id, input.enrollment, input.discountPercent ?? 0)
+    : null;
+  return { athleteId: athlete.id, enrollmentId: enrollment?.id ?? null, guardianId };
+}
+
+export { DomainError as AthleteDomainError };
 
 export function updateAthlete(database: Database, ctx: Ctx, athleteId: string, input: AthleteInput) {
   return run(() =>
