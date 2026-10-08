@@ -62,9 +62,9 @@ test("tablero del administrador muestra los indicadores del mes", async ({ page 
   await createFeePlans(page, school, [["Mensual", "100000"]]);
   await createGroup(page, school, "Grupo A", 4, "Mensual · $ 100.000");
   await page.goto(`${school}/alumnos/importar`);
-  await page.getByLabel("Archivo de alumnos").setInputFiles(
-    csv([`Ana;Pérez;2015-01-01;Luz;Pérez;${randomPhone()};Grupo A;;50000`]),
-  );
+  await page
+    .getByLabel("Archivo de alumnos")
+    .setInputFiles(csv([`Ana;Pérez;2015-01-01;Luz;Pérez;${randomPhone()};Grupo A;;50000`]));
   await page.getByRole("button", { name: "Revisar archivo" }).click();
   await page.getByRole("button", { name: "Importar 1 alumnos" }).click();
   await expect(page.getByText("Importación lista")).toBeVisible();

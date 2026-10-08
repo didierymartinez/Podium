@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { createSchool, signUp } from "./helpers";
 
-test("suscripción: datos de facturación, planes, cancelación y reactivación en solo lectura", async ({ page }) => {
+test("suscripción: datos de facturación, planes, cancelación y reactivación en solo lectura", async ({
+  page,
+}) => {
   await signUp(page);
   const school = await createSchool(page);
 

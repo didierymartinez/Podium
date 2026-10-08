@@ -71,6 +71,7 @@ export async function POST(request: Request) {
   }
 
   let identity: Identity;
+  let mfa = false;
   if (body.provider === "firebase") {
     const projectId = serverEnv().NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!projectId) {
@@ -81,7 +82,9 @@ export async function POST(request: Request) {
     }
     try {
       const verified = await verifyFirebaseIdToken(body.idToken, projectId);
-      identity = { ...verified, name: verified.name ?? body.name ?? "", phone: null };
+      const { secondFactor, ...rest } = verified;
+      mfa = secondFactor;
+      identity = { ...rest, name: verified.name ?? body.name ?? "", phone: null };
     } catch {
       return NextResponse.json(
         { error: "invalid_token", message: "Sesión inválida, ingresa de nuevo" },
@@ -118,12 +121,19 @@ export async function POST(request: Request) {
     }
   }
 
-  const result = await signIn(db, identity, { acceptTerms: body.acceptTerms, ip });
+  const result = await signIn(db, identity, {
+    acceptTerms: body.acceptTerms,
+    ip,
+    platformAdminEmails: (env.PLATFORM_ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
+  });
   if (!result.ok) {
     return NextResponse.json({ error: result.error, message: ERRORS[result.error] }, { status: 409 });
   }
 
-  await startSession(result.user.id);
+  await startSession(result.user.id, { mfa });
   const redirectTo = result.user.emailVerifiedAt ? "/escuelas" : "/verificar-email";
   return NextResponse.json({ redirectTo });
 }

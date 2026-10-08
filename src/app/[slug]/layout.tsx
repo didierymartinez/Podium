@@ -11,10 +11,11 @@ import { unreadCount } from "@/modules/notifications/notify";
 import { trialDaysLeft } from "@/modules/schools/trial";
 import { getSchoolContext } from "./data";
 import { SchoolBlocked, SubscriptionBanner } from "./subscription-banner";
+import { SupportBanner } from "@/app/admin/support-banner";
 
 export default async function SchoolLayout({ children, params }: LayoutProps<"/[slug]">) {
   const { slug } = await params;
-  const { user, school, roles } = await getSchoolContext(slug);
+  const { user, school, roles, support } = await getSchoolContext(slug);
   const unread = await unreadCount(db, school.id, user.id);
   const access = {
     manager: canManagePeople(roles),
@@ -80,6 +81,7 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
           </div>
         </TopBar>
         <main className="flex-1 space-y-4 pb-24 md:pb-6">
+          {support && <SupportBanner schoolId={school.id} reason={support.reason} />}
           <InstallPrompt />
           {access.manager && (
             <SubscriptionBanner slug={school.slug} status={school.status} isOwner={isOwner} />

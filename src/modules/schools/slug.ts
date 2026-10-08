@@ -20,6 +20,7 @@ export const RESERVED_SLUGS = new Set([
   "registro",
   "salir",
   "signup",
+  "sin-conexion",
   "soporte",
   "static",
   "terminos",

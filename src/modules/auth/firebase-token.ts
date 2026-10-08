@@ -13,6 +13,8 @@ export type VerifiedIdentity = {
   email: string;
   emailVerified: boolean;
   name: string | null;
+  /** Inició sesión con segundo factor (Identity Platform). */
+  secondFactor: boolean;
 };
 
 export async function verifyFirebaseIdToken(idToken: string, projectId: string): Promise<VerifiedIdentity> {
@@ -28,5 +30,8 @@ export async function verifyFirebaseIdToken(idToken: string, projectId: string):
     email: payload.email.toLowerCase(),
     emailVerified: payload.email_verified === true,
     name: typeof payload.name === "string" ? payload.name : null,
+    secondFactor: Boolean(
+      (payload.firebase as { sign_in_second_factor?: string } | undefined)?.sign_in_second_factor,
+    ),
   };
 }

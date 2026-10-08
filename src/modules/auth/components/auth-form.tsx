@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
+import type { MultiFactorError, UserCredential } from "firebase/auth";
 import { Alert, Button, Field, Input } from "@/components/ui";
 import { firebaseAuth, firebaseErrorMessage } from "@/lib/firebase-client";
 import { publicEnv } from "@/lib/public-env";
@@ -19,6 +20,34 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const turnstileBox = useRef<HTMLDivElement>(null);
   const getTurnstileToken = useTurnstile(publicEnv.turnstileSiteKey, turnstileBox);
+  // Segundo factor (TOTP de Identity Platform): se pide el código solo si la cuenta lo tiene activo.
+  const [askingCode, setAskingCode] = useState(false);
+  const codeWaiter = useRef<((code: string | null) => void) | null>(null);
+
+  function askCode() {
+    setAskingCode(true);
+    return new Promise<string | null>((resolve) => {
+      codeWaiter.current = (code) => {
+        setAskingCode(false);
+        resolve(code);
+      };
+    });
+  }
+
+  async function withSecondFactor(attempt: () => Promise<UserCredential>): Promise<UserCredential> {
+    try {
+      return await attempt();
+    } catch (err) {
+      if ((err as { code?: string }).code !== "auth/multi-factor-auth-required") throw err;
+      const { getMultiFactorResolver, TotpMultiFactorGenerator } = await import("firebase/auth");
+      const resolver = getMultiFactorResolver(firebaseAuth(), err as MultiFactorError);
+      const hint = resolver.hints.find((h) => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+      if (!hint) throw err;
+      const code = await askCode();
+      if (!code) throw err;
+      return resolver.resolveSignIn(TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code));
+    }
+  }
 
   async function finish(request: SessionRequest) {
     let turnstileToken: string | null;
@@ -94,7 +123,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
           acceptTerms,
         });
       } else {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const cred = await withSecondFactor(() => signInWithEmailAndPassword(auth, email, password));
         await finish({ provider: "firebase", idToken: await cred.user.getIdToken() });
       }
     });
@@ -107,7 +136,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     }
     void run(async () => {
       const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
-      const cred = await signInWithPopup(firebaseAuth(), new GoogleAuthProvider());
+      const cred = await withSecondFactor(() => signInWithPopup(firebaseAuth(), new GoogleAuthProvider()));
       await finish({ provider: "firebase", idToken: await cred.user.getIdToken(), acceptTerms });
     });
   }
@@ -177,6 +206,30 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
 
         {error && <Alert>{error}</Alert>}
         <div ref={turnstileBox} />
+        {askingCode && (
+          <div className="space-y-2 rounded-2xl bg-brand/5 p-4">
+            <Field label="Código de verificación" hint="Los 6 dígitos de tu app autenticadora">
+              <Input
+                id="mfa-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="\d{6}"
+                maxLength={6}
+              />
+            </Field>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() =>
+                codeWaiter.current?.(
+                  (document.getElementById("mfa-code") as HTMLInputElement | null)?.value ?? null,
+                )
+              }
+            >
+              Verificar
+            </Button>
+          </div>
+        )}
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Ingresar"}

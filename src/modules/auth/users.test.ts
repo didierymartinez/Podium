@@ -36,6 +36,29 @@ describe.skipIf(!testDatabaseUrl)("signIn (integración)", () => {
     expect(accepted.map((a) => a.document).sort()).toEqual(["PRIVACY", "TERMS"]);
   });
 
+  it("marca super admin solo a emails configurados y verificados", async () => {
+    const id = identity();
+    const list = [id.email];
+    const unverified = await signIn(conn.db, id, { acceptTerms: true, ip: null, platformAdminEmails: list });
+    expect(unverified.ok && unverified.user.isPlatformAdmin).toBe(false);
+    const verified = await signIn(
+      conn.db,
+      { ...id, emailVerified: true },
+      {
+        acceptTerms: false,
+        ip: null,
+        platformAdminEmails: list,
+      },
+    );
+    expect(verified.ok && verified.user.isPlatformAdmin).toBe(true);
+    const other = await signIn(conn.db, identity({ emailVerified: true }), {
+      acceptTerms: true,
+      ip: null,
+      platformAdminEmails: list,
+    });
+    expect(other.ok && other.user.isPlatformAdmin).toBe(false);
+  });
+
   it("la misma identidad vuelve a ingresar y se marca verificada", async () => {
     const id = identity();
     await signIn(conn.db, id, { acceptTerms: true, ip: null });

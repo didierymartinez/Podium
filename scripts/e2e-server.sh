@@ -10,4 +10,4 @@ cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public
 
 cd .next/standalone
-AUTH_RATE_LIMIT="${AUTH_RATE_LIMIT:-10000/60}" ALLOW_DEV_AUTH=true PORT="${E2E_PORT:-3100}" HOSTNAME=127.0.0.1 exec node server.js
+AUTH_RATE_LIMIT="${AUTH_RATE_LIMIT:-10000/60}" PLATFORM_ADMIN_EMAILS="${PLATFORM_ADMIN_EMAILS:-e2e-admin@example.com}" ALLOW_DEV_AUTH=true PORT="${E2E_PORT:-3100}" HOSTNAME=127.0.0.1 exec node server.js

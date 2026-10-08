@@ -136,7 +136,8 @@ export default async function SubscriptionPage({ params, searchParams }: PagePro
           {!keys && (
             <div className="mb-3">
               <Alert tone="info">
-                Los pagos en línea de Podium se están configurando. Escríbenos por WhatsApp y activamos tu plan.
+                Los pagos en línea de Podium se están configurando. Escríbenos por WhatsApp y activamos tu
+                plan.
               </Alert>
             </div>
           )}

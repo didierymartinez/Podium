@@ -65,7 +65,7 @@ export type SignInResult =
 export async function signIn(
   database: Database,
   identity: Identity,
-  opts: { acceptTerms: boolean; ip: string | null },
+  opts: { acceptTerms: boolean; ip: string | null; platformAdminEmails?: string[] },
 ): Promise<SignInResult> {
   const existing = await findUserByEmail(database, identity.email);
 
@@ -74,7 +74,15 @@ export async function signIn(
     return { ok: false, error: "email_in_use" };
   }
 
-  const user = await upsertUser(database, identity);
+  let user = await upsertUser(database, identity);
   if (!existing) await recordLegalAcceptance(database, user.id, opts.ip);
+  // Super admins de Podium (#17) definidos por configuración: así se crea el primero sin tocar la base.
+  if (!user.isPlatformAdmin && user.emailVerifiedAt && opts.platformAdminEmails?.includes(user.email)) {
+    [user] = await database
+      .update(users)
+      .set({ isPlatformAdmin: true })
+      .where(eq(users.id, user.id))
+      .returning();
+  }
   return { ok: true, user, isNew: !existing };
 }

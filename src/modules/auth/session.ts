@@ -19,10 +19,12 @@ export type CurrentUser = {
   name: string;
   emailVerified: boolean;
   isPlatformAdmin: boolean;
+  /** La sesión se inició con segundo factor (requisito de la consola de Podium). */
+  mfa: boolean;
 };
 
-export async function startSession(userId: string) {
-  const token = await signSessionToken(userId, serverEnv().SESSION_SECRET);
+export async function startSession(userId: string, opts: { mfa?: boolean } = {}) {
+  const token = await signSessionToken(userId, serverEnv().SESSION_SECRET, opts);
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -40,9 +42,9 @@ export async function endSession() {
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const userId = await verifySessionToken(token, serverEnv().SESSION_SECRET);
-  if (!userId) return null;
-  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  const claims = await verifySessionToken(token, serverEnv().SESSION_SECRET);
+  if (!claims) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, claims.userId));
   if (!user) return null;
   return {
     id: user.id,
@@ -50,8 +52,23 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     name: user.name,
     emailVerified: user.emailVerifiedAt !== null,
     isPlatformAdmin: user.isPlatformAdmin,
+    mfa: claims.mfa,
   };
 });
+
+/**
+ * Consola de Podium (#17): solo super admins y, con Firebase, solo si la sesión se inició con segundo factor
+ * (Identity Platform). En modo dev no hay 2FA.
+ */
+export const hasConsoleAccess = (user: CurrentUser) =>
+  user.isPlatformAdmin && (user.mfa || serverEnv().NEXT_PUBLIC_AUTH_PROVIDER === "dev");
+
+export async function requirePlatformAdmin(): Promise<CurrentUser> {
+  const user = await requireVerifiedUser();
+  if (!user.isPlatformAdmin) redirect("/escuelas");
+  if (!hasConsoleAccess(user)) redirect("/ingresar?mfa=1&next=/admin");
+  return user;
+}
 
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
