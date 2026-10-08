@@ -7,6 +7,8 @@ import { db } from "@/db/client";
 import { formatLongDate, isoDateOf, todayIn } from "@/lib/dates";
 import { nextGenerationDate } from "@/modules/billing/schedule";
 import { readBillingPolicy } from "@/modules/billing/policy";
+import { listGroups } from "@/modules/groups/groups";
+import { shortTimeRange } from "@/modules/groups/schedule";
 import { getSportsStructure } from "@/modules/schools/queries";
 import { getSetupSteps } from "@/modules/schools/setup-status";
 import { trialDaysLeft } from "@/modules/schools/trial";
@@ -21,10 +23,12 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
 export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
   const { school, user } = await getSchoolContext(slug);
-  const [structure, steps] = await Promise.all([
+  const [structure, steps, allGroups] = await Promise.all([
     getSportsStructure(db, school.id),
     getSetupSteps(db, school),
+    listGroups(db, school.id),
   ]);
+  const activeGroups = allGroups.filter((g) => g.active);
   const billing = readBillingPolicy(school.settings.billing);
 
   const today = todayIn(school.timezone);
@@ -52,36 +56,70 @@ export default async function SchoolHomePage({ params }: PageProps<"/[slug]">) {
       <Card className="p-4 sm:p-6">
         <SectionTitle
           action={
-            <Chip tone="brand" dot>
-              Patinaje {mainDiscipline?.name.toLowerCase()}
-            </Chip>
+            activeGroups.length > 0 ? (
+              <Link href={`/${school.slug}/grupos`} className={buttonClass("secondary", "h-9 px-4")}>
+                Ver grupos
+              </Link>
+            ) : (
+              <Chip tone="brand" dot>
+                Patinaje {mainDiscipline?.name.toLowerCase()}
+              </Chip>
+            )
           }
         >
           Semana en la pista
         </SectionTitle>
-        <WeekBoard
-          today={today}
-          rows={(mainDiscipline?.levels ?? []).map((level) => ({
-            id: level.id,
-            title: level.name,
-            subtitle: level.goal ?? undefined,
-            avatar: (
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-sm font-bold text-brand">
-                {level.position}
-              </span>
-            ),
-          }))}
-          overlay={
-            <div className="max-w-xs rounded-3xl border border-white/80 bg-glass p-5 text-center shadow-soft backdrop-blur-md dark:border-line">
-              <span className="mx-auto mb-2 grid size-10 place-items-center rounded-full bg-brand/10 text-brand">
-                <Layers className="size-5" />
-              </span>
-              <p className="font-semibold">Aquí verás tus clases y la asistencia</p>
-              <p className="mt-1 text-sm text-ink-soft">Crea tus grupos y horarios para llenar el tablero.</p>
-              <Chip className="mt-3">Próximamente</Chip>
-            </div>
-          }
-        />
+        {activeGroups.length > 0 ? (
+          <WeekBoard
+            today={today}
+            rowLabel="Grupo"
+            rows={activeGroups.map((group) => ({
+              id: group.id,
+              title: group.name,
+              subtitle: `${group.levelName ?? "Varios niveles"} · ${group.enrolled}/${group.capacity}`,
+              avatar: (
+                <span
+                  className="size-3 shrink-0 rounded-full"
+                  style={{ background: group.color }}
+                  aria-hidden
+                />
+              ),
+              events: group.schedule.map((slot) => ({
+                weekday: slot.weekday,
+                color: group.color,
+                label: shortTimeRange(slot.startTime, slot.endTime),
+              })),
+            }))}
+          />
+        ) : (
+          <WeekBoard
+            today={today}
+            rows={(mainDiscipline?.levels ?? []).map((level) => ({
+              id: level.id,
+              title: level.name,
+              subtitle: level.goal ?? undefined,
+              avatar: (
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-sm font-bold text-brand">
+                  {level.position}
+                </span>
+              ),
+            }))}
+            overlay={
+              <div className="pointer-events-auto max-w-xs rounded-3xl border border-white/80 bg-glass p-5 text-center shadow-soft backdrop-blur-md dark:border-line">
+                <span className="mx-auto mb-2 grid size-10 place-items-center rounded-full bg-brand/10 text-brand">
+                  <Layers className="size-5" />
+                </span>
+                <p className="font-semibold">Aquí verás tus clases y la asistencia</p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Crea tus grupos y horarios para llenar el tablero.
+                </p>
+                <Link href={`/${school.slug}/grupos/nuevo`} className={buttonClass("primary", "mt-4 h-10")}>
+                  Crear grupo
+                </Link>
+              </div>
+            }
+          />
+        )}
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">

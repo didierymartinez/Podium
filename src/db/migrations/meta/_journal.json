@@ -29,6 +29,20 @@
       "when": 1791444143413,
       "tag": "0003_fee_plans_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791444914341,
+      "tag": "0004_athletes_guardians_groups",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791444915575,
+      "tag": "0005_athletes_rls",
+      "breakpoints": true
     }
   ]
 }

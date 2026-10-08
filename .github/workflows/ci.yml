@@ -23,6 +23,7 @@ jobs:
       TEST_DATABASE_URL: postgres://podium_app:podium_app_dev@localhost:5432/podium_test
       DATABASE_URL: postgres://podium_app:podium_app_dev@localhost:5432/podium_test
       SESSION_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+      DATA_ENCRYPTION_KEY: Y2ktY2ktY2ktY2ktY2ktY2ktY2ktY2ktY2ktY2ktY2k=
       NEXT_PUBLIC_AUTH_PROVIDER: dev
     steps:
       - uses: actions/checkout@v4

@@ -9,3 +9,12 @@ describe("canManageSettings", () => {
     expect(canManageSettings(["COACH", "GUARDIAN"])).toBe(false);
   });
 });
+
+describe("canManagePeople", () => {
+  it("incluye coordinador, no profesor ni acudiente", async () => {
+    const { canManagePeople } = await import("./permissions");
+    expect(canManagePeople(["COORDINATOR"])).toBe(true);
+    expect(canManagePeople(["COACH"])).toBe(false);
+    expect(canManagePeople(["GUARDIAN"])).toBe(false);
+  });
+});

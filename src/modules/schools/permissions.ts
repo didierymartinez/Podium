@@ -13,3 +13,13 @@ export class ForbiddenError extends Error {
     this.name = "ForbiddenError";
   }
 }
+
+/** Crear y editar alumnos, acudientes, grupos y matrículas. */
+export function canManagePeople(roles: readonly SchoolRole[]): boolean {
+  return roles.some((r) => r === "OWNER" || r === "ADMIN" || r === "COORDINATOR");
+}
+
+/** Ver datos de salud (cifrados en la base de datos). */
+export function canViewHealthData(roles: readonly SchoolRole[]): boolean {
+  return canManagePeople(roles);
+}

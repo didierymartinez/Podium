@@ -19,8 +19,8 @@ type NavItem = { path: string; label: string; icon: LucideIcon; ready: boolean }
 /** Secciones de la escuela; las que aún no existen se muestran deshabilitadas. */
 export const SCHOOL_NAV: NavItem[] = [
   { path: "", label: "Inicio", icon: House, ready: true },
-  { path: "/alumnos", label: "Alumnos", icon: Users, ready: false },
-  { path: "/grupos", label: "Grupos", icon: Layers, ready: false },
+  { path: "/alumnos", label: "Alumnos", icon: Users, ready: true },
+  { path: "/grupos", label: "Grupos", icon: Layers, ready: true },
   { path: "/asistencia", label: "Asistencia", icon: CalendarCheck, ready: false },
   { path: "/cobros", label: "Cobros", icon: Wallet, ready: false },
   { path: "/avisos", label: "Avisos", icon: Megaphone, ready: false },
@@ -30,8 +30,12 @@ const SETTINGS: NavItem = { path: "/configuracion", label: "Configuración", ico
 
 function useActive(slug: string) {
   const pathname = usePathname();
-  return (item: NavItem) =>
-    item.path === "" ? pathname === `/${slug}` : pathname.startsWith(`/${slug}${item.path}`);
+  return (item: NavItem) => {
+    if (item.path === "") return pathname === `/${slug}`;
+    // Acudientes vive dentro de la sección Alumnos.
+    if (item.path === "/alumnos" && pathname.startsWith(`/${slug}/acudientes`)) return true;
+    return pathname.startsWith(`/${slug}${item.path}`);
+  };
 }
 
 function RailLink({ slug, item, active }: { slug: string; item: NavItem; active: boolean }) {
@@ -76,7 +80,7 @@ export function SideRail({ slug, logo }: { slug: string; logo: React.ReactNode }
 /** Pestañas tipo píldora de la barra superior (escritorio). */
 export function TopTabs({ slug }: { slug: string }) {
   const isActive = useActive(slug);
-  const tabs = [SCHOOL_NAV[0], SCHOOL_NAV[1], SCHOOL_NAV[4]];
+  const tabs = [SCHOOL_NAV[0], SCHOOL_NAV[1], SCHOOL_NAV[2]];
   return (
     <nav className="hidden items-center gap-1.5 lg:flex" aria-label="Accesos rápidos">
       {tabs.map((item) => {

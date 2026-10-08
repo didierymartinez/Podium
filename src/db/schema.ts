@@ -1,11 +1,15 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
+  time,
   timestamp,
   uniqueIndex,
   uuid,
@@ -44,6 +48,32 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
 ]);
 export const sportEnum = pgEnum("sport", ["SKATING"]);
 export const documentTypeEnum = pgEnum("document_type", ["NIT", "CC", "CE"]);
+export const personDocumentTypeEnum = pgEnum("person_document_type", [
+  "RC",
+  "TI",
+  "CC",
+  "CE",
+  "PPT",
+  "PASSPORT",
+]);
+export const sexEnum = pgEnum("sex", ["F", "M"]);
+export const relationshipEnum = pgEnum("relationship", ["MOTHER", "FATHER", "GUARDIAN", "OTHER"]);
+export const enrollmentStatusEnum = pgEnum("enrollment_status", [
+  "PRE_ENROLLED",
+  "ACTIVE",
+  "FROZEN",
+  "WITHDRAWN",
+  "DISCARDED",
+]);
+export const withdrawalReasonEnum = pgEnum("withdrawal_reason", [
+  "ECONOMIC",
+  "SCHEDULE",
+  "OTHER_SPORT",
+  "INJURY",
+  "DISSATISFACTION",
+  "MOVED",
+  "OTHER",
+]);
 
 // ---------------------------------------------------------------------------
 // Plataforma (sin RLS: la aplicación controla el acceso)
@@ -231,4 +261,156 @@ export const feePlans = pgTable(
     ...timestamps,
   },
   (t) => [index("fee_plans_school_idx").on(t.schoolId)],
+);
+
+// ---------------------------------------------------------------------------
+// Personas, grupos y matrículas (docs/GESTION_ADMINISTRATIVA.md §3–4)
+// ---------------------------------------------------------------------------
+
+export const athletes = pgTable(
+  "athletes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    documentType: personDocumentTypeEnum("document_type"),
+    documentNumber: text("document_number"),
+    birthDate: date("birth_date").notNull(),
+    sex: sexEnum("sex"),
+    phone: text("phone"),
+    email: text("email"),
+    healthInsurer: text("health_insurer"), // EPS
+    bloodType: text("blood_type"),
+    /** Alergias, condiciones y medicamentos: cifrado en la aplicación (ADM-73). */
+    medicalNotesEncrypted: text("medical_notes_encrypted"),
+    emergencyContactName: text("emergency_contact_name"),
+    emergencyContactPhone: text("emergency_contact_phone"),
+    schoolName: text("school_name"), // colegio
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("athletes_school_document_uq")
+      .on(t.schoolId, t.documentType, t.documentNumber)
+      .where(sql`${t.documentNumber} is not null`),
+    index("athletes_school_name_idx").on(t.schoolId, t.lastName, t.firstName),
+  ],
+);
+
+export const guardians = pgTable(
+  "guardians",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    documentType: personDocumentTypeEnum("document_type"),
+    documentNumber: text("document_number"),
+    phone: text("phone").notNull(),
+    email: text("email"),
+    /** Se llena cuando el acudiente acepta su invitación. */
+    userId: uuid("user_id").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("guardians_school_phone_uq").on(t.schoolId, t.phone)],
+);
+
+export const athleteGuardians = pgTable(
+  "athlete_guardians",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id, { onDelete: "cascade" }),
+    relationship: relationshipEnum("relationship").notNull(),
+    isPayer: boolean("is_payer").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("athlete_guardians_pair_uq").on(t.athleteId, t.guardianId),
+    // Exactamente un responsable de pago por alumno.
+    uniqueIndex("athlete_guardians_one_payer_uq")
+      .on(t.athleteId)
+      .where(sql`${t.isPayer}`),
+    index("athlete_guardians_guardian_idx").on(t.guardianId),
+  ],
+);
+
+export const groups = pgTable("groups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  disciplineId: uuid("discipline_id")
+    .notNull()
+    .references(() => disciplines.id),
+  levelId: uuid("level_id").references(() => levels.id),
+  capacity: integer("capacity").notNull(),
+  defaultFeePlanId: uuid("default_fee_plan_id").references(() => feePlans.id),
+  color: text("color").notNull().default("#2f6bff"),
+  active: boolean("active").notNull().default(true),
+  ...timestamps,
+});
+
+/** Horario recurrente: weekday 0 = lunes … 6 = domingo. */
+export const groupSchedules = pgTable(
+  "group_schedules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    weekday: smallint("weekday").notNull(),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+  },
+  (t) => [index("group_schedules_group_idx").on(t.groupId)],
+);
+
+export const enrollments = pgTable(
+  "enrollments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id),
+    feePlanId: uuid("fee_plan_id")
+      .notNull()
+      .references(() => feePlans.id),
+    status: enrollmentStatusEnum("status").notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    frozenUntil: date("frozen_until"),
+    withdrawalReason: withdrawalReasonEnum("withdrawal_reason"),
+    statusNotes: text("status_notes"),
+    ...timestamps,
+  },
+  (t) => [
+    // Un alumno no puede tener dos matrículas vigentes en el mismo grupo.
+    uniqueIndex("enrollments_current_uq")
+      .on(t.athleteId, t.groupId)
+      .where(sql`${t.status} in ('PRE_ENROLLED', 'ACTIVE', 'FROZEN')`),
+    index("enrollments_group_idx").on(t.groupId, t.status),
+  ],
 );

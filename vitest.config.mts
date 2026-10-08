@@ -8,5 +8,9 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     // Los tests de integración comparten una base de datos real.
     fileParallelism: false,
+    env: {
+      // Clave solo para pruebas.
+      DATA_ENCRYPTION_KEY: "dGVzdC1rZXktdGVzdC1rZXktdGVzdC1rZXktMTIzNDU=",
+    },
   },
 });

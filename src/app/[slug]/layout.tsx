@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { BottomNav, SideRail, TopTabs } from "@/components/school-nav";
 import { TopBar } from "@/components/top-bar";
 import { Chip, LogoMark, buttonClass } from "@/components/ui";
@@ -19,13 +20,9 @@ export default async function SchoolLayout({ children, params }: LayoutProps<"/[
           userName={user.name}
           actions={
             <span className="hidden sm:block">
-              <span
-                className={buttonClass("secondary", "h-10 cursor-not-allowed opacity-60")}
-                title="Próximamente"
-                aria-disabled
-              >
+              <Link href={`/${school.slug}/alumnos/nuevo`} className={buttonClass("secondary", "h-10")}>
                 <Plus className="size-4" /> Agregar alumno
-              </span>
+              </Link>
             </span>
           }
         >

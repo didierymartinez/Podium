@@ -10,7 +10,8 @@ import { startTransition, type FormEvent } from "react";
 export function submitWithoutReset(dispatch: (form: FormData) => void) {
   return (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    // Incluye el botón que envió el formulario (p. ej. name="to" value="ACTIVE").
+    const form = new FormData(event.currentTarget, (event.nativeEvent as SubmitEvent).submitter);
     startTransition(() => dispatch(form));
   };
 }

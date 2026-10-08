@@ -1,6 +1,6 @@
-import { and, count, eq } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { runInTenant, type Database } from "@/db/rls";
-import { feePlans, type schools } from "@/db/schema";
+import { enrollments, feePlans, groups, type schools } from "@/db/schema";
 
 export type SetupStep = { key: string; title: string; detail: string; done: boolean; href?: string };
 
@@ -9,11 +9,24 @@ export async function getSetupSteps(
   database: Database,
   school: typeof schools.$inferSelect,
 ): Promise<SetupStep[]> {
-  const [{ value: activePlans }] = await runInTenant(database, { schoolId: school.id }, (tx) =>
-    tx
-      .select({ value: count() })
-      .from(feePlans)
-      .where(and(eq(feePlans.schoolId, school.id), eq(feePlans.active, true))),
+  const { activePlans, activeGroups, activeEnrollments } = await runInTenant(
+    database,
+    { schoolId: school.id },
+    async (tx) => {
+      const [[plansCount], [groupsCount], [enrollmentsCount]] = await Promise.all([
+        tx.select({ value: count() }).from(feePlans).where(eq(feePlans.active, true)),
+        tx.select({ value: count() }).from(groups).where(eq(groups.active, true)),
+        tx
+          .select({ value: count() })
+          .from(enrollments)
+          .where(inArray(enrollments.status, ["ACTIVE", "PRE_ENROLLED"])),
+      ]);
+      return {
+        activePlans: plansCount.value,
+        activeGroups: groupsCount.value,
+        activeEnrollments: enrollmentsCount.value,
+      };
+    },
   );
   const base = `/${school.slug}/configuracion`;
 
@@ -33,9 +46,21 @@ export async function getSetupSteps(
       done: activePlans > 0,
       href: `${base}/cobros`,
     },
-    { key: "groups", title: "Grupos y horarios", detail: "Niveles, cupos y profesores", done: false },
+    {
+      key: "groups",
+      title: "Grupos y horarios",
+      detail: "Niveles, cupos y días",
+      done: activeGroups > 0,
+      href: `/${school.slug}/grupos`,
+    },
     { key: "coaches", title: "Profesores", detail: "Invitar al equipo", done: false },
-    { key: "athletes", title: "Alumnos", detail: "Uno a uno o desde Excel", done: false },
+    {
+      key: "athletes",
+      title: "Alumnos",
+      detail: "Con acudiente y matrícula",
+      done: activeEnrollments > 0,
+      href: `/${school.slug}/alumnos/nuevo`,
+    },
     { key: "payments", title: "Pagos en línea", detail: "Conectar Wompi", done: false },
     { key: "guardians", title: "Acudientes", detail: "Invitar y empezar a facturar", done: false },
   ];
