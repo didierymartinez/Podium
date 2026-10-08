@@ -244,13 +244,15 @@ Solo admin, con motivo; revierte la aplicación y deja el cobro nuevamente pendi
 
 ## 10. Comunicaciones
 
+> Detalle completo de WhatsApp, avisos e invitaciones: [`WHATSAPP_COMUNICACIONES.md`](WHATSAPP_COMUNICACIONES.md). En el MVP WhatsApp funciona en modo **manual asistido** (links `wa.me` prellenados); el envío automático por API llega en F2.
+
 | ID | Requisito | Prioridad |
 |---|---|---|
 | ADM-60 | **Avisos** a: toda la escuela, uno o varios grupos, una categoría, deudores, individuales | MVP |
-| ADM-61 | Canales: push (FCM) y email en MVP; **WhatsApp** (plantillas aprobadas por Meta) en F2 | MVP / F2 |
+| ADM-61 | Canales: push (FCM), email y **WhatsApp manual asistido** (`wa.me`) en MVP; **WhatsApp automático** (plantillas aprobadas por Meta) en F2 | MVP / F2 |
 | ADM-62 | Confirmación de lectura en avisos importantes ("Leído por 54/80") | F2 |
 | ADM-63 | Avisos automáticos: cancelación/reprogramación de clase, nuevos cobros, pagos recibidos, convocatorias | MVP |
-| ADM-64 | Preferencias de notificación por usuario; respeto de horario (no enviar entre 9 p. m. y 7 a. m.) | MVP |
+| ADM-64 | Preferencias de notificación por usuario; horario permitido 7 a. m.–8 p. m. y reglas de la **Ley 2300 de 2023** para mensajes de cobro (ver COM-32/33) | MVP |
 
 ---
 
