@@ -29,7 +29,7 @@ El mensaje que recibe el socio tiene **8 pasos**, advertencias, dos casillas leg
 | "Primero se suscribe la tarjeta y luego se paga" | Pago directo; guardar la tarjeta para débito automático es **opcional** y se ofrece *después* del primer pago |
 | Advertencias confusas ("dale continuar") | Ningún aviso técnico al usuario final; mensajes en lenguaje claro |
 | "Se queda congelado: cierra y repite" | Estado de pago visible ("en verificación"), webhook + conciliación diaria, sin pagos duplicados (clave de idempotencia) |
-| Instrucciones largas por WhatsApp | El mensaje automático es: "Hola Didier, tu plan vence el 15. Renueva aquí: [link]" — **1 toque** |
+| Instrucciones largas por WhatsApp | El mensaje automático es: "Hola Carlos, tu plan vence el 15. Renueva aquí: [link]" — **1 toque** |
 | Registro previo por un link aparte | Registro y primer pago en el mismo flujo (invitación → datos → pago) |
 
 **Meta de diseño:** renovar = **≤ 3 toques** desde el mensaje (abrir link → elegir medio → pagar).
@@ -92,7 +92,7 @@ Costo: unas pocas columnas y enums en el modelo de datos. No hay pantallas nueva
 | **Registro del entreno** | El socio (o el instructor) marca series hechas y peso real en la app → historial |
 | **Progreso** | Gráficas por ejercicio (peso máximo, volumen, 1RM estimado), asistencia, racha |
 | **Composición corporal** | Registro de evaluaciones InBody: peso, masa muscular esquelética, masa grasa, % grasa, grasa visceral, agua corporal, metabolismo basal; foto/PDF del resultado; gráficas de evolución |
-| **Instructores** | Cartera de socios asignados, agenda de valoraciones, alertas ("Didier no viene hace 10 días", "toca re-evaluación") |
+| **Instructores** | Cartera de socios asignados, agenda de valoraciones, alertas ("Carlos no viene hace 10 días", "toca re-evaluación") |
 | **Clases grupales** | Spinning, funcional, yoga: horario, cupo, **reserva** desde la app, lista de espera |
 | **Retención** | Socios inactivos, membresías por vencer, campañas de reactivación |
 
