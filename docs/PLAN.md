@@ -14,6 +14,7 @@
 | Cliente | **PWA primero** | Una sola app web instalable para admin, profesores y acudientes |
 | Equipo | **Un desarrollador (fundador)** | Stack mínimo, un solo despliegue, nada de microservicios |
 | Infraestructura | **Vercel + Neon + Firebase Auth/FCM + Cloudflare (DNS, R2, Turnstile)**, portable a VPS/nube | Ver sección 6 y [`ARQUITECTURA_Y_MIGRACION.md`](ARQUITECTURA_Y_MIGRACION.md) |
+| Gimnasios / entrenamiento personalizado | **Misma plataforma, segunda vertical en Fase 3** (tras validar); el núcleo se diseña desde ya para soportarla | Ver [`EVALUACION_GIMNASIOS.md`](EVALUACION_GIMNASIOS.md) |
 | Alta de escuelas | **Self-service**: cada usuario crea su escuela, con prueba gratis de 30 días y pago en línea de la suscripción | Sin aprobaciones manuales; ver [`ONBOARDING_ESCUELAS.md`](ONBOARDING_ESCUELAS.md) |
 
 ---
