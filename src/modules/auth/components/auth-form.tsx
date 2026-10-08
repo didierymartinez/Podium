@@ -139,7 +139,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <label className="flex items-start gap-2 text-sm text-ink-soft">
             <input
               type="checkbox"
-              className="mt-1 size-4 accent-brand"
+              className="mt-0.5 size-4 shrink-0 accent-brand"
               checked={acceptTerms}
               onChange={(e) => setAcceptTerms(e.target.checked)}
             />

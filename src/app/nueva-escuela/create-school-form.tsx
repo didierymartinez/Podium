@@ -94,7 +94,7 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
         error={slugError}
         hint={shownSlugStatus?.available ? "✓ Disponible" : "Letras minúsculas, números y guiones"}
       >
-        <div className="flex items-center rounded-lg border border-line bg-muted focus-within:border-brand">
+        <div className="flex items-center rounded-xl border border-line bg-canvas focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
           <span className="pl-3 text-sm text-ink-soft">{baseUrl}/</span>
           <Input
             name="slug"
@@ -104,7 +104,7 @@ export function CreateSchoolForm({ baseUrl }: { baseUrl: string }) {
               setSlugEdited(true);
               setSlug(e.target.value.toLowerCase());
             }}
-            className="border-0 bg-transparent pl-0.5 focus:ring-0"
+            className="border-0 bg-transparent pl-0.5 shadow-none focus:ring-0"
             placeholder="patinveloz"
           />
         </div>

@@ -1,39 +1,60 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de diseño Podium (ver docs/DISENO.md):
+ * fondo gris claro, lienzo suave, tarjetas blancas con bordes muy redondeados,
+ * botones tipo píldora, sombras difusas y chips de estado de color.
+ */
 :root {
-  --bg: #f6f7fb;
+  --bg: #e8ebf1;
+  --canvas: #f3f5f9;
   --surface: #ffffff;
-  --muted: #eef0f6;
-  --line: #dde1ec;
-  --ink: #141a2e;
-  --ink-soft: #5a6278;
-  --ink-faint: #9aa1b3;
-  --brand: #1f4fd8;
-  --brand-strong: #173ca6;
+  --glass: rgb(255 255 255 / 0.72);
+  --muted: #eef1f6;
+  --line: #e3e7ef;
+  --ink: #111827;
+  --ink-soft: #5b6476;
+  --ink-faint: #9aa3b5;
+  --brand: #2f6bff;
+  --brand-strong: #1f52d6;
+  --violet: #7c5cff;
+  --mint: #16b364;
+  --sun: #fcd34d;
   --accent: #f59e0b;
-  --danger: #d43c3c;
-  --ok: #138a4f;
+  --danger: #e5484d;
+  --ok: #16a34a;
+  --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 30px -12px rgb(16 24 40 / 0.12);
+  --shadow-pill: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 12px -6px rgb(16 24 40 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1120;
-    --surface: #151a2c;
-    --muted: #1e2438;
-    --line: #2a3150;
+    --bg: #0b0f1a;
+    --canvas: #111625;
+    --surface: #171d2e;
+    --glass: rgb(23 29 46 / 0.72);
+    --muted: #1e2538;
+    --line: #283049;
     --ink: #eef1f8;
     --ink-soft: #a6adc2;
     --ink-faint: #6d7590;
-    --brand: #5b82f5;
-    --brand-strong: #7b9bff;
-    --danger: #f06a6a;
+    --brand: #5b8cff;
+    --brand-strong: #82a6ff;
+    --violet: #9b84ff;
+    --mint: #34d399;
+    --sun: #facc15;
+    --danger: #f47174;
     --ok: #39c27f;
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -12px rgb(0 0 0 / 0.5);
+    --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px -6px rgb(0 0 0 / 0.5);
   }
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-glass: var(--glass);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-ink: var(--ink);
@@ -41,11 +62,20 @@
   --color-ink-faint: var(--ink-faint);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
+  --color-violet: var(--violet);
+  --color-mint: var(--mint);
+  --color-sun: var(--sun);
   --color-accent: var(--accent);
   --color-danger: var(--danger);
   --color-ok: var(--ok);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-pill: var(--shadow-pill);
+  --font-sans: var(--font-manrope);
+}
+
+/* Celdas no laborables (fines de semana, festivos) en calendarios. */
+@utility hatch {
+  background-image: repeating-linear-gradient(-45deg, rgb(148 160 184 / 0.22) 0 2px, transparent 2px 9px);
 }
 
 body {

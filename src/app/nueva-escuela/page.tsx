@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/app-header";
-import { Card } from "@/components/ui";
+import { PlainShell } from "@/components/top-bar";
+import { Card, Chip } from "@/components/ui";
 import { requireVerifiedUser } from "@/modules/auth/session";
 import { CreateSchoolForm } from "./create-school-form";
 
@@ -11,18 +11,19 @@ export default async function NewSchoolPage() {
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "podium.app").replace(/^https?:\/\//, "");
 
   return (
-    <>
-      <AppHeader userName={user.name} />
-      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8">
+    <PlainShell userName={user.name}>
+      <div className="mx-auto max-w-xl pt-2">
+        <Chip tone="mint" dot>
+          30 días gratis · sin tarjeta
+        </Chip>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Crea tu escuela</h1>
+        <p className="mb-6 mt-1 text-ink-soft">
+          Cargamos niveles y categorías de patinaje que podrás ajustar después.
+        </p>
         <Card>
-          <h1 className="text-2xl font-bold">Crea tu escuela</h1>
-          <p className="mb-6 mt-1 text-sm text-ink-soft">
-            30 días gratis con todas las funciones. Cargamos niveles y categorías de patinaje que podrás
-            ajustar.
-          </p>
           <CreateSchoolForm baseUrl={baseUrl} />
         </Card>
-      </main>
-    </>
+      </div>
+    </PlainShell>
   );
 }

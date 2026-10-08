@@ -1,8 +1,9 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui";
+import { IconButton } from "@/components/ui";
 import { firebaseAuth } from "@/lib/firebase-client";
 import { publicEnv } from "@/lib/public-env";
 
@@ -22,8 +23,8 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant="ghost" className="h-9" onClick={logout} disabled={pending}>
-      Salir
-    </Button>
+    <IconButton onClick={logout} disabled={pending} title="Salir" aria-label="Salir">
+      <LogOut className="size-4" />
+    </IconButton>
   );
 }
