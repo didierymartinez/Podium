@@ -1842,3 +1842,81 @@ export const trainingPeriods = pgTable(
   },
   (t) => [index("training_periods_group_idx").on(t.groupId, t.startsOn)],
 );
+
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "PAYROLL",
+  "VENUE",
+  "EQUIPMENT",
+  "TRANSPORT",
+  "SERVICES",
+  "COMPETITIONS",
+  "OTHER",
+]);
+
+/** Egresos de la escuela (ADM-52). */
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    category: expenseCategoryEnum("category").notNull(),
+    description: text("description").notNull(),
+    amount: integer("amount").notNull(),
+    spentOn: date("spent_on").notNull(),
+    method: paymentMethodEnum("method").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("expenses_school_date_idx").on(t.schoolId, t.spentOn)],
+);
+
+/** Productos de inventario simple (ADM-53). */
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    price: integer("price").notNull(),
+    stock: integer("stock").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("products_school_name_uq").on(t.schoolId, t.name),
+    check("products_stock_ck", sql`${t.stock} >= 0`),
+  ],
+);
+
+export const stockMovementKindEnum = pgEnum("stock_movement_kind", ["IN", "SALE", "ADJUST"]);
+
+/** Entradas, ventas y ajustes de inventario. */
+export const stockMovements = pgTable(
+  "stock_movements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    kind: stockMovementKindEnum("kind").notNull(),
+    /** Positivo entra, negativo sale. */
+    quantity: integer("quantity").notNull(),
+    unitPrice: integer("unit_price").notNull().default(0),
+    athleteId: uuid("athlete_id").references(() => athletes.id, { onDelete: "set null" }),
+    invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
+    /** Venta de contado (sin cuenta de cobro): cuenta como ingreso del día. */
+    method: paymentMethodEnum("method"),
+    note: text("note"),
+    movedOn: date("moved_on").notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("stock_movements_product_idx").on(t.productId)],
+);

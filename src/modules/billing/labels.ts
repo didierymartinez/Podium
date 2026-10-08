@@ -16,3 +16,15 @@ export const METHOD_LABELS = {
 
 export const pdfHref = (slug: string, kind: "cuenta" | "recibo" | "estado" | "paz-y-salvo", id: string) =>
   `/api/pdf/${kind}/${id}?escuela=${encodeURIComponent(slug)}`;
+
+/** Categorías de egresos (ADM-52). */
+export const EXPENSE_CATEGORY_LABELS = {
+  PAYROLL: "Nómina y honorarios",
+  VENUE: "Arriendo de pista",
+  EQUIPMENT: "Implementos",
+  TRANSPORT: "Transporte",
+  SERVICES: "Servicios",
+  COMPETITIONS: "Competencias",
+  OTHER: "Otros",
+} as const;
+export type ExpenseCategory = keyof typeof EXPENSE_CATEGORY_LABELS;
