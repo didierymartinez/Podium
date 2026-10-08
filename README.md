@@ -16,6 +16,7 @@ Pendientes, avances y trabajo realizado viven en los [issues de GitHub](https://
 - Arquitectura y plan de migración: [`docs/ARQUITECTURA_Y_MIGRACION.md`](docs/ARQUITECTURA_Y_MIGRACION.md)
 - Evaluación de tecnologías Google: [`docs/EVALUACION_GOOGLE.md`](docs/EVALUACION_GOOGLE.md)
 - Evaluación: gimnasios y entrenamiento personalizado: [`docs/EVALUACION_GIMNASIOS.md`](docs/EVALUACION_GIMNASIOS.md)
+- Decisión: app nativa frente a la PWA: [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md)
 - Sistema de diseño: [`docs/DISENO.md`](docs/DISENO.md)
 
 ## Stack
