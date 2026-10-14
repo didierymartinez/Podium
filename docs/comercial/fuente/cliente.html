@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <title>Podium · Brochure para escuelas y gimnasios</title>
+    <link rel="stylesheet" href="estilos.css" />
+    <style>
+      .cover {
+        padding: 0;
+        background: radial-gradient(120% 70% at 85% 0%, #dbe6ff 0%, rgb(219 230 255 / 0) 60%), var(--bg);
+      }
+      .cover .top {
+        padding: 0.6in 0.65in 0;
+      }
+      .cover h1 {
+        margin-top: 0.55in;
+        font-size: 42pt;
+      }
+      .cover h1 span {
+        color: var(--brand);
+      }
+      .cover .lead {
+        margin-top: 16px;
+        max-width: 5.6in;
+        font-size: 13pt;
+      }
+      .cover .tags {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .cover .hero {
+        position: absolute;
+        left: 0.65in;
+        right: -1.4in;
+        bottom: 1.05in;
+      }
+      .cover .hero .shot {
+        width: 8in;
+      }
+      .cover .hero .phone {
+        position: absolute;
+        right: 1.55in;
+        bottom: -0.35in;
+        width: 1.9in;
+      }
+      .pain {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 22px;
+      }
+      .pain .before,
+      .pain .after {
+        border-radius: 16px;
+        padding: 18px 20px;
+      }
+      .pain .before {
+        background: #fff1f1;
+      }
+      .pain .after {
+        background: #e9f8f0;
+      }
+      .pain h3 {
+        margin-bottom: 10px;
+      }
+      .pain li {
+        font-size: 10pt;
+        line-height: 1.45;
+        color: var(--ink-soft);
+        margin-bottom: 7px;
+      }
+      .pain ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 26px;
+        align-items: start;
+      }
+      .phones {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .kpi {
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid var(--line);
+        padding: 12px 14px;
+      }
+      .kpi b {
+        display: block;
+        font-size: 10pt;
+        color: var(--ink);
+      }
+      .kpi span {
+        font-size: 8.5pt;
+        color: var(--ink-soft);
+        line-height: 1.35;
+        display: block;
+        margin-top: 3px;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .steps > div {
+        border-radius: 14px;
+        background: var(--bg);
+        padding: 14px;
+      }
+      .steps b {
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        font-size: 9.5pt;
+        margin-bottom: 8px;
+      }
+      .steps p {
+        font-size: 9pt;
+        line-height: 1.4;
+        margin-top: 3px;
+      }
+      ul.check.cols {
+        columns: 2;
+        column-gap: 24px;
+      }
+      ul.check.cols li {
+        break-inside: avoid;
+      }
+      .tight .card {
+        padding: 11px 13px;
+      }
+      .tight .card p {
+        font-size: 8.8pt;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1. Portada -->
+    <section class="page cover">
+      <div class="top">
+        <div class="brand"><img src="logo.svg" alt="" /> Podium</div>
+        <h1>Tu escuela deportiva,<br /><span>organizada y al día.</span></h1>
+        <p class="lead">
+          Cobros, asistencia, entrenamientos y comunicación con las familias en una sola app. Menos Excel y menos
+          perseguir pagos por WhatsApp; más tiempo para entrenar.
+        </p>
+        <div class="tags">
+          <span class="pill">Escuelas de patinaje</span>
+          <span class="pill">Natación</span>
+          <span class="pill">Gimnasios y entrenamiento personal</span>
+          <span class="pill mint">30 días gratis</span>
+        </div>
+      </div>
+      <div class="hero">
+        <img class="shot" src="../capturas/inicio.png" alt="Tablero de Podium" />
+        <div class="phone"><div class="screen"><img src="../capturas/celular-familia.png" alt="" /></div></div>
+      </div>
+      <div class="foot"><span>Hecho en Colombia para escuelas colombianas</span><span>podium · 2026</span></div>
+    </section>
+
+    <!-- 2. El problema -->
+    <section class="page">
+      <span class="eyebrow">¿Te suena?</span>
+      <h2>Dirigir una escuela no debería ser perseguir pagos</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.4in">
+        La mayoría de escuelas deportivas se administran con un Excel, un cuaderno de asistencia y decenas de chats
+        de WhatsApp. Funciona hasta que crece: nadie sabe con certeza quién debe, quién dejó de venir ni cuánto
+        entró este mes.
+      </p>
+      <div class="pain">
+        <div class="before">
+          <h3>Sin Podium</h3>
+          <ul>
+            <li>Revisas extractos y chats para saber quién pagó la mensualidad.</li>
+            <li>Mandas el mismo recordatorio de cobro, uno por uno.</li>
+            <li>La asistencia queda en papel y se pierde.</li>
+            <li>Te enteras de que un alumno se retiró cuando ya se fue.</li>
+            <li>Los papás preguntan a cada rato horarios, saldos y avisos.</li>
+            <li>Los tiempos y avances de los deportistas viven en el celular del profesor.</li>
+          </ul>
+        </div>
+        <div class="after">
+          <h3>Con Podium</h3>
+          <ul>
+            <li>Las mensualidades se generan solas el día de corte y la cartera se ve en un vistazo.</li>
+            <li>Recordatorios a todos los que deben, con un clic, por WhatsApp o correo.</li>
+            <li>El profesor toma asistencia en dos toques desde el celular, incluso sin señal.</li>
+            <li>Alertas de alumnos con varias faltas seguidas, antes de que se retiren.</li>
+            <li>Las familias ven horario, pagos, avisos y progreso en su propia app.</li>
+            <li>Marcas, evaluaciones y certificados de nivel quedan en la ficha de cada alumno.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid g3" style="margin-top: 22px">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
+          <h3>Cobra a tiempo</h3>
+          <p>Cuentas automáticas, pagos en línea con PSE, Nequi y tarjeta, recibos y paz y salvo.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" /></svg></div>
+          <h3>Ahorra horas</h3>
+          <p>Asistencia, horarios, avisos y reportes en Excel, sin transcribir nada a mano.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg></div>
+          <h3>Retén a tus alumnos</h3>
+          <p>Familias informadas y deportistas que ven su progreso se quedan más tiempo.</p>
+        </div>
+      </div>
+
+      <div class="band" style="margin-top: 22px; display: flex; gap: 24px; align-items: center">
+        <div style="flex: 1">
+          <h3 style="font-size: 14pt">Una sola app para todos</h3>
+          <p style="margin-top: 6px; opacity: 0.92">
+            Dirección, secretaría, profesores y familias entran a la misma aplicación y cada uno ve solo lo suyo. Se
+            instala en el celular desde el navegador, sin tiendas de aplicaciones.
+          </p>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: none; width: 2.9in">
+          <span class="pill" style="background: rgb(255 255 255 / 0.18); color: #fff">Dirección</span>
+          <span class="pill" style="background: rgb(255 255 255 / 0.18); color: #fff">Secretaría</span>
+          <span class="pill" style="background: rgb(255 255 255 / 0.18); color: #fff">Profesores</span>
+          <span class="pill" style="background: rgb(255 255 255 / 0.18); color: #fff">Familias y alumnos</span>
+        </div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>2</span></div>
+    </section>
+
+    <!-- 3. Dirección -->
+    <section class="page tint">
+      <span class="eyebrow">Para la dirección</span>
+      <h2>Los números de tu escuela, cada mañana</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        Al entrar ves cuánto recaudaste, cuánto está vencido, cuántos alumnos activos tienes, cuántos entraron o se
+        retiraron y qué tan llenos están tus grupos. Y debajo, la semana completa de clases.
+      </p>
+      <img class="shot" style="margin-top: 20px" src="../capturas/inicio.png" alt="Tablero de inicio" />
+      <div class="kpis">
+        <div class="kpi"><b>Recaudo y % de recaudo</b><span>Lo facturado contra lo que realmente entró, mes a mes.</span></div>
+        <div class="kpi"><b>Cartera vencida</b><span>Quién debe, desde cuándo y cuánto, por edades de deuda.</span></div>
+        <div class="kpi"><b>Retención y ocupación</b><span>Altas, retiros con su motivo y cupos libres por grupo.</span></div>
+        <div class="kpi"><b>Alertas</b><span>Inasistencias seguidas, documentos vencidos y certificaciones por renovar.</span></div>
+      </div>
+      <div class="grid g2" style="margin-top: 18px">
+        <div class="crop" style="height: 1.95in"><img src="../capturas/grupos.png" alt="Grupos" /></div>
+        <div>
+          <h3>Grupos, horarios y cupos sin enredos</h3>
+          <p style="margin-top: 6px">
+            Define cada grupo con su nivel, profesor, sede, cupo y horario. Podium genera las clases de todo el
+            periodo, avisa cruces de horario de los profesores y muestra los cupos disponibles para vender.
+          </p>
+          <ul class="check" style="margin-top: 10px">
+            <li>Varias sedes y modalidades en la misma cuenta.</li>
+            <li>Festivos de Colombia y días sin clase marcados.</li>
+            <li>Reportes en Excel y exportación completa: tus datos son tuyos.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>3</span></div>
+    </section>
+
+    <!-- 4. Cobros -->
+    <section class="page">
+      <span class="eyebrow">Cobros y cartera</span>
+      <h2>Cobra la mensualidad sin perseguir a nadie</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        Podium genera las cuentas de cobro de todos tus alumnos el día que elijas, aplica descuentos y recargos, y
+        te muestra en tiempo real quién está al día y quién no.
+      </p>
+      <div class="crop" style="margin-top: 18px; height: 3.55in"><img src="../capturas/cobros.png" alt="Cobros y cartera" /></div>
+      <div class="grid g3" style="margin-top: 20px">
+        <div class="card">
+          <h3>Automático</h3>
+          <p>Mensualidades el día de corte, descuento por hermanos o pronto pago, recargo por mora y cobros únicos (uniformes, torneos, matrícula).</p>
+        </div>
+        <div class="card">
+          <h3>Fácil de pagar</h3>
+          <p>Las familias pagan en línea con PSE, Nequi o tarjeta (Wompi) o reportan su transferencia con el comprobante. El pago se aplica solo.</p>
+        </div>
+        <div class="card">
+          <h3>Ordenado</h3>
+          <p>Recibos de caja, cierre de caja diario, estado de cuenta, paz y salvo, acuerdos de pago, egresos e inventario de uniformes.</p>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 16px">
+        <strong>Recordatorios con un clic:</strong> selecciona a los deudores y envíales el recordatorio por WhatsApp
+        o correo, en horario permitido. <strong>Facturación electrónica DIAN</strong> disponible conectando tu cuenta
+        de Alegra.
+      </div>
+      <h3 style="margin-top: 18px">Así funciona cada mes</h3>
+      <div class="steps">
+        <div><b>1</b><h3>Día de corte</h3><p>Podium genera las cuentas de todos los alumnos con su tarifa y descuentos.</p></div>
+        <div><b>2</b><h3>Aviso a la familia</h3><p>Le llega la cuenta a su app, con push, WhatsApp o correo.</p></div>
+        <div><b>3</b><h3>Pago</h3><p>Paga en línea o reporta la transferencia; tú la apruebas con un clic.</p></div>
+        <div><b>4</b><h3>Al día</h3><p>El pago se aplica, sale el recibo y la cartera se actualiza sola.</p></div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>4</span></div>
+    </section>
+
+    <!-- 5. Profesores -->
+    <section class="page tint">
+      <span class="eyebrow">Para los profesores</span>
+      <h2>Asistencia en dos toques, desde la pista</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        El profesor abre la clase en su celular, toca <em>Todos presentes</em> y corrige a los que faltaron. Si no
+        hay señal en la pista, se guarda y se sincroniza solo después.
+      </p>
+      <div class="crop" style="margin-top: 18px; height: 3.05in"><img src="../capturas/clase.png" alt="Tomar asistencia" /></div>
+      <ul class="check cols" style="margin-top: 14px">
+        <li><strong>Presente, tarde, ausente o excusa</strong> por alumno, con el motivo.</li>
+        <li><strong>Funciona sin internet</strong> y sincroniza al volver la señal.</li>
+        <li><strong>Check-in con QR:</strong> la familia escanea el código de la clase al llegar.</li>
+        <li><strong>Reposiciones:</strong> un alumno recupera la clase en otro grupo.</li>
+        <li><strong>Novedades médicas</strong> y restricciones visibles en la lista.</li>
+        <li>El profesor ve si el alumno está al día, <strong>sin ver montos</strong> (opcional).</li>
+      </ul>
+      <h3 style="margin-top: 12px">Y todo lo deportivo, en el mismo lugar</h3>
+      <div class="grid g4 tight" style="margin-top: 10px">
+        <div class="card"><h3>Planes de clase</h3><p>Biblioteca de ejercicios por modalidad y nivel; planes reutilizables por sesión.</p></div>
+        <div class="card"><h3>Marcas</h3><p>Cronómetro multi-alumno, mejores marcas y aviso automático a la familia.</p></div>
+        <div class="card"><h3>Evaluaciones</h3><p>Criterios por nivel, ascensos aprobados y certificado en PDF.</p></div>
+        <div class="card"><h3>Competencias</h3><p>Convocatorias, autorizaciones de los papás, cobro de inscripción y resultados.</p></div>
+        <div class="card"><h3>Carga de entrenamiento</h3><p>Macrociclos por grupo, esfuerzo percibido (RPE) y alertas de sobrecarga.</p></div>
+        <div class="card"><h3>Valoración física</h3><p>Medidas y composición corporal con su evolución (con permiso del acudiente).</p></div>
+        <div class="card"><h3>Insignias</h3><p>Logros por asistencia y marcas que motivan a los más pequeños.</p></div>
+        <div class="card"><h3>Rutinas</h3><p>Rutinas de gimnasio por alumno con series, cargas y progreso.</p></div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>5</span></div>
+    </section>
+
+    <!-- 6. Familias -->
+    <section class="page">
+      <span class="eyebrow">Para las familias</span>
+      <h2>Los papás tranquilos, y sin escribirte a cada rato</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        Cada acudiente tiene su propia app con lo que necesita saber de sus hijos: cuándo entrenan, si asistieron,
+        cuánto deben, los avisos de la escuela y cómo van en lo deportivo.
+      </p>
+      <div class="phones" style="margin-top: 26px">
+        <div>
+          <div class="phone"><div class="screen"><img src="../capturas/celular-familia.png" alt="" /></div></div>
+          <div class="caption">Avisos, próximo pago y clases</div>
+        </div>
+        <div>
+          <div class="phone"><div class="screen"><img src="../capturas/celular-mis-hijos.png" alt="" /></div></div>
+          <div class="caption">Horario y asistencia de cada hijo</div>
+        </div>
+        <div>
+          <div class="phone"><div class="screen"><img src="../capturas/celular-mis-pagos.png" alt="" /></div></div>
+          <div class="caption">Saldo, cuentas y comprobantes</div>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top: 26px">
+        <div class="card"><h3>Notificaciones</h3><p>Push en el celular, WhatsApp o correo, según lo que cada familia prefiera.</p></div>
+        <div class="card"><h3>Pagos y certificados</h3><p>Pagan en línea, descargan estado de cuenta y paz y salvo cuando lo necesiten.</p></div>
+        <div class="card"><h3>Inscripción en línea</h3><p>Formulario público para nuevos alumnos y clases de prueba, directo a tu lista.</p></div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>6</span></div>
+    </section>
+
+    <!-- 7. Seguimiento -->
+    <section class="page tint">
+      <span class="eyebrow">Seguimiento de cada alumno</span>
+      <h2>La historia completa de cada deportista</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        Matrícula, acudientes, documentos, salud, asistencia, nivel, marcas y competencias en una sola ficha. Las
+        gráficas muestran la evolución de cada prueba frente al promedio de su categoría.
+      </p>
+      <img class="shot" style="margin-top: 20px" src="../capturas/alumno.png" alt="Ficha del alumno" />
+      <div class="grid g2" style="margin-top: 20px">
+        <div class="card">
+          <h3>Documentos al día</h3>
+          <p>Certificado médico, consentimiento y uso de imagen con fecha de vencimiento y alertas automáticas.</p>
+        </div>
+        <div class="card">
+          <h3>Datos de salud protegidos</h3>
+          <p>EPS, condiciones médicas y lesiones cifradas; solo las ve quien debe verlas.</p>
+        </div>
+        <div class="card">
+          <h3>Niveles y ascensos</h3>
+          <p>Cada alumno avanza por los niveles de su modalidad; el profesor evalúa y la dirección aprueba el ascenso.</p>
+        </div>
+        <div class="card">
+          <h3>Categorías automáticas</h3>
+          <p>La categoría por edad (Mini, Infantil, Juvenil…) se calcula sola con la fecha de nacimiento.</p>
+        </div>
+      </div>
+      <div class="foot"><span>Podium · Brochure</span><span>7</span></div>
+    </section>
+
+    <!-- 8. Planes -->
+    <section class="page">
+      <span class="eyebrow">Planes</span>
+      <h2>Paga según el tamaño de tu escuela</h2>
+      <p class="lead" style="margin-top: 10px; max-width: 6.6in">
+        Todos los planes incluyen todas las funciones, usuarios ilimitados para tu equipo y la app de familias. Solo
+        cambia el número de alumnos activos y el cupo de mensajes de WhatsApp.
+      </p>
+      <div class="grid g4" style="margin-top: 20px">
+        <div class="price">
+          <div class="name">Semilla</div>
+          <div class="per">Hasta 50 alumnos</div>
+          <div class="amount">$ 89.000</div>
+          <div class="per">al mes</div>
+          <ul class="check"><li>500 WhatsApp/mes</li></ul>
+        </div>
+        <div class="price featured">
+          <div class="name">Club <span class="pill" style="margin-left: 4px">Popular</span></div>
+          <div class="per">Hasta 150 alumnos</div>
+          <div class="amount">$ 179.000</div>
+          <div class="per">al mes</div>
+          <ul class="check"><li>1.500 WhatsApp/mes</li></ul>
+        </div>
+        <div class="price">
+          <div class="name">Academia</div>
+          <div class="per">Hasta 400 alumnos</div>
+          <div class="amount">$ 299.000</div>
+          <div class="per">al mes</div>
+          <ul class="check"><li>5.000 WhatsApp/mes</li></ul>
+        </div>
+        <div class="price">
+          <div class="name">Élite</div>
+          <div class="per">Alumnos ilimitados</div>
+          <div class="amount">$ 449.000</div>
+          <div class="per">al mes</div>
+          <ul class="check"><li>10.000 WhatsApp/mes</li></ul>
+        </div>
+      </div>
+      <p class="muted" style="font-size: 8.5pt; margin-top: 8px">
+        Valores en pesos colombianos. Plan anual: pagas 10 meses y recibes 12. Precios de referencia, sujetos a cambio.
+      </p>
+
+      <div class="grid g2" style="margin-top: 22px">
+        <div>
+          <h3>Seguro y en regla</h3>
+          <ul class="check" style="margin-top: 10px">
+            <li>Los datos de cada escuela están aislados de las demás desde la base de datos.</li>
+            <li>Datos de salud cifrados y tratamiento conforme a la Ley 1581 de 2012.</li>
+            <li>Consentimiento de las familias para WhatsApp y uso de imagen.</li>
+            <li>Exportación completa en cualquier momento.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Empezar es fácil</h3>
+          <ul class="check" style="margin-top: 10px">
+            <li>Creas tu escuela en minutos; 30 días gratis, sin tarjeta.</li>
+            <li>Importas tus alumnos desde Excel.</li>
+            <li>Invitas a profesores y familias por WhatsApp.</li>
+            <li>Te acompañamos en la configuración inicial.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="band" style="margin-top: 26px; display: flex; gap: 22px; align-items: center">
+        <div style="flex: 1">
+          <h2 style="font-size: 20pt; color: #fff">Agenda una demostración</h2>
+          <p style="margin-top: 6px; opacity: 0.92">
+            En 20 minutos te mostramos Podium con una escuela de ejemplo y configuramos la tuya juntos.
+          </p>
+        </div>
+        <div style="background: #fff; border-radius: 14px; padding: 14px 16px; width: 2.9in; flex: none">
+          <p style="font-size: 8pt; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800">Tu asesor</p>
+          <p style="margin-top: 8px; border-bottom: 1px solid var(--line); height: 20px"></p>
+          <p style="margin-top: 10px; border-bottom: 1px solid var(--line); height: 20px"></p>
+          <p style="margin-top: 10px; border-bottom: 1px solid var(--line); height: 20px"></p>
+        </div>
+      </div>
+      <p class="muted" style="font-size: 7.5pt; margin-top: 14px">
+        Las imágenes son capturas reales de Podium con una escuela de demostración; los nombres y datos son ficticios.
+      </p>
+      <div class="foot"><span>Podium · Brochure</span><span>8</span></div>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <title>Podium · Guía comercial para vendedores</title>
+    <link rel="stylesheet" href="estilos.css" />
+    <style>
+      .cover {
+        background: linear-gradient(150deg, #0f1f4d 0%, #1f4fd8 58%, #2f6bff 100%);
+        color: #fff;
+      }
+      .cover .brand {
+        color: #fff;
+      }
+      .cover h1 {
+        color: #fff;
+        margin-top: 1.1in;
+        font-size: 44pt;
+      }
+      .cover .lead {
+        color: rgb(255 255 255 / 0.85);
+        margin-top: 16px;
+        max-width: 5.6in;
+        font-size: 13pt;
+      }
+      .cover .toc {
+        margin-top: 0.4in;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 30px;
+        max-width: 6.2in;
+      }
+      .cover .toc div {
+        font-size: 10.5pt;
+        color: rgb(255 255 255 / 0.92);
+        border-top: 1px solid rgb(255 255 255 / 0.25);
+        padding-top: 8px;
+      }
+      .cover .toc b {
+        color: var(--sun);
+        margin-right: 8px;
+      }
+      .cover .foot {
+        color: rgb(255 255 255 / 0.6);
+      }
+      .cover .shots {
+        position: absolute;
+        right: -0.7in;
+        bottom: 0.62in;
+        width: 4.7in;
+      }
+      .cover .shots .shot {
+        border: 0;
+        box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.55);
+      }
+      .defs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 26px;
+        margin-top: 8px;
+      }
+      .defs div {
+        padding: 4px 0;
+        border-bottom: 1px solid var(--line);
+        break-inside: avoid;
+      }
+      .defs b {
+        display: block;
+        font-size: 9.8pt;
+        color: var(--ink);
+      }
+      .defs span {
+        font-size: 8.4pt;
+        color: var(--ink-soft);
+        line-height: 1.33;
+        display: block;
+        margin-top: 1px;
+      }
+      .qa b {
+        display: block;
+        font-size: 10pt;
+        color: var(--ink);
+        margin-bottom: 3px;
+      }
+      .qa p {
+        font-size: 9.2pt;
+        line-height: 1.45;
+      }
+      .qa > div {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .seg h3 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .seg .card p {
+        font-size: 9pt;
+      }
+      .seg .card ul.dash li {
+        font-size: 8.8pt;
+        margin-bottom: 2px;
+      }
+      .idea {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        padding: 12px 14px;
+        background: #fff;
+      }
+      .idea h3 {
+        font-size: 11pt;
+        margin-bottom: 3px;
+      }
+      .idea p {
+        font-size: 8.9pt;
+        line-height: 1.42;
+      }
+      .idea .pill {
+        margin-top: 6px;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+      .steps > div {
+        border-radius: 12px;
+        background: var(--bg);
+        padding: 12px;
+      }
+      .steps b {
+        display: inline-grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        font-size: 9pt;
+        margin-bottom: 6px;
+      }
+      .steps h3 {
+        font-size: 10pt;
+      }
+      .steps p {
+        font-size: 8.6pt;
+        line-height: 1.38;
+        margin-top: 3px;
+      }
+      td.mod {
+        width: 1.35in;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1. Portada -->
+    <section class="page cover">
+      <div class="brand"><img src="logo.svg" alt="" /> Podium</div>
+      <span class="eyebrow" style="color: var(--sun); margin-top: 1.1in; display: block">Uso interno · Equipo comercial</span>
+      <h1 style="margin-top: 0">Guía comercial<br />para vendedores</h1>
+      <p class="lead">
+        Qué es Podium, cómo se habla de él, qué ofrecer a cada tipo de cliente, cómo hacer la demostración y qué
+        ideas de negocio tenemos alrededor del producto.
+      </p>
+      <div class="toc">
+        <div><b>01</b>Podium en 30 segundos</div>
+        <div><b>06</b>Qué ofrecer a cada cliente</div>
+        <div><b>02</b>Glosario: las palabras de Podium</div>
+        <div><b>07</b>Proceso de venta y demostración</div>
+        <div><b>03</b>Módulos y argumentos de venta</div>
+        <div><b>08</b>Objeciones y respuestas</div>
+        <div><b>04</b>Roles: quién usa qué</div>
+        <div><b>09</b>Qué no prometer</div>
+        <div><b>05</b>Planes, precios y cupos</div>
+        <div><b>10</b>Ideas de negocio</div>
+      </div>
+      <div class="shots"><img class="shot" src="../capturas/cobros.png" alt="" /></div>
+      <div class="foot"><span>Documento confidencial · no compartir con clientes</span><span>2026</span></div>
+    </section>
+
+    <!-- 2. Pitch + cliente ideal -->
+    <section class="page">
+      <span class="eyebrow">01 · Podium en 30 segundos</span>
+      <h2>Lo que vendemos, en una frase</h2>
+      <div class="band" style="margin-top: 14px">
+        <p style="font-size: 13pt; line-height: 1.45">
+          <strong>Podium es la app con la que una escuela deportiva cobra a tiempo, toma asistencia desde el celular
+          y mantiene informadas a las familias</strong>, sin Excel ni cadenas de WhatsApp. Se paga sola cuando la
+          escuela recupera la cartera que hoy se le escapa.
+        </p>
+      </div>
+
+      <h3 style="margin-top: 22px">El pitch de un minuto</h3>
+      <p style="margin-top: 6px">
+        «¿Cómo llevan hoy los pagos de las mensualidades? … La mayoría de escuelas lo hacen en Excel y persiguen a
+        los papás por WhatsApp. Con Podium las cuentas se generan solas el día de corte, los papás pagan en línea o
+        reportan la transferencia, y usted ve en su celular quién debe y desde cuándo. Los profesores toman
+        asistencia en dos toques, incluso sin señal, y los papás tienen su propia app con horarios, pagos y avisos.
+        Lo pueden probar gratis 30 días; en una llamada de 20 minutos lo dejamos configurado.»
+      </p>
+
+      <h3 style="margin-top: 22px">Los tres beneficios que más venden</h3>
+      <div class="grid g3" style="margin-top: 10px">
+        <div class="card"><h3>1. Plata</h3><p>Menos cartera vencida: cobro automático, recordatorios masivos y pago en línea. Es el argumento que cierra.</p></div>
+        <div class="card"><h3>2. Tiempo</h3><p>Horas de secretaría que se liberan: asistencia, recibos, reportes y respuestas a los papás.</p></div>
+        <div class="card"><h3>3. Imagen</h3><p>La escuela se ve profesional: app propia para las familias, certificados, seguimiento deportivo.</p></div>
+      </div>
+
+      <h3 style="margin-top: 22px">Cliente ideal</h3>
+      <table style="margin-top: 8px">
+        <tr><th>Señal</th><th>Por qué importa</th></tr>
+        <tr><td><strong>30 a 400 alumnos</strong> con mensualidad fija</td><td>Ya les duele cobrar a mano y pueden pagar el plan sin pensarlo mucho.</td></tr>
+        <tr><td><strong>Patinaje, natación</strong> o <strong>gimnasio / entrenamiento personal</strong></td><td>Son las plantillas listas hoy (niveles, categorías, pruebas y ejercicios).</td></tr>
+        <tr><td><strong>Varios grupos y profesores</strong></td><td>Asistencia, horarios y cruces de profesores se vuelven inmanejables en papel.</td></tr>
+        <tr><td>Cobran por <strong>transferencia o Nequi</strong> y confirman por chat</td><td>Es exactamente lo que Podium ordena (reportes de pago con comprobante).</td></tr>
+        <tr><td>Clubes que <strong>compiten</strong></td><td>Valoran marcas, evaluaciones, convocatorias y autorizaciones de los papás.</td></tr>
+      </table>
+      <div class="note" style="margin-top: 14px">
+        <strong>Menos ideal hoy:</strong> deportes de equipo con ligas complejas (fútbol con torneos propios), escuelas
+        que cobran por clase suelta o paquetes, y gimnasios con torniquetes. Véase «Qué no prometer».
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>2</span></div>
+    </section>
+
+    <!-- 3. Glosario -->
+    <section class="page">
+      <span class="eyebrow">02 · Glosario</span>
+      <h2>Las palabras de Podium</h2>
+      <p style="margin-top: 6px">Usa siempre estos términos con el cliente: son los mismos que ve en la app.</p>
+      <div class="defs">
+        <div><b>Escuela</b><span>La cuenta del cliente (club, academia o gimnasio). Sus datos están separados de las demás.</span></div>
+        <div><b>Sede</b><span>Lugar físico (pista, piscina, gimnasio). Una escuela puede tener varias.</span></div>
+        <div><b>Modalidad</b><span>Disciplina dentro del deporte: velocidad, artístico, hockey, freestyle; natación formativa o competitiva; entrenamiento personal.</span></div>
+        <div><b>Nivel</b><span>Etapa de aprendizaje (Iniciación → Competencia). El alumno asciende con una evaluación.</span></div>
+        <div><b>Categoría por edad</b><span>Mini, Infantil, Juvenil… Se calcula sola con la fecha de nacimiento.</span></div>
+        <div><b>Grupo</b><span>Clase recurrente: modalidad, nivel, profesor, sede, cupo y horario (p. ej. Lun-Mié-Vie 4–6 p. m.).</span></div>
+        <div><b>Clase (sesión)</b><span>Cada ocurrencia del horario de un grupo. Podium las genera solas; se pueden cancelar o crear extra.</span></div>
+        <div><b>Matrícula</b><span>Vínculo alumno → grupo + tarifa, con fecha de inicio y estado (activa, congelada, retirada con motivo).</span></div>
+        <div><b>Re-matrícula</b><span>Renovación masiva al cambiar de periodo, con cupos y tarifas nuevas.</span></div>
+        <div><b>Acudiente</b><span>Padre, madre o responsable. Un acudiente puede tener varios hijos y es quien paga.</span></div>
+        <div><b>Tarifa</b><span>Valor mensual de un plan de la escuela (p. ej. «3 días: $ 160.000»). No confundir con el plan de Podium.</span></div>
+        <div><b>Cuenta de cobro</b><span>Lo que se le cobra a un acudiente en un mes: mensualidades, recargos o cobros únicos.</span></div>
+        <div><b>Cobro único</b><span>Uniforme, inscripción a torneo, matrícula: se cobra una vez a uno o varios alumnos.</span></div>
+        <div><b>Cartera</b><span>Todo lo que deben los acudientes. <em>Cartera vencida</em>: lo que pasó de la fecha de pago.</span></div>
+        <div><b>Recaudo</b><span>Lo que efectivamente se pagó en el mes. <em>% de recaudo</em> = pagado ÷ facturado.</span></div>
+        <div><b>Recibo de caja</b><span>Comprobante de cada pago registrado (efectivo, transferencia, datáfono o en línea).</span></div>
+        <div><b>Saldo a favor</b><span>Lo pagado de más; se aplica solo a la siguiente cuenta.</span></div>
+        <div><b>Paz y salvo / estado de cuenta</b><span>Certificados en PDF que la familia descarga cuando quiera.</span></div>
+        <div><b>Reporte de pago</b><span>La familia avisa que transfirió y adjunta el comprobante; la escuela lo aprueba.</span></div>
+        <div><b>Wompi</b><span>Pasarela de pagos colombiana (PSE, Nequi, tarjeta). Cada escuela conecta su propia cuenta.</span></div>
+        <div><b>Asistencia</b><span>Presente, tarde, ausente o excusa por alumno y clase. Funciona sin señal.</span></div>
+        <div><b>Reposición</b><span>Clase recuperada en otro grupo por un alumno que faltó.</span></div>
+        <div><b>Check-in QR</b><span>Código de la clase que la familia escanea al llegar para marcar la llegada.</span></div>
+        <div><b>Marca</b><span>Resultado de una prueba (tiempo, distancia, puntos). Detecta mejores marcas y avisa.</span></div>
+        <div><b>Evaluación / certificado</b><span>Calificación por criterios del nivel; si aprueba, asciende y se emite certificado PDF.</span></div>
+        <div><b>Macrociclo / carga (RPE)</b><span>Planificación por periodos y esfuerzo percibido de cada sesión; alerta sobrecargas.</span></div>
+        <div><b>Membresía (gimnasio)</b><span>Plan de un socio con vigencia; el ingreso se registra en recepción con QR.</span></div>
+        <div><b>PWA</b><span>App web instalable: se agrega a la pantalla del celular sin pasar por tiendas.</span></div>
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>3</span></div>
+    </section>
+
+    <!-- 4. Módulos -->
+    <section class="page">
+      <span class="eyebrow">03 · Módulos</span>
+      <h2>Qué hace cada módulo y cómo venderlo</h2>
+      <table style="margin-top: 14px">
+        <tr><th>Módulo</th><th>Qué hace</th><th>Argumento de venta</th></tr>
+        <tr><td class="mod"><strong>Tablero</strong></td><td>Recaudo, % de recaudo, cartera vencida, alumnos activos, altas y retiros, retención, ocupación; semana de clases.</td><td>«Abre el celular y sabe cómo va su negocio.»</td></tr>
+        <tr><td class="mod"><strong>Alumnos y acudientes</strong></td><td>Ficha completa, documentos con vencimiento, salud cifrada, importación desde Excel, invitaciones a familias.</td><td>«Toda la información en un lugar, no en 5 carpetas.»</td></tr>
+        <tr><td class="mod"><strong>Grupos y horarios</strong></td><td>Cupos, niveles, profesores, sedes; clases generadas solas; cruces de horario; festivos.</td><td>«Sabe cuántos cupos le quedan para vender.»</td></tr>
+        <tr><td class="mod"><strong>Asistencia</strong></td><td>Toma en el celular, sin internet, QR, reposiciones, excusas, alertas de inasistencia.</td><td>«Detecta al alumno que se va a retirar antes de que se vaya.»</td></tr>
+        <tr><td class="mod"><strong>Cobros</strong></td><td>Mensualidades automáticas, descuentos, mora, cobros únicos, pagos manuales y en línea, recibos, caja, acuerdos de pago, recordatorios.</td><td>«Recupera la cartera; el plan se paga solo.»</td></tr>
+        <tr><td class="mod"><strong>Egresos e inventario</strong></td><td>Gastos por categoría, utilidad del mes, productos (uniformes) con stock y venta.</td><td>«Sabe cuánto gana, no solo cuánto factura.»</td></tr>
+        <tr><td class="mod"><strong>Facturación DIAN</strong></td><td>Factura electrónica de cada pago a través de la cuenta Alegra de la escuela.</td><td>«Cumple con la DIAN sin digitar dos veces.»</td></tr>
+        <tr><td class="mod"><strong>Comunicación</strong></td><td>Avisos por grupo, nivel, categoría o deudores; push, WhatsApp y correo; número de WhatsApp propio con bandeja de mensajes.</td><td>«Un aviso a todos en 30 segundos, sin listas de difusión.»</td></tr>
+        <tr><td class="mod"><strong>Portal de familias</strong></td><td>Horario, asistencia, pagos, certificados, avisos, progreso, competencias, insignias.</td><td>«Menos preguntas por chat; papás tranquilos.»</td></tr>
+        <tr><td class="mod"><strong>Entrenamiento</strong></td><td>Biblioteca de ejercicios, planes de clase, macrociclos, carga y alertas de sobrecarga.</td><td>«El método de la escuela queda escrito y se reutiliza.»</td></tr>
+        <tr><td class="mod"><strong>Rendimiento</strong></td><td>Marcas con cronómetro multi-alumno, metas, comparación por categoría, evaluaciones y certificados de nivel.</td><td>«Los papás ven el progreso y se quedan.»</td></tr>
+        <tr><td class="mod"><strong>Competencias</strong></td><td>Convocatorias, autorización de los papás, cobro de inscripción, lista de viaje en Excel, resultados.</td><td>«Organiza un torneo sin 50 mensajes.»</td></tr>
+        <tr><td class="mod"><strong>Inscripción pública</strong></td><td>Formulario web para nuevos alumnos y clases de prueba, con cupos.</td><td>«Convierte los interesados de redes en alumnos.»</td></tr>
+        <tr><td class="mod"><strong>Gimnasio</strong></td><td>Membresías con vigencia, ingreso por QR en recepción, rutinas por socio, valoración y composición corporal.</td><td>«Lo básico de un gimnasio sin pagar un software de cadena.»</td></tr>
+        <tr><td class="mod"><strong>Reportes</strong></td><td>Excel de cobros, cartera, pagos, alumnos, altas/retiros y asistencia; exportación completa en ZIP.</td><td>«Sus datos son suyos; se los lleva cuando quiera.»</td></tr>
+      </table>
+      <div class="foot"><span>Podium · Guía comercial</span><span>4</span></div>
+    </section>
+
+    <!-- 5. Roles + capturas -->
+    <section class="page tint">
+      <span class="eyebrow">04 · Roles</span>
+      <h2>Quién usa qué</h2>
+      <p style="margin-top: 6px">
+        Una sola app; cada persona ve lo que le corresponde. No hay costo por usuario: el plan se cobra por alumnos
+        activos.
+      </p>
+      <table style="margin-top: 12px; background: #fff; border-radius: 12px">
+        <tr><th>Rol</th><th>Qué puede hacer</th></tr>
+        <tr><td><strong>Propietario</strong></td><td>Todo, incluida la suscripción con Podium.</td></tr>
+        <tr><td><strong>Administrador</strong></td><td>Todo menos la suscripción y eliminar la escuela.</td></tr>
+        <tr><td><strong>Coordinador / secretaría</strong></td><td>Matrículas, cartera, pagos y horarios, sin configuración sensible.</td></tr>
+        <tr><td><strong>Profesor</strong></td><td>Sus grupos: asistencia, planes, marcas, evaluaciones y avisos. No ve dinero (puede ver «al día / en mora» si la escuela lo activa).</td></tr>
+        <tr><td><strong>Acudiente / alumno</strong></td><td>Horario, asistencia, pagos, certificados, avisos y progreso de sus hijos o el propio.</td></tr>
+      </table>
+      <div style="display: flex; gap: 18px; margin-top: 22px; align-items: flex-start">
+        <div style="flex: 1">
+          <h3>Lo que más impresiona en la demo</h3>
+          <ul class="check" style="margin-top: 10px">
+            <li>El tablero con recaudo y cartera vencida en rojo.</li>
+            <li>«Todos presentes» y corregir un ausente en la clase.</li>
+            <li>Seleccionar deudores y enviar recordatorio en un clic.</li>
+            <li>La app del papá en el celular: próximo pago y asistencia del hijo.</li>
+            <li>Las gráficas de marcas de un deportista.</li>
+          </ul>
+          <div class="crop" style="margin-top: 14px; height: 2.05in"><img src="../capturas/alumno.png" alt="" /></div>
+        </div>
+        <div class="phone" style="width: 2.1in"><div class="screen"><img src="../capturas/celular-familia.png" alt="" /></div></div>
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>5</span></div>
+    </section>
+
+    <!-- 6. Planes -->
+    <section class="page">
+      <span class="eyebrow">05 · Planes, precios y cupos</span>
+      <h2>Cómo se cobra Podium</h2>
+      <p style="margin-top: 6px">
+        Un precio mensual por tamaño de escuela (alumnos activos). Todas las funciones en todos los planes.
+      </p>
+      <table style="margin-top: 12px">
+        <tr><th>Plan</th><th>Alumnos activos</th><th>Mensual</th><th>Anual (10 meses)</th><th>WhatsApp incluidos / mes</th></tr>
+        <tr><td><strong>Semilla</strong></td><td>Hasta 50</td><td>$ 89.000</td><td>$ 890.000</td><td>500</td></tr>
+        <tr><td><strong>Club</strong></td><td>Hasta 150</td><td>$ 179.000</td><td>$ 1.790.000</td><td>1.500</td></tr>
+        <tr><td><strong>Academia</strong></td><td>Hasta 400</td><td>$ 299.000</td><td>$ 2.990.000</td><td>5.000</td></tr>
+        <tr><td><strong>Élite</strong></td><td>Ilimitados</td><td>$ 449.000</td><td>$ 4.490.000</td><td>10.000</td></tr>
+      </table>
+      <div class="note" style="margin-top: 10px">
+        <strong>Precios provisionales</strong> (pendientes de confirmación por la gerencia). Confirma la tabla vigente
+        antes de enviar una propuesta formal.
+      </div>
+
+      <div class="grid g2" style="margin-top: 18px">
+        <div>
+          <h3>Reglas que debes conocer</h3>
+          <ul class="dash" style="margin-top: 8px">
+            <li><strong>Prueba gratis de 30 días</strong> con todo habilitado. Al terminar elige plan y paga en línea (tarjeta o link de pago).</li>
+            <li><strong>Plan sugerido:</strong> el más pequeño que alcanza para sus alumnos activos. Si crece, la app avisa y se sube de plan.</li>
+            <li><strong>Anual:</strong> paga 10 meses y usa 12 (2 meses gratis). Úsalo para cerrar.</li>
+            <li><strong>Cupones:</strong> la gerencia puede dar descuento por un tiempo desde la consola de Podium.</li>
+            <li>Si no paga: periodo de gracia, luego <strong>solo lectura</strong> (no se pierde nada).</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Costos que asume la escuela aparte</h3>
+          <ul class="dash" style="margin-top: 8px">
+            <li><strong>Wompi:</strong> comisión por cada pago en línea, en la cuenta de la escuela.</li>
+            <li><strong>Alegra:</strong> su propia suscripción si quiere factura electrónica DIAN.</li>
+            <li><strong>Número de WhatsApp propio:</strong> verificación del negocio en Meta y el costo de los mensajes por encima del cupo.</li>
+            <li>Push y correo no tienen costo para la escuela.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 18px">¿Se paga solo? Haz la cuenta con el cliente</h3>
+      <div class="band" style="margin-top: 8px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: center">
+        <p style="font-size: 10.5pt">
+          Escuela de 80 alumnos × $ 160.000 = <strong>$ 12.800.000</strong> facturados al mes. Si hoy recupera solo el
+          85 % y con Podium sube al 92 %, son <strong>$ 896.000 más al mes</strong>. El plan Club cuesta $ 179.000.
+        </p>
+        <p style="font-size: 9pt; opacity: 0.9">
+          Usa los números del propio cliente. No prometas porcentajes: muéstrale cómo calcularlos y que lo verá en
+          su tablero desde el primer mes.
+        </p>
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>6</span></div>
+    </section>
+
+    <!-- 7. Segmentos -->
+    <section class="page tint seg">
+      <span class="eyebrow">06 · Qué ofrecer a cada cliente</span>
+      <h2>Una propuesta por tipo de cliente</h2>
+      <div class="grid g2" style="margin-top: 14px">
+        <div class="card">
+          <h3>Escuela pequeña <span class="pill">Semilla</span></h3>
+          <p>Hasta 50 alumnos, el dueño es también el profesor.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Abre con: cobros automáticos y recordatorios.</li>
+            <li>Muestra: asistencia en el celular y app de papás.</li>
+            <li>Cierre: plan anual (2 meses gratis).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Club en crecimiento <span class="pill">Club</span></h3>
+          <p>50–150 alumnos, 2–5 profesores, secretaria de medio tiempo.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Abre con: tablero y cartera por edades.</li>
+            <li>Muestra: roles, reportes de pago con comprobante, caja.</li>
+            <li>Extra: importación desde su Excel el primer día.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Academia con sedes <span class="pill">Academia / Élite</span></h3>
+          <p>150+ alumnos, varias sedes o modalidades.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Abre con: multi-sede, ocupación y retención.</li>
+            <li>Muestra: egresos y utilidad, facturación DIAN, WhatsApp propio.</li>
+            <li>Extra: capacitación al equipo (ver ideas de negocio).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Club de competencia <span class="pill violet">Deportivo</span></h3>
+          <p>Deportistas federados que viajan a torneos.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Abre con: marcas, metas y comparación por categoría.</li>
+            <li>Muestra: convocatorias con autorización y cobro, macrociclos y carga.</li>
+            <li>Habla con el entrenador jefe, no solo con el dueño.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Escuela de natación <span class="pill violet">Natación</span></h3>
+          <p>Niveles de adaptación a competencia, grupos por horario.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Plantilla lista: niveles, categorías y pruebas de piscina.</li>
+            <li>Muestra: evaluaciones con certificado de nivel (los papás lo aman).</li>
+            <li>Reposiciones de clase: dolor típico de natación.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Gimnasio o entrenador personal <span class="pill sun">Gimnasio</span></h3>
+          <p>Socios con membresía, sin grupos fijos.</p>
+          <ul class="dash" style="margin-top: 6px">
+            <li>Muestra: membresías con vigencia, ingreso por QR, rutinas y valoración corporal.</li>
+            <li>Ideal para estudios pequeños y entrenadores; no para cadenas con torniquetes.</li>
+            <li>Vertical nueva: busca clientes piloto con descuento.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>7</span></div>
+    </section>
+
+    <!-- 8. Proceso + demo -->
+    <section class="page">
+      <span class="eyebrow">07 · Proceso de venta</span>
+      <h2>De la primera llamada a la escuela funcionando</h2>
+      <div class="steps" style="margin-top: 14px">
+        <div><b>1</b><h3>Descubrir</h3><p>Llamada de 10 min con las preguntas de abajo. Califica tamaño y dolor.</p></div>
+        <div><b>2</b><h3>Demostrar</h3><p>20 min con la escuela de ejemplo, enfocada en su dolor.</p></div>
+        <div><b>3</b><h3>Activar</h3><p>Crea su escuela en la llamada e importa su Excel de alumnos.</p></div>
+        <div><b>4</b><h3>Acompañar</h3><p>Semana 1: invitar profesores y familias. Semana 2: primer cobro.</p></div>
+        <div><b>5</b><h3>Cerrar</h3><p>Antes del día 25 de prueba: muestra su tablero real y ofrece el anual.</p></div>
+      </div>
+
+      <div class="grid g2" style="margin-top: 18px">
+        <div>
+          <h3>Preguntas de descubrimiento</h3>
+          <ul class="dash" style="margin-top: 8px">
+            <li>¿Cuántos alumnos activos tienen y cuántos grupos?</li>
+            <li>¿Cómo cobran hoy y cómo saben quién pagó?</li>
+            <li>¿Cuánto les deben ahora mismo? ¿Lo saben sin revisar?</li>
+            <li>¿Cómo toman la asistencia? ¿Quién la revisa?</li>
+            <li>¿Cómo avisan a los papás de cambios de horario o torneos?</li>
+            <li>¿Cuántos alumnos se retiraron el último semestre y por qué?</li>
+            <li>¿Quién más decide la compra? (socio, entrenador jefe, contador)</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Guion de demostración (20 min)</h3>
+          <table style="margin-top: 6px">
+            <tr><td><strong>0–3</strong></td><td>Tablero: recaudo, cartera vencida, retención.</td></tr>
+            <tr><td><strong>3–8</strong></td><td>Cobros: deudores, recordatorio, registrar pago, recibo.</td></tr>
+            <tr><td><strong>8–12</strong></td><td>Asistencia en el celular: todos presentes y alertas.</td></tr>
+            <tr><td><strong>12–15</strong></td><td>App de la familia: pago, horario, asistencia.</td></tr>
+            <tr><td><strong>15–18</strong></td><td>Ficha del alumno y marcas (si es club deportivo).</td></tr>
+            <tr><td><strong>18–20</strong></td><td>Crear su escuela y agendar la importación.</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 16px">
+        <strong>Escuela de demostración:</strong> «Club Patín Veloz» (65 alumnos ficticios, 6 meses de historia). Pide al
+        equipo de producto tu acceso de demostración; nunca hagas la demo con datos reales de otro cliente.
+      </div>
+      <div class="crop" style="margin-top: 14px; height: 2.1in"><img src="../capturas/inicio.png" alt="" /></div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>8</span></div>
+    </section>
+
+    <!-- 9. Objeciones + qué no prometer -->
+    <section class="page">
+      <span class="eyebrow">08 · Objeciones</span>
+      <h2>Lo que te van a decir</h2>
+      <div class="grid g2 qa" style="margin-top: 8px; gap: 0 26px">
+        <div><b>«Con Excel me va bien.»</b><p>¿Cuánto le deben hoy y desde cuándo? Si tarda más de 10 segundos en responder, Podium le ahorra plata. Además el Excel no le manda recordatorios a los papás.</p></div>
+        <div><b>«Está caro.»</b><p>Haz la cuenta de la página 6: con recuperar una o dos mensualidades al mes ya se pagó. Ofrece el anual.</p></div>
+        <div><b>«Los papás no van a usar otra app.»</b><p>No necesitan descargar nada de una tienda: se abre con un link por WhatsApp. Y si no la usan, igual les llegan los avisos por WhatsApp o correo.</p></div>
+        <div><b>«Los profesores no son buenos con tecnología.»</b><p>Tomar asistencia es abrir la clase y tocar «Todos presentes». Funciona sin señal en la pista.</p></div>
+        <div><b>«Me da miedo poner los datos de los niños en internet.»</b><p>Los datos de cada escuela están aislados, la salud va cifrada y cumplimos la Ley 1581. La escuela puede exportar todo cuando quiera.</p></div>
+        <div><b>«No tengo tiempo de pasar todo.»</b><p>Importamos su Excel de alumnos y acudientes; en una llamada queda lista.</p></div>
+        <div><b>«Ya pagamos otro software.»</b><p>Pregunta qué no hace bien. Nuestro fuerte es combinar cobros con lo deportivo y la app de familias, hecho para Colombia (PSE, Nequi, DIAN).</p></div>
+        <div><b>«Déjeme pensarlo.»</b><p>No tiene que decidir hoy: 30 días gratis, sin tarjeta. Agenda la creación de la escuela ya.</p></div>
+      </div>
+
+      <span class="eyebrow" style="margin-top: 22px; display: block">09 · Qué no prometer</span>
+      <h2 style="font-size: 18pt">Sé honesto: esto hoy no lo hacemos</h2>
+      <table style="margin-top: 10px">
+        <tr><th>Si te piden…</th><th>Responde</th></tr>
+        <tr><td>App en App Store / Play Store</td><td>Es una app web instalable (PWA): mismo resultado en el celular. Las tiendas están evaluadas para más adelante.</td></tr>
+        <tr><td>Torniquetes, huella o NFC</td><td>No. El ingreso al gimnasio es por QR en recepción.</td></tr>
+        <tr><td>Cobro por clase suelta o paquetes de clases</td><td>El modelo es mensualidad o membresía; los cobros únicos cubren casos puntuales.</td></tr>
+        <tr><td>Fútbol, baloncesto u otros deportes</td><td>Hoy hay plantillas de patinaje, natación y gimnasio. Lo administrativo sirve para cualquiera; lo deportivo se ajusta a mano. Reporta la oportunidad.</td></tr>
+        <tr><td>WhatsApp con el número de la escuela inmediato</td><td>Requiere verificar el negocio en Meta (días o semanas). Mientras tanto, se usa el número de Podium.</td></tr>
+        <tr><td>Factura electrónica sin otro proveedor</td><td>Se hace a través de Alegra, con la cuenta y la resolución de la escuela.</td></tr>
+        <tr><td>Precios o descuentos no publicados</td><td>Solo los aprueba la gerencia (cupones).</td></tr>
+      </table>
+      <div class="foot"><span>Podium · Guía comercial</span><span>9</span></div>
+    </section>
+
+    <!-- 10. Ideas de negocio -->
+    <section class="page tint">
+      <span class="eyebrow">10 · Ideas de negocio</span>
+      <h2>Cómo crecer más allá de la suscripción</h2>
+      <p style="margin-top: 6px">
+        Ideas para conversar con la gerencia. Ninguna es una oferta vigente: no las prometas a clientes sin aprobación.
+      </p>
+      <div class="grid g3" style="margin-top: 14px">
+        <div class="idea"><h3>Implementación llave en mano</h3><p>Cobro único por migrar el Excel, configurar tarifas y grupos, y capacitar al equipo en una sesión.</p><span class="pill mint">Ingreso inmediato</span></div>
+        <div class="idea"><h3>Alianzas con ligas y federaciones</h3><p>Descuento a clubes afiliados a una liga de patinaje o natación a cambio de difusión; la liga recibe reportes agregados.</p><span class="pill">Canal de venta</span></div>
+        <div class="idea"><h3>Programa de referidos</h3><p>Un mes gratis para la escuela que refiere y para la referida cuando esta paga su primer mes.</p><span class="pill">Adquisición barata</span></div>
+        <div class="idea"><h3>Vendedores regionales</h3><p>Representantes por ciudad con comisión recurrente sobre lo que paguen sus escuelas durante el primer año.</p><span class="pill">Escala</span></div>
+        <div class="idea"><h3>Paquetes extra de WhatsApp</h3><p>Bolsas de mensajes adicionales para escuelas grandes o temporadas de torneos.</p><span class="pill mint">Margen</span></div>
+        <div class="idea"><h3>Uniformes e implementos</h3><p>Convenios con proveedores de patines, gorros o uniformes que se venden desde el inventario de la escuela, con comisión.</p><span class="pill sun">Marketplace</span></div>
+        <div class="idea"><h3>Torneos y festivales</h3><p>Cobrar por organizar eventos interclubes: inscripciones, autorizaciones y resultados en Podium.</p><span class="pill violet">Eventos</span></div>
+        <div class="idea"><h3>Colegios y cajas de compensación</h3><p>Programas extracurriculares deportivos con muchos grupos: plan institucional con varias sedes.</p><span class="pill">Cuentas grandes</span></div>
+        <div class="idea"><h3>Plantillas de entrenamiento</h3><p>Bibliotecas de ejercicios y planes por nivel creadas por entrenadores reconocidos, como complemento pago.</p><span class="pill violet">Contenido</span></div>
+        <div class="idea"><h3>Seguros deportivos</h3><p>Alianza con aseguradoras para ofrecer pólizas de accidentes a los alumnos al matricularse.</p><span class="pill sun">Comisión</span></div>
+        <div class="idea"><h3>Informe anual de la escuela</h3><p>Reporte de crecimiento, retención y rendimiento listo para presentar a socios o patrocinadores.</p><span class="pill">Valor percibido</span></div>
+        <div class="idea"><h3>Nuevos deportes</h3><p>Plantillas para fútbol, tenis, artes marciales o gimnasia: cada deporte abre un mercado nuevo.</p><span class="pill">Expansión</span></div>
+      </div>
+
+      <div class="band" style="margin-top: 18px">
+        <h3 style="color: #fff">Métricas que mira el equipo comercial</h3>
+        <p style="margin-top: 6px; font-size: 9.6pt">
+          <strong>Escuelas en prueba → pagando</strong> (conversión de la prueba) · <strong>ingreso mensual recurrente</strong> ·
+          <strong>escuelas que cancelan</strong> por mes y su motivo · <strong>tiempo hasta el primer cobro</strong> (una escuela que cobra con Podium en su
+          primera semana tiene muchas más razones para quedarse).
+        </p>
+      </div>
+      <div class="foot"><span>Podium · Guía comercial</span><span>10</span></div>
+    </section>
+  </body>
+</html>

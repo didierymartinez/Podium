@@ -1,0 +1,357 @@
+/* Estilos compartidos de los PDF comerciales (#76). Tamaño carta, una <section class="page"> por hoja. */
+@font-face {
+  font-family: Manrope;
+  font-weight: 200 800;
+  src: url(fuentes/manrope-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: Manrope;
+  font-weight: 200 800;
+  src: url(fuentes/manrope-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --brand: #2f6bff;
+  --brand-deep: #1f4fd8;
+  --brand-soft: #eaf0ff;
+  --sun: #fbbf24;
+  --mint: #16b364;
+  --danger: #e5484d;
+  --violet: #7c5cff;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --ink-faint: #94a3b8;
+  --line: #e2e8f0;
+  --bg: #f4f6fb;
+}
+
+@page {
+  size: letter;
+  margin: 0;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--ink);
+  font-family: Manrope, Inter, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  position: relative;
+  width: 8.5in;
+  height: 11in;
+  padding: 0.6in 0.65in 0.7in;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: #fff;
+}
+.page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+.page.tint {
+  background: var(--bg);
+}
+
+.foot {
+  position: absolute;
+  left: 0.65in;
+  right: 0.65in;
+  bottom: 0.32in;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: 38pt;
+  line-height: 1.02;
+  font-weight: 800;
+}
+h2 {
+  font-size: 23pt;
+  line-height: 1.1;
+  font-weight: 800;
+}
+h3 {
+  font-size: 12.5pt;
+  font-weight: 700;
+}
+p {
+  margin: 0;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.eyebrow {
+  display: inline-block;
+  font-size: 8.5pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 8px;
+}
+.lead {
+  font-size: 12pt;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.muted {
+  color: var(--ink-faint);
+}
+strong {
+  color: var(--ink);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 15pt;
+  letter-spacing: -0.02em;
+}
+.brand img {
+  width: 34px;
+  height: 34px;
+}
+
+/* Capturas */
+.shot {
+  display: block;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px -22px rgb(15 23 42 / 0.45);
+}
+.crop {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px -22px rgb(15 23 42 / 0.45);
+}
+.crop img {
+  display: block;
+  width: 100%;
+}
+.phone {
+  width: 2.15in;
+  border-radius: 30px;
+  padding: 7px;
+  background: #0f172a;
+  box-shadow: 0 22px 44px -20px rgb(15 23 42 / 0.6);
+  flex: none;
+}
+.phone .screen {
+  border-radius: 24px;
+  overflow: hidden;
+  aspect-ratio: 390 / 760;
+  background: #e8ebf3;
+}
+.phone img {
+  display: block;
+  width: 100%;
+}
+.caption {
+  margin-top: 8px;
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+/* Bloques */
+.grid {
+  display: grid;
+  gap: 14px;
+}
+.g2 {
+  grid-template-columns: 1fr 1fr;
+}
+.g3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.g4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #fff;
+}
+.card h3 {
+  margin-bottom: 4px;
+}
+.card p {
+  font-size: 9.5pt;
+  line-height: 1.45;
+}
+.ic {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 14pt;
+  margin-bottom: 8px;
+}
+.ic svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+ul.check {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+ul.check li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 10pt;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin: 0 0 7px;
+}
+ul.check li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--mint)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 11px no-repeat;
+}
+ul.dash {
+  margin: 0;
+  padding-left: 16px;
+}
+ul.dash li {
+  font-size: 9.5pt;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 8pt;
+  font-weight: 700;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+.pill.mint {
+  background: #e3f7ec;
+  color: #0e7a45;
+}
+.pill.sun {
+  background: #fff4d6;
+  color: #8a5a00;
+}
+.pill.violet {
+  background: #efeaff;
+  color: #5b3fd9;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+th {
+  text-align: left;
+  font-size: 7.8pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 800;
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+td strong {
+  font-weight: 700;
+}
+
+.price {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  background: #fff;
+}
+.price.featured {
+  border: 2px solid var(--brand);
+  box-shadow: 0 16px 30px -20px rgb(47 107 255 / 0.7);
+}
+.price .name {
+  font-weight: 800;
+  font-size: 12pt;
+}
+.price .amount {
+  font-size: 19pt;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 6px 0 0;
+}
+.price .per {
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+}
+.price ul {
+  margin-top: 10px;
+}
+
+.band {
+  border-radius: 18px;
+  padding: 20px 22px;
+  background: linear-gradient(120deg, var(--brand-deep), var(--brand));
+  color: #fff;
+}
+.band p,
+.band strong {
+  color: #fff;
+}
+.note {
+  border-left: 3px solid var(--sun);
+  background: #fffaf0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 9pt;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
