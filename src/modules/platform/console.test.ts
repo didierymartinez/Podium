@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runInTenant } from "@/db/rls";
 import { auditLogs, schools, subscriptions, users } from "@/db/schema";
+import { todayIn } from "@/lib/dates";
 import { connectTestDb, createTestUser, testDatabaseUrl } from "@/test/db";
 import { schoolFixture } from "@/test/fixtures";
 import {
@@ -117,7 +118,7 @@ describe.skipIf(!testDatabaseUrl)("consola de Podium (integración)", () => {
       groups: 1,
       fee_plans: 1,
     });
-    expect((await platformSignups(conn.db, admin.id, new Date().toISOString().slice(0, 10))).length).toBe(1);
+    expect((await platformSignups(conn.db, admin.id, todayIn("America/Bogota"))).length).toBe(1);
 
     const now = new Date();
     expect(await extendTrial(conn.db, admin, f.ctx.schoolId, 15, now)).toBe(true);

@@ -77,6 +77,8 @@ test("el profesor toma la asistencia de hoy y el tablero lo refleja", async ({ p
     .getByRole("radio", { name: "Excusa" })
     .click();
   await coach.getByLabel("Motivo de la excusa de Tomás Restrepo").fill("Cita médica");
+  // Los contadores con valor se leen (texto de color sobre fondo suave, no blanco sobre claro).
+  await expect(coach.getByText("Excusa 1", { exact: true })).not.toHaveCSS("color", "rgb(255, 255, 255)");
   await coach.getByRole("button", { name: "Guardar asistencia" }).click();
   await expect(coach.getByText("Asistencia guardada (2)")).toBeVisible();
   await expect(coach.getByText("Tomada · 2")).toBeVisible();

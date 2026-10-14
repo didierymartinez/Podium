@@ -23,7 +23,7 @@ import {
   queueAttendance,
   type PendingAttendance,
 } from "@/lib/offline/outbox";
-import { Alert, Avatar, Button, Card, Chip, Input, cn } from "@/components/ui";
+import { Alert, Avatar, Button, Card, Chip, Input, cn, type ChipTone } from "@/components/ui";
 import { canRecordAttendance } from "@/modules/attendance/window";
 import type { RosterEntry } from "@/modules/attendance/attendance";
 import { ATTENDANCE_LABELS, ATTENDANCE_STATUSES, type AttendanceStatus } from "@/modules/attendance/labels";
@@ -35,6 +35,14 @@ const TONES: Record<AttendanceStatus, string> = {
   LATE: "bg-sun text-[#1f1a05]",
   ABSENT: "bg-danger text-white",
   EXCUSED: "bg-violet text-white",
+};
+
+/** Contadores: tono suave del Chip (sus clases de fondo no se pueden pisar con className). */
+const CHIP_TONES: Record<AttendanceStatus, ChipTone> = {
+  PRESENT: "mint",
+  LATE: "sun",
+  ABSENT: "danger",
+  EXCUSED: "violet",
 };
 
 type Mark = { status: AttendanceStatus | null; excuseReason: string };
@@ -186,7 +194,7 @@ export function RosterForm({
       <Card className="p-3 sm:p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2 px-1">
           {counts.map(([s, n]) => (
-            <Chip key={s} className={n ? TONES[s] : undefined}>
+            <Chip key={s} tone={n ? CHIP_TONES[s] : "neutral"}>
               {ATTENDANCE_LABELS[s].long} {n}
             </Chip>
           ))}
