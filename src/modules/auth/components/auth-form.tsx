@@ -15,6 +15,8 @@ type Mode = "signup" | "login";
 export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const router = useRouter();
   const isDev = publicEnv.authProvider === "dev";
+  // Sin correo/contraseña queda solo Google (y la casilla de términos en el registro).
+  const withEmail = isDev || publicEnv.emailPassword;
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -150,27 +152,31 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
           <Button type="button" variant="secondary" className="w-full" onClick={onGoogle} disabled={pending}>
             <GoogleIcon /> Continuar con Google
           </Button>
-          <div className="flex items-center gap-3 text-xs text-ink-faint">
-            <span className="h-px flex-1 bg-line" /> o con tu email <span className="h-px flex-1 bg-line" />
-          </div>
+          {withEmail && (
+            <div className="flex items-center gap-3 text-xs text-ink-faint">
+              <span className="h-px flex-1 bg-line" /> o con tu email <span className="h-px flex-1 bg-line" />
+            </div>
+          )}
         </>
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {mode === "signup" && (
+        {withEmail && mode === "signup" && (
           <Field label="Nombre completo">
             <Input name="name" autoComplete="name" required maxLength={80} />
           </Field>
         )}
-        <Field label="Email">
-          <Input name="email" type="email" autoComplete="email" required />
-        </Field>
-        {mode === "signup" && (
+        {withEmail && (
+          <Field label="Email">
+            <Input name="email" type="email" autoComplete="email" required />
+          </Field>
+        )}
+        {withEmail && mode === "signup" && (
           <Field label="Celular" hint="Para avisos por WhatsApp más adelante. Ej.: 300 123 4567">
             <Input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9 +()-]{10,20}" />
           </Field>
         )}
-        {!isDev && (
+        {!isDev && withEmail && (
           <Field label="Contraseña" hint={mode === "signup" ? "Mínimo 8 caracteres" : undefined}>
             <Input
               name="password"
@@ -231,9 +237,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Ingresar"}
-        </Button>
+        {withEmail && (
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? "Un momento…" : mode === "signup" ? "Crear cuenta" : "Ingresar"}
+          </Button>
+        )}
       </form>
 
       <p className="text-center text-sm text-ink-soft">

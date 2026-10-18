@@ -1,6 +1,8 @@
 /** Variables públicas: Next las incrusta en el cliente solo si se leen de forma literal. */
 export const publicEnv = {
   authProvider: (process.env.NEXT_PUBLIC_AUTH_PROVIDER === "dev" ? "dev" : "firebase") as "firebase" | "dev",
+  /** Ingreso con correo y contraseña de Firebase; `false` deja solo Google (p. ej. mientras se habilita). */
+  emailPassword: process.env.NEXT_PUBLIC_AUTH_EMAIL_PASSWORD !== "false",
   firebase: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
