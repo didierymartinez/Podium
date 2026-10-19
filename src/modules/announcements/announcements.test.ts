@@ -17,6 +17,7 @@ import {
   createAnnouncement,
   getAnnouncement,
   nextAllowedTime,
+  pinnedAnnouncements,
   receivedAnnouncements,
   renderMessage,
   sendScheduledAnnouncements,
@@ -97,6 +98,9 @@ describe.skipIf(!testDatabaseUrl)("avisos, entrega y portal (integración)", () 
       "Hola Laura, Sofía, Tomás descansa.",
     );
     expect(await receivedAnnouncements(conn.db, f.ctx.schoolId, { guardianId: laura.id })).toHaveLength(1);
+    // El aviso fijado del inicio de la familia sale personalizado, no con las variables.
+    const pinned = await pinnedAnnouncements(conn.db, f.ctx.schoolId, "2026-10-08", lauraUser.id);
+    expect(pinned.map((a) => a.body)).toEqual(["Hola Laura, Sofía, Tomás descansa."]);
     const inbox = await runInTenant(conn.db, { schoolId: f.ctx.schoolId }, (tx) =>
       tx.select().from(notifications).where(eq(notifications.userId, lauraUser.id)),
     );

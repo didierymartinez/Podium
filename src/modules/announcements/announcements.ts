@@ -388,7 +388,8 @@ export function pinnedAnnouncements(
       .selectDistinct({
         id: announcements.id,
         title: announcements.title,
-        body: announcements.body,
+        // La persona ve su mensaje personalizado ({acudiente}, {alumnos}…); la administración, la plantilla.
+        body: userId ? announcementRecipients.message : announcements.body,
         pinnedUntil: announcements.pinnedUntil,
       })
       .from(announcements)
