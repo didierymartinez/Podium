@@ -3,7 +3,7 @@ import { createSchool, signUp, uniq } from "./helpers";
 
 test("registro exige términos, crea escuela en prueba y permite salir", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Crea tu escuela gratis" }).click();
+  await page.getByRole("link", { name: /Prueba gratis 30 días/ }).click();
   await page.locator('input[name="name"]').fill("Ana Restrepo");
   await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
