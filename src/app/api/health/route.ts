@@ -11,6 +11,7 @@ export async function GET() {
     ok: boolean;
     config: { ok: boolean; invalid?: string[] };
     auth?: string;
+    storage?: { driver: string; ok: boolean; reason?: string };
     database?: { ok: boolean; migrated?: boolean; error?: string };
   } = { ok: false, config: { ok: false } };
 
@@ -23,6 +24,12 @@ export async function GET() {
           ? "firebase"
           : "firebase sin NEXT_PUBLIC_FIREBASE_PROJECT_ID"
         : env.NEXT_PUBLIC_AUTH_PROVIDER;
+    // En plataformas serverless (Vercel) el disco es de solo lectura: los archivos necesitan S3/R2.
+    const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    body.storage =
+      env.STORAGE_DRIVER === "local" && serverless
+        ? { driver: "local", ok: false, reason: "En Vercel usa STORAGE_DRIVER=s3 (Cloudflare R2)" }
+        : { driver: env.STORAGE_DRIVER, ok: true };
   } catch (error) {
     if (!(error instanceof ZodError)) throw error;
     body.config = { ok: false, invalid: [...new Set(error.issues.map((i) => i.path.join(".")))] };
@@ -44,6 +51,6 @@ export async function GET() {
     body.database = { ok: false, error: cause.code ?? String(cause.message).slice(0, 80) };
   }
 
-  body.ok = body.config.ok && Boolean(body.database?.ok);
+  body.ok = body.config.ok && Boolean(body.database?.ok) && body.storage?.ok !== false;
   return Response.json(body, { status: body.ok ? 200 : 503, headers: { "cache-control": "no-store" } });
 }

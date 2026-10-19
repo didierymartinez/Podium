@@ -28,7 +28,14 @@ export async function uploadFile(slug: string, kind: FileKind, file: File): Prom
     body: file,
     headers: { "content-type": file.type },
   });
-  if (!res.ok) throw new Error("No se pudo subir el archivo. Revisa tu conexión e intenta de nuevo.");
+  if (!res.ok) {
+    // 5xx: el servidor no pudo guardarlo (p. ej. almacenamiento sin configurar); no es la conexión del usuario.
+    throw new Error(
+      res.status >= 500
+        ? `El servidor no pudo guardar el archivo (error ${res.status}). Avisa a la escuela o intenta más tarde.`
+        : "No se pudo subir el archivo. Revisa tu conexión e intenta de nuevo.",
+    );
+  }
   return ticket.fileId;
 }
 
