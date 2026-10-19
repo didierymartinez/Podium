@@ -35,3 +35,13 @@ test("valida la URL de la escuela", async ({ page }) => {
   await page.locator('input[name="slug"]').fill("Club Malo");
   await expect(page.getByText(/Usa solo letras minúsculas/)).toBeVisible();
 });
+
+test("ingresar con una cuenta nueva pide aceptar los términos en lugar de bloquear", async ({ page }) => {
+  await page.goto("/ingresar");
+  await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
+  await page.getByRole("button", { name: "Ingresar" }).click();
+  await expect(page.getByText(/primera vez que entras a Podium/)).toBeVisible();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Ingresar" }).click();
+  await page.waitForURL("**/escuelas");
+});

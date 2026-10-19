@@ -20,6 +20,10 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  // Al ingresar con una cuenta que aún no existe en Podium (p. ej. creada en Firebase en un registro
+  // interrumpido), el servidor pide aceptar los términos: se muestra la casilla en lugar de bloquear.
+  const [needTerms, setNeedTerms] = useState(false);
+  const showTerms = mode === "signup" || needTerms;
   const turnstileBox = useRef<HTMLDivElement>(null);
   const getTurnstileToken = useTurnstile(publicEnv.turnstileSiteKey, turnstileBox);
   // Segundo factor (TOTP de Identity Platform): se pide el código solo si la cuenta lo tiene activo.
@@ -61,6 +65,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     }
     const result = await postSession({ ...request, turnstileToken });
     if (!result.ok) {
+      if (result.error === "terms_required" && mode === "login") {
+        setNeedTerms(true);
+        setError("Es la primera vez que entras a Podium con esta cuenta: acepta los términos y vuelve a intentarlo.");
+        return;
+      }
       setError(result.message);
       return;
     }
@@ -94,7 +103,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     const name = String(form.get("name") ?? "").trim() || undefined;
     const phone = String(form.get("phone") ?? "").trim() || undefined;
 
-    if (mode === "signup" && !acceptTerms) {
+    if (showTerms && !acceptTerms) {
       setError("Debes aceptar los términos y la política de tratamiento de datos.");
       return;
     }
@@ -128,13 +137,13 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
         });
       } else {
         const cred = await withSecondFactor(() => signInWithEmailAndPassword(auth, email, password));
-        await finish({ provider: "firebase", idToken: await cred.user.getIdToken() });
+        await finish({ provider: "firebase", idToken: await cred.user.getIdToken(), acceptTerms });
       }
     });
   }
 
   function onGoogle() {
-    if (mode === "signup" && !acceptTerms) {
+    if (showTerms && !acceptTerms) {
       setError("Debes aceptar los términos y la política de tratamiento de datos.");
       return;
     }
@@ -190,7 +199,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
           </Field>
         )}
 
-        {mode === "signup" && (
+        {showTerms && (
           <label className="flex items-start gap-2 text-sm text-ink-soft">
             <input
               type="checkbox"
