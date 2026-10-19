@@ -15,8 +15,6 @@ type Mode = "signup" | "login";
 export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const router = useRouter();
   const isDev = publicEnv.authProvider === "dev";
-  // Sin correo/contraseña queda solo Google (y la casilla de términos en el registro).
-  const withEmail = isDev || publicEnv.emailPassword;
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -24,6 +22,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   // interrumpido), el servidor pide aceptar los términos: se muestra la casilla en lugar de bloquear.
   const [needTerms, setNeedTerms] = useState(false);
   const showTerms = mode === "signup" || needTerms;
+  // Método con el que se intentó ingresar: si fue Google, al aceptar los términos se reintenta con Google
+  // y se ocultan los campos de correo (no deben volverse obligatorios).
+  const lastMethod = useRef<"google" | "password">("password");
+  const [googleRetry, setGoogleRetry] = useState(false);
+  const withEmail = (isDev || publicEnv.emailPassword) && !googleRetry;
   const turnstileBox = useRef<HTMLDivElement>(null);
   const getTurnstileToken = useTurnstile(publicEnv.turnstileSiteKey, turnstileBox);
   // Segundo factor (TOTP de Identity Platform): se pide el código solo si la cuenta lo tiene activo.
@@ -67,7 +70,13 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     if (!result.ok) {
       if (result.error === "terms_required" && mode === "login") {
         setNeedTerms(true);
-        setError("Es la primera vez que entras a Podium con esta cuenta: acepta los términos y vuelve a intentarlo.");
+        const viaGoogle = lastMethod.current === "google";
+        setGoogleRetry(viaGoogle);
+        setError(
+          viaGoogle
+            ? "Es la primera vez que entras a Podium con esta cuenta: acepta los términos y toca «Continuar con Google» de nuevo."
+            : "Es la primera vez que entras a Podium con esta cuenta: acepta los términos y vuelve a intentarlo.",
+        );
         return;
       }
       setError(result.message);
@@ -108,6 +117,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
       return;
     }
 
+    lastMethod.current = "password";
     void run(async () => {
       if (isDev) {
         await finish({ provider: "dev", email, name, phone, acceptTerms });
@@ -147,6 +157,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
       setError("Debes aceptar los términos y la política de tratamiento de datos.");
       return;
     }
+    lastMethod.current = "google";
     void run(async () => {
       const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
       const cred = await withSecondFactor(() => signInWithPopup(firebaseAuth(), new GoogleAuthProvider()));
