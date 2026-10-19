@@ -114,9 +114,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
       if (mode === "signup") {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         if (name) await updateProfile(cred.user, { displayName: name });
+        // La cuenta ya existe en Firebase: si el correo de verificación falla (p. ej. dominio no autorizado),
+        // se sigue y se reenvía desde /verificar-email en lugar de dejar una cuenta a medias.
         await sendEmailVerification(cred.user, {
           url: `${window.location.origin}/verificar-email${next ? `?next=${encodeURIComponent(next)}` : ""}`,
-        });
+        }).catch(() => undefined);
         await finish({
           provider: "firebase",
           idToken: await cred.user.getIdToken(),

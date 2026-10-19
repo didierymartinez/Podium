@@ -22,6 +22,8 @@ const FIREBASE_ERRORS: Record<string, string> = {
   // Errores de configuración del proyecto de Firebase (los ve quien está montando la app).
   "auth/unauthorized-domain": "Este dominio no está autorizado en Firebase (Authentication → Configuración → Dominios autorizados).",
   "auth/operation-not-allowed": "Este método de ingreso no está habilitado en Firebase (Authentication → Método de acceso).",
+  "auth/unauthorized-continue-uri":
+    "Este dominio no está autorizado en Firebase para enviar correos (Authentication → Configuración → Dominios autorizados).",
   "auth/configuration-not-found": "Firebase Authentication no está configurado en este proyecto.",
   "auth/invalid-api-key": "La llave de Firebase no es válida: revisa NEXT_PUBLIC_FIREBASE_API_KEY.",
   "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "La llave de Firebase no es válida: revisa NEXT_PUBLIC_FIREBASE_API_KEY.",
