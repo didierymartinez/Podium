@@ -25,9 +25,11 @@ export async function hitRateLimit(
     insert into rate_limits (key, window_start, count) values (${key}, ${start.toISOString()}, 1)
     on conflict (key, window_start) do update set count = rate_limits.count + 1
     returning count`);
-  // Limpieza ocasional de ventanas viejas.
+  // Limpieza ocasional de ventanas viejas (relativa a `now`, no a la hora de la base: así no borra
+  // la ventana en curso cuando `now` viene dado, como en las pruebas).
   if (Math.random() < 0.02) {
-    await database.execute(sql`delete from rate_limits where window_start < now() - interval '1 day'`);
+    const cutoff = new Date(now.getTime() - 86_400_000).toISOString();
+    await database.execute(sql`delete from rate_limits where window_start < ${cutoff}`);
   }
   const retryAfter = Math.ceil((start.getTime() + windowMs - now.getTime()) / 1000);
   return { allowed: Number(row.count) <= limit.max, retryAfter };
