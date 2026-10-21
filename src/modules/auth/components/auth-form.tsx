@@ -17,16 +17,10 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   const isDev = publicEnv.authProvider === "dev";
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  // Al ingresar con una cuenta que aún no existe en Podium (p. ej. creada en Firebase en un registro
-  // interrumpido), el servidor pide aceptar los términos: se muestra la casilla en lugar de bloquear.
-  const [needTerms, setNeedTerms] = useState(false);
-  const showTerms = mode === "signup" || needTerms;
-  // Método con el que se intentó ingresar: si fue Google, al aceptar los términos se reintenta con Google
-  // y se ocultan los campos de correo (no deben volverse obligatorios).
-  const lastMethod = useRef<"google" | "password">("password");
-  const [googleRetry, setGoogleRetry] = useState(false);
-  const withEmail = (isDev || publicEnv.emailPassword) && !googleRetry;
+  const withEmail = isDev || publicEnv.emailPassword;
+  // Aceptación por clic (Decreto 1377 de 2013, art. 7: conducta inequívoca): el aviso está junto a los botones
+  // y crear la cuenta o ingresar por primera vez la registra (fecha, IP y versión en legal_acceptances).
+  const acceptTerms = true;
   const turnstileBox = useRef<HTMLDivElement>(null);
   const getTurnstileToken = useTurnstile(publicEnv.turnstileSiteKey, turnstileBox);
   // Segundo factor (TOTP de Identity Platform): se pide el código solo si la cuenta lo tiene activo.
@@ -68,17 +62,6 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     }
     const result = await postSession({ ...request, turnstileToken });
     if (!result.ok) {
-      if (result.error === "terms_required" && mode === "login") {
-        setNeedTerms(true);
-        const viaGoogle = lastMethod.current === "google";
-        setGoogleRetry(viaGoogle);
-        setError(
-          viaGoogle
-            ? "Es la primera vez que entras a Podium con esta cuenta: acepta los términos y toca «Continuar con Google» de nuevo."
-            : "Es la primera vez que entras a Podium con esta cuenta: acepta los términos y vuelve a intentarlo.",
-        );
-        return;
-      }
       setError(result.message);
       return;
     }
@@ -112,12 +95,6 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
     const name = String(form.get("name") ?? "").trim() || undefined;
     const phone = String(form.get("phone") ?? "").trim() || undefined;
 
-    if (showTerms && !acceptTerms) {
-      setError("Debes aceptar los términos y la política de tratamiento de datos.");
-      return;
-    }
-
-    lastMethod.current = "password";
     void run(async () => {
       if (isDev) {
         await finish({ provider: "dev", email, name, phone, acceptTerms });
@@ -153,11 +130,6 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
   }
 
   function onGoogle() {
-    if (showTerms && !acceptTerms) {
-      setError("Debes aceptar los términos y la política de tratamiento de datos.");
-      return;
-    }
-    lastMethod.current = "google";
     void run(async () => {
       const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
       const cred = await withSecondFactor(() => signInWithPopup(firebaseAuth(), new GoogleAuthProvider()));
@@ -210,27 +182,19 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string | null }) {
           </Field>
         )}
 
-        {showTerms && (
-          <label className="flex items-start gap-2 text-sm text-ink-soft">
-            <input
-              type="checkbox"
-              className="mt-0.5 size-4 shrink-0 accent-brand"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-            />
-            <span>
-              Acepto los{" "}
-              <Link href="/terminos" className="font-medium text-brand underline">
-                términos del servicio
-              </Link>{" "}
-              y autorizo el tratamiento de mis datos según la{" "}
-              <Link href="/privacidad" className="font-medium text-brand underline">
-                política de privacidad
-              </Link>
-              .
-            </span>
-          </label>
-        )}
+        <p className="text-sm text-ink-soft">
+          {mode === "signup"
+            ? "Al crear tu cuenta o continuar con Google aceptas los "
+            : "Si es tu primera vez en Podium, al ingresar aceptas los "}
+          <Link href="/terminos" className="font-medium text-brand underline">
+            términos del servicio
+          </Link>{" "}
+          y autorizas el tratamiento de tus datos según la{" "}
+          <Link href="/privacidad" className="font-medium text-brand underline">
+            política de privacidad
+          </Link>
+          .
+        </p>
 
         {error && <Alert>{error}</Alert>}
         <div ref={turnstileBox} />

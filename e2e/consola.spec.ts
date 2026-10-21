@@ -17,7 +17,6 @@ test("consola de Podium: métricas, acciones y 'entrar como' en solo lectura", a
   await page.goto("/registro");
   await page.locator('input[name="name"]').fill("Soporte Podium");
   await page.locator('input[name="email"]').fill(ADMIN);
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await page.waitForURL("**/escuelas");
 

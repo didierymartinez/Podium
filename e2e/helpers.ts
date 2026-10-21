@@ -8,7 +8,6 @@ export async function signUp(page: Page, name = "Ana Restrepo") {
   await page.goto("/registro");
   await page.locator('input[name="name"]').fill(name);
   await page.locator('input[name="email"]').fill(email);
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await page.waitForURL("**/escuelas");
   return email;
@@ -120,7 +119,6 @@ export async function acceptInviteAsNewUser(page: Page, invitePath: string, name
   await page.getByRole("link", { name: "Crear mi cuenta" }).click();
   await page.locator('input[name="name"]').fill(name);
   await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await page.waitForURL(`**${invitePath}`);
   await page.getByRole("checkbox", { name: /Autorizo a/ }).check();

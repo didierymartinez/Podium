@@ -1,15 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { createSchool, signUp, uniq } from "./helpers";
 
-test("registro exige términos, crea escuela en prueba y permite salir", async ({ page }) => {
+test("registro con aviso de términos (sin casilla), crea escuela en prueba y permite salir", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: /Prueba gratis 30 días/ }).click();
   await page.locator('input[name="name"]').fill("Ana Restrepo");
   await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
-  await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Debes aceptar los términos" })).toBeVisible();
-
-  await page.getByRole("checkbox").check();
+  // Aceptación por clic: el aviso enlaza términos y privacidad y no hay casilla que bloquee.
+  await expect(page.getByText(/Al crear tu cuenta o continuar con Google aceptas/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "política de privacidad" })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await page.waitForURL("**/escuelas");
   await expect(page.getByText("Aún no tienes escuelas")).toBeVisible();
@@ -36,12 +36,10 @@ test("valida la URL de la escuela", async ({ page }) => {
   await expect(page.getByText(/Usa solo letras minúsculas/)).toBeVisible();
 });
 
-test("ingresar con una cuenta nueva pide aceptar los términos en lugar de bloquear", async ({ page }) => {
+test("ingresar con una cuenta nueva entra directo con el aviso de términos", async ({ page }) => {
   await page.goto("/ingresar");
+  await expect(page.getByText(/Si es tu primera vez en Podium, al ingresar aceptas/)).toBeVisible();
   await page.locator('input[name="email"]').fill(`e2e-${uniq()}@example.com`);
-  await page.getByRole("button", { name: "Ingresar" }).click();
-  await expect(page.getByText(/primera vez que entras a Podium/)).toBeVisible();
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Ingresar" }).click();
   await page.waitForURL("**/escuelas");
 });
